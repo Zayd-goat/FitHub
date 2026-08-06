@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "FitHub",
+    "slug": "fithub",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#020817"
+    },
+    "android": {
+      "package": "com.fithub.app",
+      "versionCode": 1,
+      "permissions": ["INTERNET"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#020817"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.fithub.app",
+      "supportsTablet": true
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FitHub uses your photos only when you choose a profile picture.",
+          "cameraPermission": "FitHub uses your camera only when you choose to take a profile picture.",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}
