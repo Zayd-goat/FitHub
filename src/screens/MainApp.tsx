@@ -9,7 +9,7 @@ import FriendsTab from './tabs/FriendsTab';
 import ProfileTab from './tabs/ProfileTab';
 
 const tabs = [
-  ['home','⌂','Home'],['food','◉','Food'],['workout','◆','Train'],['friends','♧','Friends'],['profile','●','You']
+  ['home','⌂','Home'],['food','◉','Food'],['workout','🏋️','Train'],['friends','♧','Friends'],['profile','●','You']
 ] as const;
 
 type Tab = typeof tabs[number][0];
