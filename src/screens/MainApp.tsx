@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { Profile } from '../lib/types';
 import { colors } from '../components/UI';
 import DashboardTab from './tabs/DashboardTab';
@@ -10,11 +9,11 @@ import FriendsTab from './tabs/FriendsTab';
 import ProfileTab from './tabs/ProfileTab';
 
 const tabs = [
-  ['home','⌂','Home'],
-  ['food','🍽','Food'],
-  ['workout','🏋️','Train'],
-  ['friends','🤝','Friends'],
-  ['profile','◉','You']
+  ['home', require('../../assets/nav/home.png'), 'Home'],
+  ['food', require('../../assets/nav/food.png'), 'Food'],
+  ['workout', require('../../assets/nav/workout.png'), 'Train'],
+  ['friends', require('../../assets/nav/friends.png'), 'Friends'],
+  ['profile', require('../../assets/nav/profile.png'), 'You']
 ] as const;
 
 type Tab = typeof tabs[number][0];
@@ -22,6 +21,7 @@ type Tab = typeof tabs[number][0];
 export default function MainApp({ profile, onProfileChanged }: { profile: Profile; onProfileChanged: () => void }) {
   const [tab, setTab] = useState<Tab>('home');
   const nutritionLocked = (profile.age ?? 0) < 18;
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topBar}>
@@ -44,12 +44,17 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
       </View>
 
       <View style={styles.nav}>
-        {tabs.map(([key, icon, label]) => (
-          <Pressable key={key} onPress={() => setTab(key)} style={styles.navItem}>
-            <Text style={[styles.navIcon, tab === key && styles.active]}>{icon}</Text>
-            <Text style={[styles.navLabel, tab === key && styles.active]}>{label}</Text>
-          </Pressable>
-        ))}
+        {tabs.map(([key, icon, label]) => {
+          const active = tab === key;
+          return (
+            <Pressable key={key} onPress={() => setTab(key)} style={styles.navItem}>
+              <View style={[styles.iconShell, active && styles.iconShellActive]}>
+                <Image source={icon} style={[styles.navIcon, { tintColor: active ? '#FFFFFF' : colors.muted }]} />
+              </View>
+              <Text style={[styles.navLabel, active && styles.activeLabel]}>{label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </SafeAreaView>
   );
@@ -57,15 +62,17 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  topBar: { minHeight: 72, paddingHorizontal: 18, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#030b1c' },
-  brand: { color: colors.text, fontSize: 22, fontWeight: '900' },
+  topBar: { minHeight: 72, paddingHorizontal: 18, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg },
+  brand: { color: colors.text, fontSize: 23, fontWeight: '900', letterSpacing: -.5 },
   hello: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  caloriePill: { backgroundColor: '#0a2444', borderColor: '#1d6b9c', borderWidth: 1, borderRadius: 16, paddingHorizontal: 13, paddingVertical: 7, alignItems: 'flex-end' },
-  calorieLabel: { color: colors.cyan, fontWeight: '900', fontSize: 9, letterSpacing: .8 },
+  caloriePill: { backgroundColor: colors.blueSoft, borderColor: colors.blue, borderWidth: 1, borderRadius: 16, paddingHorizontal: 13, paddingVertical: 7, alignItems: 'flex-end' },
+  calorieLabel: { color: colors.blue, fontWeight: '900', fontSize: 9, letterSpacing: .8 },
   calorieValue: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  nav: { minHeight: 70, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: '#030b1c', paddingBottom: 6 },
-  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 6 },
-  navIcon: { color: colors.muted, fontSize: 22, fontWeight: '900' },
+  nav: { minHeight: 72, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg, paddingBottom: 4 },
+  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  iconShell: { width: 38, height: 32, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  iconShellActive: { backgroundColor: colors.primary },
+  navIcon: { width: 22, height: 22, resizeMode: 'contain' },
   navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 2 },
-  active: { color: colors.cyan }
+  activeLabel: { color: colors.primary }
 });
