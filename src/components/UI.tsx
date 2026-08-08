@@ -66,6 +66,16 @@ export function Button({ title, onPress, secondary = false, disabled = false }: 
   );
 }
 
+export function OutlineButton({ title, onPress, disabled = false, compact = false }: { title: string; onPress: () => void; disabled?: boolean; compact?: boolean }) {
+  const { colors } = useTheme();
+  const s = shared(colors);
+  return (
+    <Pressable onPress={onPress} disabled={disabled} style={({ pressed }) => [s.outlineButton, compact && s.outlineButtonCompact, disabled && { opacity: .45 }, pressed && { opacity: .78 }]}>
+      <Text style={s.outlineButtonText}>{title}</Text>
+    </Pressable>
+  );
+}
+
 export function Input(props: TextInputProps) {
   const { colors } = useTheme();
   const s = shared(colors);
@@ -92,6 +102,9 @@ const shared = (colors: ThemeColors) => StyleSheet.create({
   card: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 15, marginBottom: 12 },
   button: { backgroundColor: colors.primary, minHeight: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, marginVertical: 5 },
   secondaryButton: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border },
+  outlineButton: { backgroundColor: '#FFFFFF', minHeight: 46, borderRadius: 11, borderWidth: 1.5, borderColor: colors.blue, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, marginVertical: 5 },
+  outlineButtonCompact: { minHeight: 36, paddingHorizontal: 12, marginVertical: 0 },
+  outlineButtonText: { color: colors.blue, fontWeight: '900', fontSize: 13 },
   buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: .2 },
   input: { minHeight: 48, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.input, color: colors.text, paddingHorizontal: 13, marginBottom: 10, fontSize: 15 },
   chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: colors.border, marginRight: 7, marginBottom: 7, backgroundColor: colors.panel },

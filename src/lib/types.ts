@@ -7,6 +7,8 @@ export type Profile = {
   fitness_level: string | null;
   weight_kg: number | null;
   height_cm: number | null;
+  weight_unit?: 'kg' | 'lb' | null;
+  height_unit?: 'cm' | 'in' | null;
   gender: string | null;
   activity_level: string | null;
   goal: string | null;
@@ -44,8 +46,16 @@ export type Exercise = {
 export type WorkoutPost = {
   id: string;
   user_id: string;
+  session_id?: string;
   username?: string;
   avatar_url?: string | null;
   summary: string;
   created_at: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  exercise_count?: number;
+  total_sets?: number;
+  total_volume?: number;
+  total_distance?: number;
+  exercise_names?: string;
 };

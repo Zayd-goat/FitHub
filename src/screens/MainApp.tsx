@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Profile } from '../lib/types';
 import { useTheme } from '../components/UI';
 import DashboardTab from './tabs/DashboardTab';
@@ -7,6 +7,8 @@ import FoodTab from './tabs/FoodTab';
 import WorkoutTab from './tabs/WorkoutTab';
 import FriendsTab from './tabs/FriendsTab';
 import ProfileTab from './tabs/ProfileTab';
+import ProgressScreen from './ProgressScreen';
+import WorkoutHistoryScreen from './WorkoutHistoryScreen';
 
 const tabs = [
   ['home', require('../../assets/nav/home.png'), 'Home'],
@@ -17,42 +19,49 @@ const tabs = [
 ] as const;
 
 type Tab = typeof tabs[number][0];
+type Page = 'main' | 'progress' | 'history';
 
 export default function MainApp({ profile, onProfileChanged }: { profile: Profile; onProfileChanged: () => void }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [tab, setTab] = useState<Tab>('home');
+  const [page, setPage] = useState<Page>('main');
   const styles = createStyles(colors);
 
+  const chooseTab = (next: Tab) => { setTab(next); setPage('main'); };
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
+    <View style={styles.safe}>
+      <StatusBar hidden translucent backgroundColor="transparent" />
       <View style={styles.content}>
-        {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => setTab('workout')} />}
-        {tab === 'food' && <FoodTab profile={profile} />}
-        {tab === 'workout' && <WorkoutTab profile={profile} onProfileChanged={onProfileChanged} />}
-        {tab === 'friends' && <FriendsTab profile={profile} />}
-        {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} />}
+        {page === 'progress' ? <ProgressScreen profile={profile} onBack={() => setPage('main')} /> :
+         page === 'history' ? <WorkoutHistoryScreen profile={profile} onBack={() => setPage('main')} /> : <>
+          {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => chooseTab('workout')} onViewProgress={() => setPage('progress')} onViewWorkouts={() => setPage('history')} />}
+          {tab === 'food' && <FoodTab profile={profile} />}
+          {tab === 'workout' && <WorkoutTab profile={profile} onProfileChanged={onProfileChanged} />}
+          {tab === 'friends' && <FriendsTab profile={profile} />}
+          {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} />}
+        </>}
       </View>
       <View style={styles.nav}>
         {tabs.map(([key, icon, label]) => {
-          const active = tab === key;
+          const active = page === 'main' && tab === key;
           return (
-            <Pressable key={key} onPress={() => setTab(key)} style={styles.navItem}>
+            <Pressable key={key} onPress={() => chooseTab(key)} style={styles.navItem}>
               <Image source={icon} style={[styles.navIcon, { tintColor: active ? colors.primary : colors.muted }]} />
-              <Text style={[styles.navLabel, active && { color: colors.primary }]}>{label}</Text>
+              <Text style={[styles.navLabel, active && { color: colors.primary, fontWeight: '900' }]}>{label}</Text>
             </Pressable>
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const createStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1 },
-  nav: { minHeight: 70, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.nav, paddingBottom: 5, paddingTop: 4 },
+  nav: { minHeight: 66, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.nav, paddingBottom: 5, paddingTop: 4 },
   navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  navIcon: { width: 22, height: 22, resizeMode: 'contain' },
-  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '700', marginTop: 4 }
+  navIcon: { width: 23, height: 23, resizeMode: 'contain' },
+  navLabel: { color: colors.muted, fontSize: 9, fontWeight: '700', marginTop: 3 }
 });
