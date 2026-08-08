@@ -92,10 +92,10 @@ function Macro({ label, value, target }: { label: string; value: string; target?
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 30 }, kicker: { color: colors.cyan, fontWeight: '900', fontSize: 11, letterSpacing: 1.2 },
+  wrap: { padding: 16, paddingBottom: 30 }, kicker: { color: colors.primary, fontWeight: '900', fontSize: 11, letterSpacing: 1.2 },
   title: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: 3 }, sub: { color: colors.muted, lineHeight: 19, marginTop: 4 },
   statsRow: { flexDirection: 'row', gap: 8, marginTop: 15 }, statCard: { flex: 1, padding: 12 }, stat: { color: colors.text, fontSize: 25, fontWeight: '900' }, statLabel: { color: colors.muted, fontSize: 10, marginTop: 2 },
-  progressTrack: { height: 10, borderRadius: 999, backgroundColor: '#102443', overflow: 'hidden', marginTop: 8 }, progressFill: { height: '100%', backgroundColor: colors.cyan },
-  macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, macro: { width: '48%', backgroundColor: '#091a36', borderRadius: 16, padding: 12 }, macroValue: { color: colors.text, fontSize: 22, fontWeight: '900' }, macroLabel: { color: colors.cyan, fontWeight: '800' }, macroTarget: { color: colors.muted, fontSize: 11, marginTop: 3 },
-  bmi: { color: colors.text, fontSize: 36, fontWeight: '900' }, badgeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, badge: { borderRadius: 999, backgroundColor: '#122b50', paddingHorizontal: 12, paddingVertical: 8 }, badgeText: { color: colors.text, fontWeight: '800', textTransform: 'capitalize' }
+  progressTrack: { height: 10, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginTop: 8 }, progressFill: { height: '100%', backgroundColor: colors.green },
+  macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, macro: { width: '48%', backgroundColor: colors.panel2, borderRadius: 16, padding: 12 }, macroValue: { color: colors.text, fontSize: 22, fontWeight: '900' }, macroLabel: { color: colors.blue, fontWeight: '800' }, macroTarget: { color: colors.muted, fontSize: 11, marginTop: 3 },
+  bmi: { color: colors.text, fontSize: 36, fontWeight: '900' }, badgeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, badge: { borderRadius: 999, backgroundColor: colors.goldSoft, paddingHorizontal: 12, paddingVertical: 8 }, badgeText: { color: colors.text, fontWeight: '800', textTransform: 'capitalize' }
 });
