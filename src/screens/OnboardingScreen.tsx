@@ -113,7 +113,7 @@ export default function OnboardingScreen({ profile, onComplete }: { profile: Pro
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   wrap: { padding: 20, paddingBottom: 50 },
-  kicker: { color: colors.cyan, fontSize: 12, fontWeight: '900', letterSpacing: 1.4, marginTop: 12 },
+  kicker: { color: colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 1.4, marginTop: 12 },
   title: { color: colors.text, fontSize: 31, fontWeight: '900', marginTop: 3 },
   lead: { color: colors.muted, lineHeight: 20, marginVertical: 12 },
   label: { color: colors.text, fontWeight: '800', marginTop: 7, marginBottom: 8 },

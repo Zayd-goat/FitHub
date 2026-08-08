@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   wrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   logo: { width: 130, height: 130, borderRadius: 30, marginBottom: 12 },
   title: { color: colors.text, fontSize: 38, fontWeight: '900', letterSpacing: -.8 },
-  tag: { color: colors.cyan, fontWeight: '800', marginBottom: 24 },
+  tag: { color: colors.primary, fontWeight: '800', marginBottom: 24 },
   heading: { color: colors.text, fontSize: 22, fontWeight: '900', marginBottom: 4 },
   muted: { color: colors.muted, marginBottom: 16 },
   foot: { color: colors.muted, fontSize: 12, textAlign: 'center', maxWidth: 340, lineHeight: 17 }
