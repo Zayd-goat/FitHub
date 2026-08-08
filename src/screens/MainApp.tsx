@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { Profile } from '../lib/types';
@@ -9,7 +10,11 @@ import FriendsTab from './tabs/FriendsTab';
 import ProfileTab from './tabs/ProfileTab';
 
 const tabs = [
-  ['home','⌂','Home'],['food','◉','Food'],['workout','🏋️','Train'],['friends','♧','Friends'],['profile','●','You']
+  ['home','⌂','Home'],
+  ['food','🍽','Food'],
+  ['workout','🏋️','Train'],
+  ['friends','🤝','Friends'],
+  ['profile','◉','You']
 ] as const;
 
 type Tab = typeof tabs[number][0];
@@ -58,9 +63,9 @@ const styles = StyleSheet.create({
   caloriePill: { backgroundColor: '#0a2444', borderColor: '#1d6b9c', borderWidth: 1, borderRadius: 16, paddingHorizontal: 13, paddingVertical: 7, alignItems: 'flex-end' },
   calorieLabel: { color: colors.cyan, fontWeight: '900', fontSize: 9, letterSpacing: .8 },
   calorieValue: { color: colors.text, fontWeight: '900', fontSize: 17 },
-  nav: { minHeight: 66, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: '#030b1c' },
-  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  navIcon: { color: colors.muted, fontSize: 20, fontWeight: '900' },
+  nav: { minHeight: 70, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: '#030b1c', paddingBottom: 6 },
+  navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 6 },
+  navIcon: { color: colors.muted, fontSize: 22, fontWeight: '900' },
   navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 2 },
   active: { color: colors.cyan }
 });
