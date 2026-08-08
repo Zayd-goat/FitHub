@@ -1,275 +1,259 @@
 import { Exercise } from '../lib/types';
 
-export type PresetExercise = Exercise & {
-  tags: string[];
-  subgroup?: string;
-  image_urls: string[];
-  track_weight?: boolean;
-  track_sets?: boolean;
+export const figureImages = {
+  chest: require('../../assets/exercises/chest.png'),
+  shoulders: require('../../assets/exercises/shoulders.png'),
+  back: require('../../assets/exercises/back.png'),
+  arms: require('../../assets/exercises/arms.png'),
+  legs: require('../../assets/exercises/legs.png'),
+  core: require('../../assets/exercises/core.png'),
+  cardio: require('../../assets/exercises/cardio.png'),
+  full: require('../../assets/exercises/full.png'),
+} as const;
+
+export type VisualKey = keyof typeof figureImages;
+
+export type LibraryExercise = Exercise & {
+  slug: string;
+  section: string;
+  subsection: string;
+  targetArea: string;
+  targetMuscles: string[];
+  visualKey?: VisualKey;
 };
 
-type Group = { tag: string; subgroup?: string; names: string[] };
+export const muscleGroupFilters = ['All','Chest','Shoulders','Back','Biceps','Triceps','Forearms','Legs','Core','Cardio','Full Body'] as const;
 
-const groups: Group[] = [
-  { tag: 'Compound', subgroup: 'Squat Movements', names: [
-    'Barbell Back Squat','Front Squat','Goblet Squat','Hack Squat','Smith Machine Squat','Zercher Squat','Bulgarian Split Squat','Split Squat','Pistol Squat','Sumo Squat'
-  ]},
-  { tag: 'Compound', subgroup: 'Hip Hinge Movements', names: [
-    'Conventional Deadlift','Romanian Deadlift (RDL)','Stiff-Leg Deadlift','Sumo Deadlift','Trap Bar Deadlift','Good Morning','Hip Thrust','Barbell Glute Bridge','Kettlebell Swing'
-  ]},
-  { tag: 'Compound', subgroup: 'Horizontal Push', names: [
-    'Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Bench Press','Dumbbell Floor Press','Push-Up','Machine Chest Press'
-  ]},
-  { tag: 'Compound', subgroup: 'Vertical Push', names: [
-    'Overhead Press','Military Press','Dumbbell Shoulder Press','Arnold Press','Push Press','Handstand Push-Up'
-  ]},
-  { tag: 'Compound', subgroup: 'Horizontal Pull', names: [
-    'Barbell Row','Pendlay Row','Seated Cable Row','Chest Supported Row','One-Arm Dumbbell Row','T-Bar Row','Inverted Row'
-  ]},
-  { tag: 'Compound', subgroup: 'Vertical Pull', names: [
-    'Pull-Up','Chin-Up','Lat Pulldown','Assisted Pull-Up','Neutral Grip Pull-Up'
-  ]},
-  { tag: 'Compound', subgroup: 'Loaded Carries', names: [
-    "Farmer's Carry",'Suitcase Carry','Overhead Carry','Front Rack Carry','Sandbag Carry'
-  ]},
+export const sectionFilters = ['All','Compound','Chest','Shoulders','Back','Biceps','Triceps','Forearms','Legs','Core','Bodyweight','Plyometrics','Olympic Lifts','Strongman','Kettlebells','Cable','Machines','Cardio','Functional Training'] as const;
 
-  { tag: 'Chest', names: [
-    'Barbell Bench Press','Incline Barbell Bench Press','Decline Bench Press','Dumbbell Bench Press','Incline Dumbbell Press','Decline Dumbbell Press','Dumbbell Fly','Cable Fly','Low-to-High Cable Fly','High-to-Low Cable Fly','Pec Deck Fly','Machine Chest Press','Push-Up','Weighted Push-Up','Dips','Dumbbell Pullover'
-  ]},
+export const exerciseLibrary: LibraryExercise[] = [
+  { name: "Assisted Pull-Up", category: "Back", equipment: "Pull-up bar", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "assisted-pull-up", section: "Compound", subsection: "Vertical Pull", targetArea: "Back", targetMuscles: ["Vertical Pull"], visualKey: "back" },
+  { name: "Back Extension", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "back-extension", section: "Back", subsection: "Lower Back", targetArea: "Back", targetMuscles: ["Lower Back"], visualKey: "back" },
+  { name: "Barbell Row", category: "Back", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "barbell-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Barbell Shrug", category: "Back", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "barbell-shrug", section: "Back", subsection: "Upper Traps", targetArea: "Back", targetMuscles: ["Upper Traps"], visualKey: "back" },
+  { name: "Chest Supported Row", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "chest-supported-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Chin-Up", category: "Back", equipment: "Pull-up bar", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "chin-up", section: "Compound", subsection: "Vertical Pull", targetArea: "Back", targetMuscles: ["Vertical Pull"], visualKey: "back" },
+  { name: "Deadlift", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "deadlift", section: "Back", subsection: "Lower Back", targetArea: "Back", targetMuscles: ["Lower Back"], visualKey: "back" },
+  { name: "Dumbbell Shrug", category: "Back", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dumbbell-shrug", section: "Back", subsection: "Upper Traps", targetArea: "Back", targetMuscles: ["Upper Traps"], visualKey: "back" },
+  { name: "Inverted Row", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "inverted-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Lat Pulldown", category: "Back", equipment: "Lat pulldown station", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "lat-pulldown", section: "Compound", subsection: "Vertical Pull", targetArea: "Back", targetMuscles: ["Vertical Pull"], visualKey: "back" },
+  { name: "Machine Row", category: "Back", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "machine-row", section: "Back", subsection: "Mid Back", targetArea: "Back", targetMuscles: ["Mid Back"], visualKey: "back" },
+  { name: "Neutral Grip Pull-Up", category: "Back", equipment: "Pull-up bar", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "neutral-grip-pull-up", section: "Compound", subsection: "Vertical Pull", targetArea: "Back", targetMuscles: ["Vertical Pull"], visualKey: "back" },
+  { name: "One-Arm Dumbbell Row", category: "Back", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "one-arm-dumbbell-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Pendlay Row", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "pendlay-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Pull-Up", category: "Back", equipment: "Pull-up bar", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "pull-up", section: "Compound", subsection: "Vertical Pull", targetArea: "Back", targetMuscles: ["Vertical Pull"], visualKey: "back" },
+  { name: "Romanian Deadlift", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "romanian-deadlift", section: "Back", subsection: "Lower Back", targetArea: "Back", targetMuscles: ["Lower Back"], visualKey: "back" },
+  { name: "Seated Cable Row", category: "Back", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "seated-cable-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Straight Arm Pulldown", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "straight-arm-pulldown", section: "Back", subsection: "Lats", targetArea: "Back", targetMuscles: ["Lats"], visualKey: "back" },
+  { name: "T-Bar Row", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "t-bar-row", section: "Compound", subsection: "Horizontal Pull", targetArea: "Back", targetMuscles: ["Horizontal Pull"], visualKey: "back" },
+  { name: "Trap Bar Shrug", category: "Back", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "trap-bar-shrug", section: "Back", subsection: "Upper Traps", targetArea: "Back", targetMuscles: ["Upper Traps"], visualKey: "back" },
+  { name: "Alternating Dumbbell Curl", category: "Biceps", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "alternating-dumbbell-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Barbell Curl", category: "Biceps", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "barbell-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Bayesian Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "bayesian-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Cable Curl", category: "Biceps", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Concentration Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "concentration-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Dumbbell Curl", category: "Biceps", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "dumbbell-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "EZ Bar Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "ez-bar-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Hammer Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "hammer-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Incline Dumbbell Curl", category: "Biceps", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "incline-dumbbell-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Preacher Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "preacher-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Reverse Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "reverse-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Spider Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "spider-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Zottman Curl", category: "Biceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "zottman-curl", section: "Biceps", subsection: "Main", targetArea: "Biceps", targetMuscles: ["Biceps"], visualKey: "arms" },
+  { name: "Air Bike", category: "Cardio", equipment: "Air bike", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "air-bike", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "Elliptical", category: "Cardio", equipment: "Elliptical", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "elliptical", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "Jacob's Ladder", category: "Cardio", equipment: "Jacob's Ladder", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "jacob-s-ladder", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: undefined },
+  { name: "Jump Rope", category: "Cardio", equipment: "Jump rope", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "jump-rope", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "Rowing Machine", category: "Cardio", equipment: "Machine", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "rowing-machine", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "SkiErg", category: "Cardio", equipment: "SkiErg", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "skierg", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: undefined },
+  { name: "StairMaster", category: "Cardio", equipment: "StairMaster", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "stairmaster", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "Stationary Bike", category: "Cardio", equipment: "Stationary bike", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "stationary-bike", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "Treadmill", category: "Cardio", equipment: "Treadmill", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "treadmill", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: "cardio" },
+  { name: "VersaClimber", category: "Cardio", equipment: "VersaClimber", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "versaclimber", section: "Cardio", subsection: "Main", targetArea: "Cardio", targetMuscles: ["Cardio"], visualKey: undefined },
+  { name: "Barbell Bench Press", category: "Chest", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "barbell-bench-press", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Bench Press", category: "Chest", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "bench-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Cable Fly", category: "Chest", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-fly", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Decline Bench Press", category: "Chest", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "decline-bench-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Decline Dumbbell Press", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "decline-dumbbell-press", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Dips", category: "Chest", equipment: "Dip bars", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dips", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Dumbbell Bench Press", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "dumbbell-bench-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Dumbbell Floor Press", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dumbbell-floor-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Dumbbell Fly", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "dumbbell-fly", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Dumbbell Pullover", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dumbbell-pullover", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "High-to-Low Cable Fly", category: "Chest", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "high-to-low-cable-fly", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Incline Barbell Bench Press", category: "Chest", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "incline-barbell-bench-press", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Incline Bench Press", category: "Chest", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "incline-bench-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Incline Dumbbell Press", category: "Chest", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "incline-dumbbell-press", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Low-to-High Cable Fly", category: "Chest", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "low-to-high-cable-fly", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Machine Chest Press", category: "Chest", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "machine-chest-press", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Pec Deck Fly", category: "Chest", equipment: "Pec deck machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "pec-deck-fly", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Push-Up", category: "Chest", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "push-up", section: "Compound", subsection: "Horizontal Push", targetArea: "Chest", targetMuscles: ["Horizontal Push"], visualKey: "chest" },
+  { name: "Weighted Push-Up", category: "Chest", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "weighted-push-up", section: "Chest", subsection: "Main", targetArea: "Chest", targetMuscles: ["Chest"], visualKey: "chest" },
+  { name: "Ab Wheel Rollout", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "ab-wheel-rollout", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Bicycle Crunch", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "bicycle-crunch", section: "Core", subsection: "Obliques", targetArea: "Core", targetMuscles: ["Obliques"], visualKey: "core" },
+  { name: "Bird Dog", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "bird-dog", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Cable Crunch", category: "Core", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-crunch", section: "Core", subsection: "Upper Abs", targetArea: "Core", targetMuscles: ["Upper Abs"], visualKey: "core" },
+  { name: "Cable Wood Chop", category: "Core", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-wood-chop", section: "Core", subsection: "Obliques", targetArea: "Core", targetMuscles: ["Obliques"], visualKey: "core" },
+  { name: "Crunch", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "crunch", section: "Core", subsection: "Upper Abs", targetArea: "Core", targetMuscles: ["Upper Abs"], visualKey: "core" },
+  { name: "Dead Bug", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dead-bug", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Decline Sit-Up", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "decline-sit-up", section: "Core", subsection: "Upper Abs", targetArea: "Core", targetMuscles: ["Upper Abs"], visualKey: "core" },
+  { name: "Hanging Knee Raise", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "hanging-knee-raise", section: "Core", subsection: "Lower Abs", targetArea: "Core", targetMuscles: ["Lower Abs"], visualKey: "core" },
+  { name: "Hanging Leg Raise", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "hanging-leg-raise", section: "Core", subsection: "Lower Abs", targetArea: "Core", targetMuscles: ["Lower Abs"], visualKey: "core" },
+  { name: "Hollow Hold", category: "Core", equipment: "Free weights / gym floor", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "hollow-hold", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Lying Leg Raise", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "lying-leg-raise", section: "Core", subsection: "Lower Abs", targetArea: "Core", targetMuscles: ["Lower Abs"], visualKey: "core" },
+  { name: "Pallof Press", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "pallof-press", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Plank", category: "Core", equipment: "Bodyweight", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "plank", section: "Core", subsection: "Core Stability", targetArea: "Core", targetMuscles: ["Core Stability"], visualKey: "core" },
+  { name: "Reverse Crunch", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "reverse-crunch", section: "Core", subsection: "Lower Abs", targetArea: "Core", targetMuscles: ["Lower Abs"], visualKey: "core" },
+  { name: "Russian Twist", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "russian-twist", section: "Core", subsection: "Obliques", targetArea: "Core", targetMuscles: ["Obliques"], visualKey: "core" },
+  { name: "Side Plank", category: "Core", equipment: "Bodyweight", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "side-plank", section: "Core", subsection: "Obliques", targetArea: "Core", targetMuscles: ["Obliques"], visualKey: "core" },
+  { name: "Sit-Up", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "sit-up", section: "Core", subsection: "Upper Abs", targetArea: "Core", targetMuscles: ["Upper Abs"], visualKey: "core" },
+  { name: "Toes-to-Bar", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "toes-to-bar", section: "Core", subsection: "Lower Abs", targetArea: "Core", targetMuscles: ["Lower Abs"], visualKey: "core" },
+  { name: "Windshield Wipers", category: "Core", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "windshield-wipers", section: "Core", subsection: "Obliques", targetArea: "Core", targetMuscles: ["Obliques"], visualKey: "core" },
+  { name: "Dead Hang", category: "Forearms", equipment: "Free weights / gym floor", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "dead-hang", section: "Forearms", subsection: "Main", targetArea: "Forearms", targetMuscles: ["Forearms"], visualKey: "arms" },
+  { name: "Plate Pinch Hold", category: "Forearms", equipment: "Free weights / gym floor", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "plate-pinch-hold", section: "Forearms", subsection: "Main", targetArea: "Forearms", targetMuscles: ["Forearms"], visualKey: "arms" },
+  { name: "Reverse Wrist Curl", category: "Forearms", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "reverse-wrist-curl", section: "Forearms", subsection: "Main", targetArea: "Forearms", targetMuscles: ["Forearms"], visualKey: "arms" },
+  { name: "Wrist Curl", category: "Forearms", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "wrist-curl", section: "Forearms", subsection: "Main", targetArea: "Forearms", targetMuscles: ["Forearms"], visualKey: "arms" },
+  { name: "Agility Ladder", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "agility-ladder", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Archer Push-Up", category: "Full Body", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "archer-push-up", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Assisted Pull-Up Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "assisted-pull-up-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Atlas Stone Lift", category: "Full Body", equipment: "Atlas stones", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "atlas-stone-lift", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Australian Row", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "australian-row", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Battle Ropes", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "time", icon_emoji: "\u23f1\ufe0f", rep_min: null, rep_max: null, slug: "battle-ropes", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Bear Crawl", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "bear-crawl", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Bicycle Crunches", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "bicycle-crunches", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Bodyweight Squat", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "bodyweight-squat", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Bounding", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "bounding", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Box Jump", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "box-jump", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Broad Jump", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "broad-jump", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Burpees", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "burpees", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Cable Front Raise", category: "Full Body", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-front-raise", section: "Cable", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Cable Pull-Through", category: "Full Body", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "cable-pull-through", section: "Cable", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Chest Press Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "chest-press-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Clap Push-Up", category: "Full Body", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "clap-push-up", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Clean", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "clean", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Clean and Jerk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "clean-and-jerk", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Crab Walk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "crab-walk", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Decline Push-Up", category: "Full Body", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "decline-push-up", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Depth Jump", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "depth-jump", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Diamond Push-Up", category: "Full Body", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "diamond-push-up", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Farmer's Carry", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "farmer-s-carry", section: "Compound", subsection: "Loaded Carries", targetArea: "Full Body", targetMuscles: ["Loaded Carries"], visualKey: "full" },
+  { name: "Farmer's Walk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "farmer-s-walk", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Front Rack Carry", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "front-rack-carry", section: "Compound", subsection: "Loaded Carries", targetArea: "Full Body", targetMuscles: ["Loaded Carries"], visualKey: "full" },
+  { name: "Hack Squat Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "hack-squat-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Halo", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "halo", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Hang Clean", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "hang-clean", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Hip Abductor Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "hip-abductor-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Hip Adductor Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "hip-adductor-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Jump Squat", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "jump-squat", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Kettlebell Clean", category: "Full Body", equipment: "Kettlebell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "kettlebell-clean", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Kettlebell Press", category: "Full Body", equipment: "Kettlebell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "kettlebell-press", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Kettlebell Snatch", category: "Full Body", equipment: "Kettlebell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "kettlebell-snatch", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Lat Pulldown Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "lat-pulldown-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Log Press", category: "Full Body", equipment: "Strongman log", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "log-press", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Medicine Ball Chest Pass", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "medicine-ball-chest-pass", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Medicine Ball Slam", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "medicine-ball-slam", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Medicine Ball Throws", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "medicine-ball-throws", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Mountain Climbers", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "mountain-climbers", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Muscle-Up", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "muscle-up", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Overhead Carry", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "overhead-carry", section: "Compound", subsection: "Loaded Carries", targetArea: "Full Body", targetMuscles: ["Loaded Carries"], visualKey: "full" },
+  { name: "Pec Deck", category: "Full Body", equipment: "Pec deck machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "pec-deck", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Pike Push-Up", category: "Full Body", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "pike-push-up", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Power Clean", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "power-clean", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Power Snatch", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "power-snatch", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Push Jerk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "push-jerk", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Sandbag Carries", category: "Full Body", equipment: "Sandbag", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "sandbag-carries", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Sandbag Carry", category: "Full Body", equipment: "Sandbag", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "sandbag-carry", section: "Compound", subsection: "Loaded Carries", targetArea: "Full Body", targetMuscles: ["Loaded Carries"], visualKey: "full" },
+  { name: "Seated Calf Raise Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "seated-calf-raise-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Seated Row Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "seated-row-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Shoulder Press Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "shoulder-press-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Skater Jumps", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "skater-jumps", section: "Plyometrics", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Sled Pull", category: "Full Body", equipment: "Sled", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "sled-pull", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Sled Push", category: "Full Body", equipment: "Sled", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "sled-push", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Smith Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "smith-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Snatch", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "snatch", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Split Jerk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "split-jerk", section: "Olympic Lifts", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Standing Calf Raise Machine", category: "Full Body", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "standing-calf-raise-machine", section: "Machines", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Suitcase Carry", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "suitcase-carry", section: "Compound", subsection: "Loaded Carries", targetArea: "Full Body", targetMuscles: ["Loaded Carries"], visualKey: "full" },
+  { name: "TRX Push-Ups", category: "Full Body", equipment: "TRX straps", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "trx-push-ups", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "TRX Rows", category: "Full Body", equipment: "TRX straps", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "trx-rows", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Tire Flip", category: "Full Body", equipment: "Tire", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "tire-flip", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Tire Flips", category: "Full Body", equipment: "Tire", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "tire-flips", section: "Functional Training", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Turkish Get-Up", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "turkish-get-up", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "V-Ups", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "v-ups", section: "Bodyweight", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Windmill", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "windmill", section: "Kettlebells", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Yoke Walk", category: "Full Body", equipment: "Free weights / gym floor", metric_type: "distance", icon_emoji: "\ud83c\udfc3", rep_min: null, rep_max: null, slug: "yoke-walk", section: "Strongman", subsection: "Main", targetArea: "Full Body", targetMuscles: ["Full Body"], visualKey: "full" },
+  { name: "Back Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "back-squat", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Barbell Back Squat", category: "Legs", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "barbell-back-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Barbell Glute Bridge", category: "Legs", equipment: "Barbell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "barbell-glute-bridge", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Bulgarian Split Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "bulgarian-split-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Cable Kickback", category: "Legs", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-kickback", section: "Legs", subsection: "Glutes", targetArea: "Legs", targetMuscles: ["Glutes"], visualKey: "legs" },
+  { name: "Conventional Deadlift", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "conventional-deadlift", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Donkey Calf Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "donkey-calf-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Frog Pumps", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "frog-pumps", section: "Legs", subsection: "Glutes", targetArea: "Legs", targetMuscles: ["Glutes"], visualKey: "legs" },
+  { name: "Front Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "front-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Glute Ham Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "glute-ham-raise", section: "Legs", subsection: "Hamstrings", targetArea: "Legs", targetMuscles: ["Hamstrings"], visualKey: "legs" },
+  { name: "Goblet Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "goblet-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Good Morning", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "good-morning", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Hack Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "hack-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Hip Abduction Machine", category: "Legs", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "hip-abduction-machine", section: "Legs", subsection: "Glutes", targetArea: "Legs", targetMuscles: ["Glutes"], visualKey: "legs" },
+  { name: "Hip Thrust", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "hip-thrust", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Kettlebell Swing", category: "Legs", equipment: "Kettlebell", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "kettlebell-swing", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Leg Extension", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "leg-extension", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Leg Press", category: "Legs", equipment: "Leg press machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "leg-press", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Leg Press Calf Raise", category: "Legs", equipment: "Leg press machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "leg-press-calf-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Lying Leg Curl", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "lying-leg-curl", section: "Legs", subsection: "Hamstrings", targetArea: "Legs", targetMuscles: ["Hamstrings"], visualKey: "legs" },
+  { name: "Nordic Curl", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "nordic-curl", section: "Legs", subsection: "Hamstrings", targetArea: "Legs", targetMuscles: ["Hamstrings"], visualKey: "legs" },
+  { name: "Pistol Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "pistol-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Romanian Deadlift (RDL)", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "romanian-deadlift-rdl", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Seated Calf Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "seated-calf-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Seated Leg Curl", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "seated-leg-curl", section: "Legs", subsection: "Hamstrings", targetArea: "Legs", targetMuscles: ["Hamstrings"], visualKey: "legs" },
+  { name: "Single-Leg Calf Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "single-leg-calf-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Single-Leg Hip Thrust", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "single-leg-hip-thrust", section: "Legs", subsection: "Glutes", targetArea: "Legs", targetMuscles: ["Glutes"], visualKey: "legs" },
+  { name: "Sissy Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "sissy-squat", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Smith Machine Squat", category: "Legs", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "smith-machine-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Split Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "split-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Standing Calf Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "standing-calf-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Step-Up", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "step-up", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Stiff-Leg Deadlift", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "stiff-leg-deadlift", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Sumo Deadlift", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "sumo-deadlift", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Sumo Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "sumo-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Tibialis Raise", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "tibialis-raise", section: "Legs", subsection: "Calves", targetArea: "Legs", targetMuscles: ["Calves"], visualKey: "legs" },
+  { name: "Trap Bar Deadlift", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "trap-bar-deadlift", section: "Compound", subsection: "Hip Hinge Movements", targetArea: "Legs", targetMuscles: ["Hip Hinge Movements"], visualKey: "legs" },
+  { name: "Walking Lunge", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "walking-lunge", section: "Legs", subsection: "Quadriceps", targetArea: "Legs", targetMuscles: ["Quadriceps"], visualKey: "legs" },
+  { name: "Zercher Squat", category: "Legs", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "zercher-squat", section: "Compound", subsection: "Squat Movements", targetArea: "Legs", targetMuscles: ["Squat Movements"], visualKey: "legs" },
+  { name: "Arnold Press", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "arnold-press", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Cable Lateral Raise", category: "Shoulders", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-lateral-raise", section: "Shoulders", subsection: "Side Delts", targetArea: "Shoulders", targetMuscles: ["Side Delts"], visualKey: "shoulders" },
+  { name: "Cable Rear Delt Fly", category: "Shoulders", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "cable-rear-delt-fly", section: "Shoulders", subsection: "Rear Delts", targetArea: "Shoulders", targetMuscles: ["Rear Delts"], visualKey: "shoulders" },
+  { name: "Chest Supported Rear Delt Raise", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "chest-supported-rear-delt-raise", section: "Shoulders", subsection: "Rear Delts", targetArea: "Shoulders", targetMuscles: ["Rear Delts"], visualKey: "shoulders" },
+  { name: "Dumbbell Lateral Raise", category: "Shoulders", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "dumbbell-lateral-raise", section: "Shoulders", subsection: "Side Delts", targetArea: "Shoulders", targetMuscles: ["Side Delts"], visualKey: "shoulders" },
+  { name: "Dumbbell Shoulder Press", category: "Shoulders", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "dumbbell-shoulder-press", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Face Pull", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "face-pull", section: "Shoulders", subsection: "Rear Delts", targetArea: "Shoulders", targetMuscles: ["Rear Delts"], visualKey: "shoulders" },
+  { name: "Front Raise", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "front-raise", section: "Shoulders", subsection: "Front Delts", targetArea: "Shoulders", targetMuscles: ["Front Delts"], visualKey: "shoulders" },
+  { name: "Handstand Push-Up", category: "Shoulders", equipment: "Bodyweight", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "handstand-push-up", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Landmine Press", category: "Shoulders", equipment: "Landmine setup", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "landmine-press", section: "Shoulders", subsection: "Front Delts", targetArea: "Shoulders", targetMuscles: ["Front Delts"], visualKey: "shoulders" },
+  { name: "Leaning Lateral Raise", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "leaning-lateral-raise", section: "Shoulders", subsection: "Side Delts", targetArea: "Shoulders", targetMuscles: ["Side Delts"], visualKey: "shoulders" },
+  { name: "Machine Lateral Raise", category: "Shoulders", equipment: "Machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "machine-lateral-raise", section: "Shoulders", subsection: "Side Delts", targetArea: "Shoulders", targetMuscles: ["Side Delts"], visualKey: "shoulders" },
+  { name: "Military Press", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "military-press", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Overhead Press", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "overhead-press", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Plate Raise", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "plate-raise", section: "Shoulders", subsection: "Front Delts", targetArea: "Shoulders", targetMuscles: ["Front Delts"], visualKey: "shoulders" },
+  { name: "Push Press", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "push-press", section: "Compound", subsection: "Vertical Push", targetArea: "Shoulders", targetMuscles: ["Vertical Push"], visualKey: "shoulders" },
+  { name: "Rear Delt Fly", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "rear-delt-fly", section: "Shoulders", subsection: "Rear Delts", targetArea: "Shoulders", targetMuscles: ["Rear Delts"], visualKey: "shoulders" },
+  { name: "Reverse Pec Deck", category: "Shoulders", equipment: "Pec deck machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "reverse-pec-deck", section: "Shoulders", subsection: "Rear Delts", targetArea: "Shoulders", targetMuscles: ["Rear Delts"], visualKey: "shoulders" },
+  { name: "Upright Row", category: "Shoulders", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "upright-row", section: "Shoulders", subsection: "Side Delts", targetArea: "Shoulders", targetMuscles: ["Side Delts"], visualKey: "shoulders" },
+  { name: "Bench Dips", category: "Triceps", equipment: "Dip bars", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "bench-dips", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Close Grip Bench Press", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 4, rep_max: 10, slug: "close-grip-bench-press", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Dumbbell Overhead Extension", category: "Triceps", equipment: "Dumbbells", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "dumbbell-overhead-extension", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "EZ Bar Skull Crushers", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "ez-bar-skull-crushers", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "JM Press", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "jm-press", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Overhead Cable Extension", category: "Triceps", equipment: "Cable machine", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "overhead-cable-extension", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Parallel Bar Dips", category: "Triceps", equipment: "Dip bars", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "parallel-bar-dips", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Rope Pushdown", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "rope-pushdown", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Skull Crushers", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 6, rep_max: 12, slug: "skull-crushers", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Straight Bar Pushdown", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "straight-bar-pushdown", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "Tricep Kickback", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "tricep-kickback", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+  { name: "V-Bar Pushdown", category: "Triceps", equipment: "Free weights / gym floor", metric_type: "strength", icon_emoji: "\ud83c\udfcb\ufe0f", rep_min: 8, rep_max: 15, slug: "v-bar-pushdown", section: "Triceps", subsection: "Main", targetArea: "Triceps", targetMuscles: ["Triceps"], visualKey: "arms" },
+]
 
-  { tag: 'Shoulders', subgroup: 'Front Delts', names: [
-    'Overhead Press','Military Press','Dumbbell Shoulder Press','Arnold Press','Front Raise','Plate Raise','Landmine Press'
-  ]},
-  { tag: 'Shoulders', subgroup: 'Side Delts', names: [
-    'Dumbbell Lateral Raise','Cable Lateral Raise','Machine Lateral Raise','Leaning Lateral Raise','Upright Row'
-  ]},
-  { tag: 'Shoulders', subgroup: 'Rear Delts', names: [
-    'Reverse Pec Deck','Rear Delt Fly','Cable Rear Delt Fly','Face Pull','Chest Supported Rear Delt Raise'
-  ]},
-
-  { tag: 'Back', subgroup: 'Lats', names: [
-    'Pull-Up','Chin-Up','Lat Pulldown','Straight Arm Pulldown','Dumbbell Pullover'
-  ]},
-  { tag: 'Back', subgroup: 'Mid Back', names: [
-    'Barbell Row','Pendlay Row','T-Bar Row','Seated Cable Row','Chest Supported Row','Machine Row','One-Arm Dumbbell Row'
-  ]},
-  { tag: 'Back', subgroup: 'Upper Traps', names: [
-    'Barbell Shrug','Dumbbell Shrug','Trap Bar Shrug'
-  ]},
-  { tag: 'Back', subgroup: 'Lower Back', names: [
-    'Back Extension','Good Morning','Romanian Deadlift','Deadlift'
-  ]},
-
-  { tag: 'Biceps', names: [
-    'Barbell Curl','EZ Bar Curl','Dumbbell Curl','Alternating Dumbbell Curl','Hammer Curl','Incline Dumbbell Curl','Concentration Curl','Spider Curl','Preacher Curl','Cable Curl','Bayesian Curl','Reverse Curl','Zottman Curl'
-  ]},
-  { tag: 'Triceps', names: [
-    'Rope Pushdown','Straight Bar Pushdown','V-Bar Pushdown','Skull Crushers','EZ Bar Skull Crushers','Overhead Cable Extension','Dumbbell Overhead Extension','Close Grip Bench Press','JM Press','Bench Dips','Parallel Bar Dips','Tricep Kickback'
-  ]},
-  { tag: 'Forearms', names: [
-    'Wrist Curl','Reverse Wrist Curl','Hammer Curl','Reverse Curl',"Farmer's Carry",'Plate Pinch Hold','Dead Hang'
-  ]},
-
-  { tag: 'Legs', subgroup: 'Quadriceps', names: [
-    'Back Squat','Front Squat','Hack Squat','Leg Press','Bulgarian Split Squat','Walking Lunge','Step-Up','Leg Extension','Goblet Squat','Sissy Squat'
-  ]},
-  { tag: 'Legs', subgroup: 'Hamstrings', names: [
-    'Romanian Deadlift','Stiff-Leg Deadlift','Lying Leg Curl','Seated Leg Curl','Nordic Curl','Glute Ham Raise','Good Morning'
-  ]},
-  { tag: 'Legs', subgroup: 'Glutes', names: [
-    'Hip Thrust','Barbell Glute Bridge','Cable Kickback','Frog Pumps','Hip Abduction Machine','Single-Leg Hip Thrust'
-  ]},
-  { tag: 'Legs', subgroup: 'Calves', names: [
-    'Standing Calf Raise','Seated Calf Raise','Donkey Calf Raise','Single-Leg Calf Raise','Leg Press Calf Raise','Tibialis Raise'
-  ]},
-
-  { tag: 'Core', subgroup: 'Upper Abs', names: ['Crunch','Cable Crunch','Sit-Up','Decline Sit-Up']},
-  { tag: 'Core', subgroup: 'Lower Abs', names: ['Reverse Crunch','Hanging Knee Raise','Hanging Leg Raise','Lying Leg Raise','Toes-to-Bar']},
-  { tag: 'Core', subgroup: 'Obliques', names: ['Russian Twist','Cable Wood Chop','Side Plank','Bicycle Crunch','Windshield Wipers']},
-  { tag: 'Core', subgroup: 'Core Stability', names: ['Plank','Side Plank','Hollow Hold','Dead Bug','Bird Dog','Pallof Press','Ab Wheel Rollout']},
-
-  { tag: 'Bodyweight', names: [
-    'Push-Up','Diamond Push-Up','Archer Push-Up','Decline Push-Up','Pike Push-Up','Handstand Push-Up','Pull-Up','Chin-Up','Muscle-Up','Australian Row','Bodyweight Squat','Jump Squat','Walking Lunge','Bulgarian Split Squat','Pistol Squat','Box Jump','Dips','Plank','Mountain Climbers','V-Ups','Bicycle Crunches','Burpees'
-  ]},
-  { tag: 'Plyometrics', names: [
-    'Box Jump','Broad Jump','Depth Jump','Jump Squat','Medicine Ball Slam','Medicine Ball Chest Pass','Clap Push-Up','Bounding','Skater Jumps'
-  ]},
-  { tag: 'Olympic', names: ['Clean','Power Clean','Hang Clean','Snatch','Power Snatch','Clean and Jerk','Push Jerk','Split Jerk']},
-  { tag: 'Strongman', names: ['Atlas Stone Lift','Log Press','Yoke Walk','Tire Flip','Sandbag Carry','Sled Push','Sled Pull',"Farmer's Walk"]},
-  { tag: 'Kettlebell', names: ['Kettlebell Swing','Goblet Squat','Turkish Get-Up','Kettlebell Clean','Kettlebell Snatch','Kettlebell Press','Windmill','Halo',"Farmer's Carry"]},
-  { tag: 'Cable', names: [
-    'Cable Fly','Cable Curl','Rope Pushdown','Straight Bar Pushdown','Overhead Cable Extension','Cable Lateral Raise','Face Pull','Straight Arm Pulldown','Lat Pulldown','Seated Cable Row','Cable Crunch','Cable Wood Chop','Cable Pull-Through','Cable Kickback','Cable Front Raise'
-  ]},
-  { tag: 'Machine', names: [
-    'Chest Press Machine','Shoulder Press Machine','Pec Deck','Reverse Pec Deck','Lat Pulldown Machine','Seated Row Machine','Assisted Pull-Up Machine','Leg Press','Hack Squat Machine','Leg Extension','Seated Leg Curl','Lying Leg Curl','Hip Abductor Machine','Hip Adductor Machine','Standing Calf Raise Machine','Seated Calf Raise Machine','Smith Machine'
-  ]},
-  { tag: 'Cardio', names: ['Treadmill','StairMaster','Elliptical','Stationary Bike','Air Bike','Rowing Machine','SkiErg',"Jacob's Ladder",'VersaClimber','Jump Rope']},
-  { tag: 'Functional', names: ['Battle Ropes','TRX Rows','TRX Push-Ups','Sled Push','Sled Pull','Medicine Ball Throws','Sandbag Carries','Agility Ladder','Tire Flips','Bear Crawl','Crab Walk']}
-];
-
-const timed = new Set([
-  'Plank','Side Plank','Hollow Hold','Dead Hang','Plate Pinch Hold','StairMaster','Air Bike',"Jacob's Ladder",'VersaClimber','Jump Rope','Battle Ropes','Agility Ladder','Bear Crawl','Crab Walk'
-]);
-const distance = new Set([
-  'Treadmill','Elliptical','Stationary Bike','Rowing Machine','SkiErg',"Farmer's Carry",'Suitcase Carry','Overhead Carry','Front Rack Carry','Sandbag Carry','Yoke Walk',"Farmer's Walk",'Sled Push','Sled Pull','Sandbag Carries','Bounding'
-]);
-const carries = new Set(["Farmer's Carry",'Suitcase Carry','Overhead Carry','Front Rack Carry','Sandbag Carry','Yoke Walk',"Farmer's Walk",'Sled Push','Sled Pull','Sandbag Carries']);
-const weightedTimed = new Set(['Plate Pinch Hold']);
-const bodyweightNames = new Set([
-  'Push-Up','Weighted Push-Up','Dips','Bench Dips','Parallel Bar Dips','Diamond Push-Up','Archer Push-Up','Decline Push-Up','Pike Push-Up','Handstand Push-Up','Pull-Up','Chin-Up','Assisted Pull-Up','Neutral Grip Pull-Up','Muscle-Up','Australian Row','Inverted Row','Bodyweight Squat','Jump Squat','Walking Lunge','Bulgarian Split Squat','Split Squat','Pistol Squat','Box Jump','Broad Jump','Depth Jump','Clap Push-Up','Mountain Climbers','V-Ups','Bicycle Crunches','Bicycle Crunch','Burpees','Crunch','Sit-Up','Decline Sit-Up','Reverse Crunch','Hanging Knee Raise','Hanging Leg Raise','Lying Leg Raise','Toes-to-Bar','Russian Twist','Windshield Wipers','Dead Bug','Bird Dog','Ab Wheel Rollout','Nordic Curl','Glute Ham Raise','Frog Pumps','Single-Leg Hip Thrust','Single-Leg Calf Raise','Sissy Squat'
-]);
-
-const mediaAliases: Record<string, string> = {
-  'Barbell Back Squat': 'Barbell_Squat',
-  'Back Squat': 'Barbell_Squat',
-  'Front Squat': 'Front_Barbell_Squat',
-  'Conventional Deadlift': 'Barbell_Deadlift',
-  'Deadlift': 'Barbell_Deadlift',
-  'Romanian Deadlift (RDL)': 'Romanian_Deadlift_With_Dumbbells',
-  'Romanian Deadlift': 'Romanian_Deadlift_With_Dumbbells',
-  'Bench Press': 'Barbell_Bench_Press_-_Medium_Grip',
-  'Barbell Bench Press': 'Barbell_Bench_Press_-_Medium_Grip',
-  'Incline Bench Press': 'Barbell_Incline_Bench_Press_-_Medium_Grip',
-  'Incline Barbell Bench Press': 'Barbell_Incline_Bench_Press_-_Medium_Grip',
-  'Dumbbell Bench Press': 'Dumbbell_Bench_Press',
-  'Incline Dumbbell Press': 'Incline_Dumbbell_Press',
-  'Push-Up': 'Pushups',
-  'Pull-Up': 'Pullups',
-  'Chin-Up': 'Chin-Up',
-  'Lat Pulldown': 'Wide-Grip_Lat_Pulldown',
-  'Seated Cable Row': 'Seated_Cable_Rows',
-  'One-Arm Dumbbell Row': 'One-Arm_Dumbbell_Row',
-  'Overhead Press': 'Standing_Military_Press',
-  'Military Press': 'Standing_Military_Press',
-  'Dumbbell Shoulder Press': 'Dumbbell_Shoulder_Press',
-  'Arnold Press': 'Arnold_Dumbbell_Press',
-  'Dumbbell Lateral Raise': 'Side_Lateral_Raise',
-  'Face Pull': 'Face_Pull',
-  'Barbell Curl': 'Barbell_Curl',
-  'Dumbbell Curl': 'Dumbbell_Bicep_Curl',
-  'Hammer Curl': 'Hammer_Curls',
-  'Preacher Curl': 'Preacher_Curl',
-  'Rope Pushdown': 'Triceps_Pushdown_-_Rope_Attachment',
-  'Skull Crushers': 'Lying_Triceps_Press',
-  'Leg Press': 'Leg_Press',
-  'Leg Extension': 'Leg_Extensions',
-  'Seated Leg Curl': 'Seated_Leg_Curl',
-  'Lying Leg Curl': 'Lying_Leg_Curls',
-  'Hip Thrust': 'Barbell_Hip_Thrust',
-  'Standing Calf Raise': 'Standing_Calf_Raises',
-  'Seated Calf Raise': 'Seated_Calf_Raise',
-  'Crunch': 'Crunches',
-  'Cable Crunch': 'Cable_Crunch',
-  'Hanging Leg Raise': 'Hanging_Leg_Raise',
-  'Russian Twist': 'Russian_Twist',
-  'Plank': 'Plank',
-  'Kettlebell Swing': 'One-Arm_Kettlebell_Swings',
-  'Goblet Squat': 'Goblet_Squat',
-  'Turkish Get-Up': 'Turkish_Get-Up',
-  'Clean': 'Clean',
-  'Power Clean': 'Power_Clean',
-  'Snatch': 'Snatch',
-  'Clean and Jerk': 'Clean_and_Jerk',
-  'Box Jump': 'Box_Jump_Multiple_Response',
-  'Burpees': 'Burpee',
-  'Battle Ropes': 'Battling_Ropes',
-  'Treadmill': 'Walking_Treadmill',
-  'Stationary Bike': 'Bicycling_Stationary',
-  'Rowing Machine': 'Rowing_Stationary'
-};
-
-function mediaId(name: string) {
-  const alias = mediaAliases[name];
-  if (alias) return alias;
-  return name
-    .replace(/\(RDL\)/gi, '')
-    .replace(/[’']/g, '')
-    .replace(/&/g, 'and')
-    .replace(/[^A-Za-z0-9]+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .map(w => w ? w[0].toUpperCase() + w.slice(1) : w)
-    .join('_');
+export function summarizeTargets(exercise: LibraryExercise) {
+  return exercise.targetMuscles.join(' • ');
 }
-
-function mediaUrls(name: string) {
-  const id = mediaId(name);
-  const base = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${encodeURIComponent(id)}`;
-  return [`${base}/0.jpg`, `${base}/1.jpg`];
-}
-
-function inferEquipment(name: string) {
-  const n = name.toLowerCase();
-  if (bodyweightNames.has(name)) return 'Bodyweight';
-  if (n.includes('smith machine') || name === 'Smith Machine') return 'Smith machine';
-  if (n.includes('cable') || n.includes('pulldown') || n.includes('pushdown') || n.includes('face pull')) return 'Cable machine';
-  if (n.includes('dumbbell') || n.includes('arnold')) return 'Dumbbells';
-  if (n.includes('kettlebell')) return 'Kettlebell';
-  if (n.includes('barbell') || n.includes('good morning') || n.includes('zercher') || n.includes('landmine')) return 'Barbell';
-  if (n.includes('ez bar')) return 'EZ bar';
-  if (n.includes('trap bar')) return 'Trap bar';
-  if (n.includes('machine') || n.includes('pec deck') || n.includes('leg press') || n.includes('leg extension') || n.includes('leg curl') || n.includes('hack squat') || n.includes('hip abductor') || n.includes('hip adductor')) return 'Machine';
-  if (n.includes('medicine ball')) return 'Medicine ball';
-  if (n.includes('sandbag')) return 'Sandbag';
-  if (n.includes('sled')) return 'Sled';
-  if (n.includes('tire')) return 'Tire';
-  if (n.includes('trx')) return 'TRX';
-  if (n.includes('battle rope')) return 'Battle ropes';
-  if (n.includes('treadmill')) return 'Treadmill';
-  if (n.includes('stairmaster')) return 'StairMaster';
-  if (n.includes('elliptical')) return 'Elliptical';
-  if (n.includes('bike')) return 'Bike';
-  if (n.includes('rowing')) return 'Rowing machine';
-  if (n.includes('skierg')) return 'SkiErg';
-  if (n.includes('jacob')) return "Jacob's Ladder";
-  if (n.includes('versaclimber')) return 'VersaClimber';
-  if (n.includes('jump rope')) return 'Jump rope';
-  if (n.includes('atlas stone')) return 'Atlas stone';
-  if (n.includes('log press')) return 'Strongman log';
-  if (n.includes('yoke')) return 'Yoke';
-  if (n.includes('plate')) return 'Weight plate';
-  return 'Gym / free weights';
-}
-
-function inferRepRange(name: string): [number | null, number | null] {
-  if (timed.has(name) || distance.has(name)) return [null, null];
-  const n = name.toLowerCase();
-  if (n.includes('deadlift') || n === 'clean' || n.includes('snatch') || n.includes('jerk')) return [3, 8];
-  if (n.includes('squat') || n.includes('bench press') || n.includes('overhead press') || n.includes('military press') || n.includes('row')) return [5, 12];
-  if (n.includes('raise') || n.includes('curl') || n.includes('fly') || n.includes('pushdown') || n.includes('extension') || n.includes('kickback')) return [8, 15];
-  return [6, 15];
-}
-
-export function buildExerciseLibrary(): PresetExercise[] {
-  const byName = new Map<string, PresetExercise>();
-  for (const group of groups) {
-    for (const name of group.names) {
-      const existing = byName.get(name);
-      if (existing) {
-        if (!existing.tags.includes(group.tag)) existing.tags.push(group.tag);
-        if (!existing.subgroup && group.subgroup) existing.subgroup = group.subgroup;
-        continue;
-      }
-      const metric_type: Exercise['metric_type'] = timed.has(name) ? 'time' : distance.has(name) ? 'distance' : 'strength';
-      const [rep_min, rep_max] = inferRepRange(name);
-      byName.set(name, {
-        name,
-        category: group.tag,
-        subgroup: group.subgroup,
-        tags: [group.tag],
-        equipment: inferEquipment(name),
-        metric_type,
-        icon_emoji: metric_type === 'time' ? '⏱️' : metric_type === 'distance' ? '🏃' : '🏋️',
-        rep_min,
-        rep_max,
-        image_urls: mediaUrls(name),
-        track_weight: metric_type === 'strength' || carries.has(name) || weightedTimed.has(name),
-        track_sets: metric_type === 'strength' || carries.has(name)
-      });
-    }
-  }
-  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export const presetExercises = buildExerciseLibrary();
-export const exerciseTags = ['All','Compound','Chest','Shoulders','Back','Biceps','Triceps','Forearms','Legs','Core','Bodyweight','Plyometrics','Olympic','Strongman','Kettlebell','Cable','Machine','Cardio','Functional'];
