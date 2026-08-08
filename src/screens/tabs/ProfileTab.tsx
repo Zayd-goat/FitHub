@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, Card, Chip, Input, SectionTitle, colors } from '../../components/UI';
+import { Button, Card, Chip, Input, SectionTitle, useTheme } from '../../components/UI';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 
 export default function ProfileTab({ profile, onProfileChanged }: { profile: Profile; onProfileChanged: () => void }) {
+  const { colors, themeMode, setThemeMode } = useTheme();
+  const styles = createStyles(colors);
   const [days, setDays] = useState(String(profile.workout_days_target));
   const [busy, setBusy] = useState(false);
 
@@ -48,6 +50,15 @@ export default function ProfileTab({ profile, onProfileChanged }: { profile: Pro
       </Card>
 
       <Card>
+        <SectionTitle title="Appearance" subtitle="Choose how FitHub looks on this device." />
+        <View style={styles.themeRow}>
+          <Chip label="System" active={themeMode === 'system'} onPress={() => setThemeMode('system')} />
+          <Chip label="Dark" active={themeMode === 'dark'} onPress={() => setThemeMode('dark')} />
+          <Chip label="Light" active={themeMode === 'light'} onPress={() => setThemeMode('light')} />
+        </View>
+      </Card>
+
+      <Card>
         <SectionTitle title="Training plan" subtitle="Change how many days you want to train each week." />
         <Input value={days} onChangeText={setDays} keyboardType="number-pad" placeholder="1-7" />
         <Button title="Save weekly target" onPress={saveDays} />
@@ -79,10 +90,11 @@ export default function ProfileTab({ profile, onProfileChanged }: { profile: Pro
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) { return <View style={styles.info}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>; }
-function Source({ title, url }: { title: string; url: string }) { return <Pressable onPress={() => Linking.openURL(url)} style={styles.source}><Text style={styles.sourceText}>↗ {title}</Text></Pressable>; }
+function Info({ label, value }: { label: string; value: string }) { const { colors } = useTheme(); const styles = createStyles(colors); return <View style={styles.info}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>; }
+function Source({ title, url }: { title: string; url: string }) { const { colors } = useTheme(); const styles = createStyles(colors); return <Pressable onPress={() => Linking.openURL(url)} style={styles.source}><Text style={styles.sourceText}>↗ {title}</Text></Pressable>; }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 40 }, title: { color: colors.text, fontSize: 29, fontWeight: '900', marginBottom: 12 }, profileRow: { flexDirection: 'row', gap: 13, alignItems: 'center', marginBottom: 8 }, avatar: { width: 74, height: 74, borderRadius: 37 }, fallback: { backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, initial: { color: colors.text, fontSize: 28, fontWeight: '900' }, name: { color: colors.text, fontSize: 21, fontWeight: '900' }, meta: { color: colors.muted, fontSize: 12, marginTop: 3 },
-  info: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: colors.border }, infoLabel: { color: colors.muted, flex: 1 }, infoValue: { color: colors.text, fontWeight: '800', flex: 1, textAlign: 'right', textTransform: 'capitalize' }, source: { backgroundColor: colors.panel2, padding: 10, borderRadius: 12, marginTop: 7 }, sourceText: { color: colors.blue, fontWeight: '800', lineHeight: 18 }
+  themeRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  info: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: colors.border }, infoLabel: { color: colors.muted, flex: 1 }, infoValue: { color: colors.text, fontWeight: '800', flex: 1, textAlign: 'right', textTransform: 'capitalize' }, source: { backgroundColor: colors.panel2, padding: 10, borderRadius: 12, marginTop: 7 }, sourceText: { color: colors.cyan, fontWeight: '800', lineHeight: 18 }
 });

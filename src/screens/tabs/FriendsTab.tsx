@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Chip, Input, SectionTitle, colors } from '../../components/UI';
+import { Button, Card, Chip, Input, SectionTitle, useTheme } from '../../components/UI';
 import { presetChallenges } from '../../data/presets';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 
 export default function FriendsTab({ profile }: { profile: Profile }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [search, setSearch] = useState('');
   const [found, setFound] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -134,12 +136,12 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   );
 }
 
-function Avatar({ name, url }: { name: string; url?: string | null }) { return url ? <Image source={{ uri: url }} style={styles.avatar} /> : <View style={styles.avatar}><Text style={styles.avatarText}>{String(name ?? '?').slice(0,1).toUpperCase()}</Text></View>; }
+function Avatar({ name, url }: { name: string; url?: string | null }) { const { colors } = useTheme(); const styles = createStyles(colors); return url ? <Image source={{ uri: url }} style={styles.avatar} /> : <View style={styles.avatar}><Text style={styles.avatarText}>{String(name ?? '?').slice(0,1).toUpperCase()}</Text></View>; }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 40 }, title: { color: colors.text, fontSize: 29, fontWeight: '900' }, sub: { color: colors.muted, lineHeight: 19, marginTop: 4, marginBottom: 12 },
   person: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 }, avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, avatarText: { color: colors.text, fontWeight: '900' }, name: { color: colors.text, fontWeight: '900' }, meta: { color: colors.muted, fontSize: 11, marginTop: 2, lineHeight: 16 },
   small: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 11, backgroundColor: colors.primary }, smallText: { color: colors.text, fontWeight: '900', fontSize: 12 }, post: { color: colors.text, fontSize: 16, lineHeight: 22, marginVertical: 8, fontWeight: '700' },
-  comment: { backgroundColor: colors.panel2, borderRadius: 12, padding: 9, marginTop: 6 }, commentAuthor: { color: colors.blue, fontWeight: '900', fontSize: 11 }, commentBody: { color: colors.text, marginTop: 2 }, commentInput: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 9 }, send: { backgroundColor: colors.blue, borderRadius: 12, paddingHorizontal: 13, minHeight: 48, justifyContent: 'center' }, sendText: { color: 'white', fontWeight: '900' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap' }, two: { flexDirection: 'row', gap: 8 }, challengeTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 }, challenge: { color: colors.text, fontSize: 17, fontWeight: '900' }, progress: { color: colors.green, fontSize: 18, fontWeight: '900', marginTop: 10 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginVertical: 7 }, fill: { height: '100%', backgroundColor: colors.gold }
+  comment: { backgroundColor: colors.panel2, borderRadius: 12, padding: 9, marginTop: 6 }, commentAuthor: { color: colors.cyan, fontWeight: '900', fontSize: 11 }, commentBody: { color: colors.text, marginTop: 2 }, commentInput: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 9 }, send: { backgroundColor: colors.blue, borderRadius: 12, paddingHorizontal: 13, minHeight: 48, justifyContent: 'center' }, sendText: { color: 'white', fontWeight: '900' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap' }, two: { flexDirection: 'row', gap: 8 }, challengeTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 }, challenge: { color: colors.text, fontSize: 17, fontWeight: '900' }, progress: { color: colors.cyan, fontSize: 18, fontWeight: '900', marginTop: 10 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginVertical: 7 }, fill: { height: '100%', backgroundColor: colors.purple }
 });

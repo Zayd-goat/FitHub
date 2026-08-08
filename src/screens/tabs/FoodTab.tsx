@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Input, SectionTitle, colors } from '../../components/UI';
+import { Button, Card, Input, SectionTitle, useTheme } from '../../components/UI';
 import { presetFoods } from '../../data/presets';
 import { Food, Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { searchUsda } from '../../lib/usda';
 
 export default function FoodTab({ profile }: { profile: Profile }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const locked = (profile.age ?? 0) < 18;
   const [query, setQuery] = useState('');
   const [customFoods, setCustomFoods] = useState<Food[]>([]);
@@ -124,15 +126,16 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   );
 }
 
-function Mini({ label, value }: { label: string; value: string }) { return <View style={styles.mini}><Text style={styles.miniValue}>{value}</Text><Text style={styles.miniLabel}>{label}</Text></View>; }
+function Mini({ label, value }: { label: string; value: string }) { const { colors } = useTheme(); const styles = createStyles(colors); return <View style={styles.mini}><Text style={styles.miniValue}>{value}</Text><Text style={styles.miniLabel}>{label}</Text></View>; }
 function FoodRow({ food, onAdd }: { food: Food; onAdd: () => void }) {
+  const { colors } = useTheme(); const styles = createStyles(colors);
   return <View style={styles.foodRow}><View style={{ flex: 1 }}><Text style={styles.foodName}>{food.name}</Text><Text style={styles.foodMeta}>{food.serving} · P {Math.round(food.protein_g)}g · C {Math.round(food.carbs_g)}g · F {Math.round(food.fat_g)}g</Text></View><Pressable onPress={onAdd} style={styles.add}><Text style={styles.addText}>+ {Math.round(food.calories)}</Text></Pressable></View>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 40 }, title: { color: colors.text, fontSize: 29, fontWeight: '900' }, sub: { color: colors.muted, lineHeight: 19, marginTop: 4, marginBottom: 12 },
-  macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }, mini: { width: '48%', backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 12 }, miniValue: { color: colors.text, fontWeight: '900', fontSize: 16 }, miniLabel: { color: colors.green, fontSize: 11, marginTop: 2, fontWeight: '800' },
+  macroRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }, mini: { width: '48%', backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 12 }, miniValue: { color: colors.text, fontWeight: '900', fontSize: 16 }, miniLabel: { color: colors.cyan, fontSize: 11, marginTop: 2, fontWeight: '800' },
   buttonRow: { flexDirection: 'row', gap: 8 }, manualBox: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 }, two: { flexDirection: 'row', gap: 8 },
-  foodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 13, marginBottom: 8 }, foodName: { color: colors.text, fontWeight: '900' }, foodMeta: { color: colors.muted, fontSize: 11, marginTop: 3, lineHeight: 16 }, kcal: { color: colors.green, fontWeight: '900' }, add: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9, marginLeft: 8 }, addText: { color: colors.text, fontWeight: '900' },
+  foodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 13, marginBottom: 8 }, foodName: { color: colors.text, fontWeight: '900' }, foodMeta: { color: colors.muted, fontSize: 11, marginTop: 3, lineHeight: 16 }, kcal: { color: colors.cyan, fontWeight: '900' }, add: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9, marginLeft: 8 }, addText: { color: colors.text, fontWeight: '900' },
   logRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: colors.border }
 });
