@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { supabase } from './src/lib/supabase';
+import { colors } from './src/components/UI';
 import { Profile } from './src/lib/types';
 import { recordDailyCheckIn } from './src/lib/streaks';
 import AuthScreen from './src/screens/AuthScreen';
@@ -75,6 +76,6 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#020817' },
-  loading: { color: '#dbeafe', marginTop: 12, fontSize: 16 }
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  loading: { color: colors.text, marginTop: 12, fontSize: 16 }
 });
