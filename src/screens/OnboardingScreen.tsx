@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Chip, Input, SectionTitle, colors } from '../components/UI';
+import { Button, Card, Chip, Input, SectionTitle, useTheme } from '../components/UI';
 import { Profile } from '../lib/types';
 import { bmi, cmFrom, kgFrom, maintenanceCalories, proteinTarget } from '../lib/health';
 import { supabase } from '../lib/supabase';
 
 export default function OnboardingScreen({ profile, onComplete }: { profile: Profile; onComplete: () => void }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [age, setAge] = useState('');
   const [fitness, setFitness] = useState('new');
   const [weight, setWeight] = useState('');
@@ -110,10 +112,10 @@ export default function OnboardingScreen({ profile, onComplete }: { profile: Pro
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   wrap: { padding: 20, paddingBottom: 50 },
-  kicker: { color: colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 1.4, marginTop: 12 },
+  kicker: { color: colors.cyan, fontSize: 12, fontWeight: '900', letterSpacing: 1.4, marginTop: 12 },
   title: { color: colors.text, fontSize: 31, fontWeight: '900', marginTop: 3 },
   lead: { color: colors.muted, lineHeight: 20, marginVertical: 12 },
   label: { color: colors.text, fontWeight: '800', marginTop: 7, marginBottom: 8 },
