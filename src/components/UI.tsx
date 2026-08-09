@@ -102,7 +102,7 @@ const shared = (colors: ThemeColors) => StyleSheet.create({
   card: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 15, marginBottom: 12 },
   button: { backgroundColor: colors.primary, minHeight: 50, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, marginVertical: 5 },
   secondaryButton: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border },
-  outlineButton: { backgroundColor: '#FFFFFF', minHeight: 46, borderRadius: 11, borderWidth: 1.5, borderColor: colors.blue, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, marginVertical: 5 },
+  outlineButton: { backgroundColor: colors.panel, minHeight: 46, borderRadius: 11, borderWidth: 1.5, borderColor: colors.blue, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, marginVertical: 5 },
   outlineButtonCompact: { minHeight: 36, paddingHorizontal: 12, marginVertical: 0 },
   outlineButtonText: { color: colors.blue, fontWeight: '900', fontSize: 13 },
   buttonText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: .2 },

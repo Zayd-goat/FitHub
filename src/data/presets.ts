@@ -1,4 +1,4 @@
-import { Food } from '../lib/types';
+import { Exercise, Food } from '../lib/types';
 
 export const presetFoods: Food[] = [
   { name: 'Banana', serving: '1 medium', calories: 105, protein_g: 1.3, carbs_g: 27, fat_g: 0.4, source: 'preset' },
@@ -27,8 +27,19 @@ export const presetFoods: Food[] = [
   { name: 'Cheddar cheese', serving: '28 g', calories: 113, protein_g: 7, carbs_g: 0.4, fat_g: 9.3, source: 'preset' }
 ];
 
-export { presetExercises, exerciseTags } from './exerciseLibrary';
-export type { PresetExercise } from './exerciseLibrary';
+export type PresetExercise = Exercise & { image: any };
+export const presetExercises: PresetExercise[] = [
+  { name: 'Bench Press', category: 'Chest', equipment: 'Barbell + bench', metric_type: 'strength', icon_emoji: '🏋️', rep_min: 6, rep_max: 12, image: require('../../assets/exercises/bench.png') },
+  { name: 'Back Squat', category: 'Legs', equipment: 'Barbell / rack', metric_type: 'strength', icon_emoji: '🏋️', rep_min: 5, rep_max: 10, image: require('../../assets/exercises/squat.png') },
+  { name: 'Deadlift', category: 'Posterior chain', equipment: 'Barbell', metric_type: 'strength', icon_emoji: '🏋️', rep_min: 3, rep_max: 8, image: require('../../assets/exercises/deadlift.png') },
+  { name: 'Seated Cable Row', category: 'Back', equipment: 'Cable machine', metric_type: 'strength', icon_emoji: '🎯', rep_min: 8, rep_max: 12, image: require('../../assets/exercises/row.png') },
+  { name: 'Lat Pulldown', category: 'Back', equipment: 'Pulldown machine', metric_type: 'strength', icon_emoji: '🎯', rep_min: 8, rep_max: 12, image: require('../../assets/exercises/lat_pulldown.png') },
+  { name: 'Leg Press', category: 'Legs', equipment: 'Leg press machine', metric_type: 'strength', icon_emoji: '🦵', rep_min: 8, rep_max: 15, image: require('../../assets/exercises/leg_press.png') },
+  { name: 'Push-up', category: 'Chest', equipment: 'Bodyweight', metric_type: 'strength', icon_emoji: '💪', rep_min: 6, rep_max: 20, image: require('../../assets/exercises/pushup.png') },
+  { name: 'Plank', category: 'Core', equipment: 'Bodyweight', metric_type: 'time', icon_emoji: '⏱️', rep_min: null, rep_max: null, image: require('../../assets/exercises/plank.png') },
+  { name: 'Running', category: 'Cardio', equipment: 'Treadmill / outdoors', metric_type: 'distance', icon_emoji: '🏃', rep_min: null, rep_max: null, image: require('../../assets/exercises/run.png') },
+  { name: 'Cycling', category: 'Cardio', equipment: 'Bike / stationary bike', metric_type: 'distance', icon_emoji: '🚴', rep_min: null, rep_max: null, image: require('../../assets/exercises/cycle.png') }
+];
 
 export const presetChallenges = [
   { title: '3 Workouts This Week', description: 'Complete three workout sessions in seven days.', metric: 'workouts', target_value: 3, unit: 'workouts' },
