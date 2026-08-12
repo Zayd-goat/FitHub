@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import Storage from 'expo-sqlite/kv-store';
 import {
   Alert,
   Image,
@@ -16,6 +18,7 @@ import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { progressionSuggestion } from '../../lib/progression';
 import { recordWorkoutDay } from '../../lib/streaks';
+import { clearActiveWorkoutNotification, showActiveWorkoutNotification } from '../../lib/notifications';
 import {
   exerciseLibrary,
   figureImages,
@@ -71,8 +74,14 @@ const makeItem = (ex: LibraryExercise): BuilderItem => ({
   load: '',
   done: false,
 });
-const formatTime = (sec: number) =>
-  `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+const formatTime = (sec: number) => {
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor((sec % 3600) / 60);
+  const seconds = sec % 60;
+  return hours > 0
+    ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
 
 const serializeBuilder = (items: BuilderItem[]): SavedPlanItem[] =>
   items.map((item) => ({
@@ -112,6 +121,54 @@ const hydratePlan = (plan: SavedPlanItem[]): BuilderItem[] => {
   return hydrated;
 };
 
+type ActiveSavedItem = {
+  exercise_slug: string;
+  exercise_name: string;
+  strength_sets: Array<{ weight: string; reps: string; done: boolean }>;
+  distance: string;
+  duration: string;
+  load: string;
+  done: boolean;
+};
+type ActiveSavedState = {
+  started_at: number;
+  template_name: string;
+  editing_template_id: string | null;
+  active_index: number;
+  items: ActiveSavedItem[];
+};
+
+const serializeActive = (items: BuilderItem[]): ActiveSavedItem[] =>
+  items.map((item) => ({
+    exercise_slug: item.exercise.slug,
+    exercise_name: item.exercise.name,
+    strength_sets: item.strengthSets.map((set) => ({ weight: set.weight, reps: set.reps, done: set.done })),
+    distance: item.distance,
+    duration: item.duration,
+    load: item.load,
+    done: item.done,
+  }));
+
+const hydrateActive = (items: ActiveSavedItem[]): BuilderItem[] => {
+  const hydrated: BuilderItem[] = [];
+  for (const saved of items ?? []) {
+    const ex = exerciseLibrary.find((item) => item.slug === saved.exercise_slug) ?? exerciseLibrary.find((item) => item.name === saved.exercise_name);
+    if (!ex) continue;
+    hydrated.push({
+      id: `${ex.slug}-${makeId()}`,
+      exercise: ex,
+      strengthSets: ex.metric_type === 'strength'
+        ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10', done: false }]).map((set) => ({ id: makeId(), weight: set.weight ?? '', reps: set.reps ?? '10', done: !!set.done }))
+        : [],
+      distance: saved.distance ?? '',
+      duration: saved.duration ?? '',
+      load: saved.load ?? '',
+      done: !!saved.done,
+    });
+  }
+  return hydrated;
+};
+
 export default function WorkoutTab({
   profile,
   onProfileChanged,
@@ -139,6 +196,7 @@ export default function WorkoutTab({
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
+  const activeStorageKey = `fithub_active_workout_${profile.id}`;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -170,6 +228,24 @@ export default function WorkoutTab({
       .order('updated_at', { ascending: false });
     if (!error) setSavedWorkouts((data ?? []) as SavedWorkout[]);
   };
+
+  useEffect(() => {
+    Storage.getItem(activeStorageKey).then((raw) => {
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw) as ActiveSavedState;
+        const restored = hydrateActive(saved.items);
+        if (!saved.started_at || !restored.length) return;
+        setBuilder(restored);
+        setTemplateName(saved.template_name ?? 'Workout');
+        setEditingTemplateId(saved.editing_template_id ?? null);
+        setActiveStartedAt(saved.started_at);
+        setElapsed(Math.max(0, Math.floor((Date.now() - saved.started_at) / 1000)));
+        setActiveExerciseIndex(Math.min(saved.active_index ?? 0, Math.max(0, restored.length - 1)));
+        setScreen('active');
+      } catch {}
+    }).catch(() => {});
+  }, [profile.id]);
 
   useEffect(() => {
     const loadLast = async () => {
@@ -223,10 +299,40 @@ export default function WorkoutTab({
   }, [profile.id]);
 
   useEffect(() => {
-    if (screen !== 'active' || !activeStartedAt) return;
+    if (!activeStartedAt) return;
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - activeStartedAt) / 1000)), 1000);
     return () => clearInterval(id);
-  }, [screen, activeStartedAt]);
+  }, [activeStartedAt]);
+
+  useEffect(() => {
+    if (!activeStartedAt || !builder.length) return;
+    const saved: ActiveSavedState = {
+      started_at: activeStartedAt,
+      template_name: templateName || 'Workout',
+      editing_template_id: editingTemplateId,
+      active_index: Math.min(activeExerciseIndex, Math.max(0, builder.length - 1)),
+      items: serializeActive(builder),
+    };
+    Storage.setItem(activeStorageKey, JSON.stringify(saved)).catch(() => {});
+    const current = builder[Math.min(activeExerciseIndex, Math.max(0, builder.length - 1))];
+    if (current) {
+      let detail = '';
+      if (current.exercise.metric_type === 'strength') {
+        const next = current.strengthSets.findIndex((set) => !set.done);
+        const set = current.strengthSets[Math.max(0, next >= 0 ? next : current.strengthSets.length - 1)];
+        if (set) detail = `Set ${Math.max(1, (next >= 0 ? next : current.strengthSets.length - 1) + 1)}/${current.strengthSets.length}${set.weight ? ` • ${set.weight} kg` : ''}${set.reps ? ` × ${set.reps}` : ''}`;
+      } else if (current.distance || current.duration) {
+        detail = `${current.distance ? `${current.distance} km` : ''}${current.distance && current.duration ? ' • ' : ''}${current.duration ? `${current.duration} min` : ''}`;
+      }
+      showActiveWorkoutNotification({
+        userId: profile.id,
+        workoutName: templateName || 'Workout',
+        exerciseName: current.exercise.name,
+        startedAt: activeStartedAt,
+        detail,
+      }).catch(() => {});
+    }
+  }, [activeStartedAt, builder, activeExerciseIndex, templateName, editingTemplateId, Math.floor(elapsed / 30)]);
 
   useEffect(() => {
     if (restSeconds <= 0) return;
@@ -394,11 +500,22 @@ export default function WorkoutTab({
       done: false,
       strengthSets: item.strengthSets.map((set) => ({ ...set, done: false })),
     }));
+    const startedAt = Date.now();
+    const saved: ActiveSavedState = {
+      started_at: startedAt,
+      template_name: templateName || 'Workout',
+      editing_template_id: editingTemplateId,
+      active_index: 0,
+      items: serializeActive(reset),
+    };
+    Storage.setItem(activeStorageKey, JSON.stringify(saved)).catch(() => {});
+    const first = reset[0];
+    if (first) showActiveWorkoutNotification({ userId: profile.id, workoutName: templateName || 'Workout', exerciseName: first.exercise.name, startedAt }).catch(() => {});
     setBuilder(reset);
     setActiveExerciseIndex(0);
     setElapsed(0);
     setRestSeconds(0);
-    setActiveStartedAt(Date.now());
+    setActiveStartedAt(startedAt);
     setScreen('active');
   };
 
@@ -527,12 +644,59 @@ export default function WorkoutTab({
     ]);
   };
 
-  const newWorkout = () => {
+  const deleteActiveWorkout = async () => {
     setBuilder([]);
     setTemplateName('');
     setEditingTemplateId(null);
     setShowSaveForm(false);
     setScreen('browse');
+    setActiveStartedAt(null);
+    setElapsed(0);
+    setRestSeconds(0);
+    setActiveExerciseIndex(0);
+    await Storage.removeItem(activeStorageKey).catch(() => {});
+    await clearActiveWorkoutNotification(profile.id).catch(() => {});
+  };
+
+  const newWorkout = () => {
+    if (activeStartedAt) {
+      Alert.alert('Workout still active', 'Resume or delete the active workout before starting a different one.');
+      return;
+    }
+    setBuilder([]);
+    setTemplateName('');
+    setEditingTemplateId(null);
+    setShowSaveForm(false);
+    setScreen('browse');
+  };
+
+  const postWorkout = async (sessionId: string, summary: string, withPhoto: boolean) => {
+    try {
+      let photoPath: string | null = null;
+      if (withPhoto) {
+        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.82 });
+        if (result.canceled) return;
+        const asset = result.assets[0];
+        const bytes = await (await fetch(asset.uri)).arrayBuffer();
+        const ext = (asset.fileName?.split('.').pop() || 'jpg').toLowerCase();
+        photoPath = `${profile.id}/${sessionId}-${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('workout-media').upload(photoPath, bytes, { contentType: asset.mimeType ?? 'image/jpeg', upsert: false });
+        if (uploadError) throw uploadError;
+      }
+      const { error } = await supabase.from('workout_posts').insert({ user_id: profile.id, session_id: sessionId, summary, photo_path: photoPath });
+      if (error) throw error;
+      Alert.alert('Posted', withPhoto ? 'Your workout stats and photo were shared with your FitHub friends.' : 'Your workout stats were shared with your FitHub friends.');
+    } catch (error: any) {
+      Alert.alert('Could not post workout', error?.message ?? 'Your workout is still saved privately in your history.');
+    }
+  };
+
+  const offerWorkoutShare = (sessionId: string, summary: string) => {
+    Alert.alert('Workout complete', 'Your workout is saved. Would you like to share the stats with your friends?', [
+      { text: 'Keep private', style: 'cancel' },
+      { text: 'Post stats', onPress: () => postWorkout(sessionId, summary, false) },
+      { text: 'Add photo & post', onPress: () => postWorkout(sessionId, summary, true) },
+    ]);
   };
 
   const saveWorkout = async () => {
@@ -587,7 +751,6 @@ export default function WorkoutTab({
       });
       const { error: setError } = await supabase.from('workout_sets').insert(rows);
       if (setError) throw setError;
-      await supabase.from('workout_posts').insert({ user_id: profile.id, session_id: session.id, summary });
       await recordWorkoutDay(profile.id);
       await supabase.rpc('apply_workout_to_challenges', { p_session_id: session.id });
       setLastWorkout(
@@ -604,8 +767,10 @@ export default function WorkoutTab({
       setRestSeconds(0);
       setEditingTemplateId(null);
       setTemplateName('');
+      await Storage.removeItem(activeStorageKey).catch(() => {});
+      await clearActiveWorkoutNotification(profile.id).catch(() => {});
       onProfileChanged();
-      Alert.alert('Workout complete', 'Saved to your history and shared as a workout post with accepted friends.');
+      offerWorkoutShare(session.id, summary);
     } catch (error: any) {
       Alert.alert('Could not save workout', error?.message ?? 'Please try again.');
     } finally {
@@ -626,7 +791,7 @@ export default function WorkoutTab({
           </View>
           <View style={styles.detailHero}>
             {img ? (
-              <Image source={img} style={styles.detailFigure} />
+              <Image source={img} style={detailExercise.targetArea === 'Cardio' ? styles.detailCardioFigure : styles.detailFigure} />
             ) : (
               <View style={styles.cardioVisual}><Text style={styles.cardioEmoji}>{detailExercise.icon_emoji || '●'}</Text></View>
             )}
@@ -684,7 +849,7 @@ export default function WorkoutTab({
               )}
               <View style={styles.detailActions}>
                 <OutlineButton title="+ ADD ANOTHER EXERCISE" onPress={() => setScreen('browse')} />
-                <Button title="START WORKOUT" onPress={startWorkout} />
+                <Button title={activeStartedAt ? "RETURN TO ACTIVE WORKOUT" : "START WORKOUT"} onPress={activeStartedAt ? () => setScreen('active') : startWorkout} />
               </View>
               <Pressable onPress={() => { removeExercise(item.exercise.slug); setScreen('browse'); }} style={styles.removeExercise}>
                 <Text style={styles.removeExerciseText}>Remove from workout</Text>
@@ -705,9 +870,10 @@ export default function WorkoutTab({
           <View style={styles.activeHeader}>
             <Pressable
               onPress={() =>
-                Alert.alert('Leave workout?', 'Your current workout has not been saved to history yet.', [
+                Alert.alert('Keep workout running?', 'You can minimize FitHub and the workout timer will keep its start time. The active-workout notification stays until you finish or delete the session.', [
                   { text: 'Keep training', style: 'cancel' },
-                  { text: 'Leave', style: 'destructive', onPress: () => setScreen('browse') },
+                  { text: 'Minimize workout', onPress: () => setScreen('browse') },
+                  { text: 'Delete workout', style: 'destructive', onPress: deleteActiveWorkout },
                 ])
               }
             >
@@ -750,7 +916,7 @@ export default function WorkoutTab({
             <Card style={[styles.liveCard, itemDone(current) && { opacity: 0.72 }]}>
               <View style={styles.liveHero}>
                 {img ? (
-                  <Image source={img} style={styles.liveFigure} />
+                  <Image source={img} style={current.exercise.targetArea === 'Cardio' ? styles.liveCardioFigure : styles.liveFigure} />
                 ) : (
                   <View style={styles.liveIconBox}><Text style={styles.liveEmoji}>{current.exercise.icon_emoji || '●'}</Text></View>
                 )}
@@ -827,7 +993,7 @@ export default function WorkoutTab({
                   const icon = ex.visualKey ? figureImages[ex.visualKey] : undefined;
                   return (
                     <Pressable key={ex.slug} onPress={() => addExerciseDuringWorkout(ex)} style={styles.pickerExerciseRow}>
-                      {icon ? <Image source={icon} style={styles.pickerThumb} /> : <Text style={styles.pickerEmoji}>{ex.icon_emoji || '●'}</Text>}
+                      {icon ? <Image source={icon} style={ex.targetArea === 'Cardio' ? styles.pickerCardioThumb : styles.pickerThumb} /> : <Text style={styles.pickerEmoji}>{ex.icon_emoji || '●'}</Text>}
                       <View style={{ flex: 1 }}>
                         <Text style={styles.pickerExerciseName}>{ex.name}</Text>
                         <Text style={styles.pickerExerciseMeta}>{ex.targetArea} • {ex.equipment}</Text>
@@ -849,13 +1015,18 @@ export default function WorkoutTab({
       <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
         <View style={styles.browseHeader}>
           <View>
-            <Text style={styles.browseTitle}>{editingTemplateId ? 'Edit Saved Workout' : 'New Workout'}</Text>
+            <Text style={styles.browseTitle}>{activeStartedAt ? 'Workout Running' : editingTemplateId ? 'Edit Saved Workout' : 'New Workout'}</Text>
             <Text style={styles.browseSub}>
-              {builder.length ? `${builder.length} exercise${builder.length === 1 ? '' : 's'} ready` : 'Choose an exercise to set it up'}
+              {activeStartedAt ? `${formatTime(elapsed)} elapsed • ${builder.length} exercise${builder.length === 1 ? '' : 's'}` : builder.length ? `${builder.length} exercise${builder.length === 1 ? '' : 's'} ready` : 'Choose an exercise to set it up'}
             </Text>
           </View>
           <Pressable onPress={newWorkout}><Text style={styles.newWorkoutText}>NEW</Text></Pressable>
         </View>
+
+        {activeStartedAt ? <Card style={styles.activeResumeCard}>
+          <View style={{flex:1}}><Text style={styles.activeResumeTitle}>ACTIVE WORKOUT</Text><Text style={styles.activeResumeName}>{templateName || 'Workout'}</Text><Text style={styles.activeResumeMeta}>{formatTime(elapsed)} • {builder[activeExerciseIndex]?.exercise.name ?? 'In progress'}</Text></View>
+          <View style={styles.activeResumeActions}><Pressable onPress={() => setScreen('active')} style={styles.activeResumeButton}><Text style={styles.activeResumeButtonText}>RESUME</Text></Pressable><Pressable onPress={() => Alert.alert('Delete workout?', 'This active workout will be removed and the notification will stop.', [{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:deleteActiveWorkout}])}><Text style={styles.activeResumeDelete}>Delete</Text></Pressable></View>
+        </Card> : null}
 
         {savedWorkouts.length ? (
           <View style={styles.savedSection}>
@@ -895,7 +1066,7 @@ export default function WorkoutTab({
           {muscleCards.map((muscle) => (
             <Pressable key={muscle.label} onPress={() => setMuscleFilter(muscle.label as any)} style={styles.muscleChoice}>
               <View style={[styles.circle, muscleFilter === muscle.label && styles.circleActive]}>
-                <Image source={muscle.image} style={styles.circleAnatomy} />
+                <Image source={muscle.image} style={muscle.label === 'Cardio' ? styles.circleCardio : styles.circleAnatomy} />
               </View>
               <Text style={[styles.choiceLabel, muscleFilter === muscle.label && styles.choiceLabelActive]}>{muscle.label}</Text>
             </Pressable>
@@ -904,7 +1075,7 @@ export default function WorkoutTab({
 
         <Input value={query} onChangeText={setQuery} placeholder="Search exercises…" />
 
-        {builder.length ? (
+        {builder.length && !activeStartedAt ? (
           <Card style={styles.selectedCard}>
             <View style={styles.selectedTop}>
               <View style={{ flex: 1 }}>
@@ -937,7 +1108,7 @@ export default function WorkoutTab({
             return (
               <Pressable key={ex.slug} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
                 {img ? (
-                  <Image source={img} style={styles.thumb} />
+                  <Image source={img} style={ex.targetArea === 'Cardio' ? styles.cardioThumb : styles.thumb} />
                 ) : (
                   <View style={styles.blankThumb}><Text style={styles.listEmoji}>{ex.icon_emoji || '●'}</Text></View>
                 )}
@@ -1042,6 +1213,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   browseTitle: { color: colors.text, fontSize: 24, fontWeight: '900' },
   browseSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   newWorkoutText: { color: colors.blue, fontSize: 11, fontWeight: '900', borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 7 },
+  activeResumeCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  activeResumeTitle: { color: colors.primary, fontWeight: '900', fontSize: 9 },
+  activeResumeName: { color: colors.text, fontWeight: '900', fontSize: 17, marginTop: 3 },
+  activeResumeMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
+  activeResumeActions: { alignItems: 'center', gap: 7 },
+  activeResumeButton: { backgroundColor: colors.primary, borderRadius: 9, paddingHorizontal: 13, paddingVertical: 9 },
+  activeResumeButtonText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  activeResumeDelete: { color: colors.danger, fontWeight: '800', fontSize: 10 },
   savedSection: { marginBottom: 10 },
   sectionTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
   sectionSubtitle: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 2, marginBottom: 8 },
@@ -1061,6 +1240,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   circleActive: { borderColor: colors.primary },
   circleIcon: { width: 22, height: 22, resizeMode: 'contain' },
   circleAnatomy: { width: 46, height: 46, resizeMode: 'contain' },
+  circleCardio: { width: 48, height: 48, resizeMode: 'cover' },
   choiceLabel: { color: colors.muted, fontSize: 9, marginTop: 5 },
   choiceLabelActive: { color: colors.primary, fontWeight: '900' },
   selectedCard: { padding: 12 },
@@ -1079,6 +1259,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   exerciseList: { gap: 7 },
   exerciseRow: { minHeight: 78, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 9 },
   thumb: { width: 58, height: 58, resizeMode: 'contain' },
+  cardioThumb: { width: 58, height: 58, resizeMode: 'cover', borderRadius: 10 },
   blankThumb: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel2, borderRadius: 10 },
   listEmoji: { fontSize: 26 },
   target: { color: colors.primary, fontWeight: '900', fontSize: 10 },
@@ -1093,6 +1274,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   more: { color: colors.text, fontSize: 16, fontWeight: '900' },
   detailHero: { flexDirection: 'row', minHeight: 250, alignItems: 'center' },
   detailFigure: { flex: 1, height: 250, resizeMode: 'contain' },
+  detailCardioFigure: { flex: 1, height: 220, resizeMode: 'cover', borderRadius: 16, marginRight: 10 },
   cardioVisual: { flex: 1, height: 220, alignItems: 'center', justifyContent: 'center' },
   cardioEmoji: { fontSize: 92 },
   muscleBox: { width: 145, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 11 },
@@ -1142,6 +1324,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   liveCard: { padding: 13 },
   liveHero: { flexDirection: 'row', alignItems: 'center', minHeight: 150, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8 },
   liveFigure: { width: 135, height: 155, resizeMode: 'contain' },
+  liveCardioFigure: { width: 135, height: 135, resizeMode: 'cover', borderRadius: 14 },
   liveIconBox: { width: 135, height: 150, alignItems: 'center', justifyContent: 'center' },
   liveEmoji: { fontSize: 66 },
   liveMuscles: { flex: 1, paddingLeft: 9 },
@@ -1163,6 +1346,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   pickerClose: { color: colors.text, fontSize: 31, fontWeight: '300' },
   pickerExerciseRow: { minHeight: 66, flexDirection: 'row', gap: 9, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 7 },
   pickerThumb: { width: 49, height: 49, resizeMode: 'contain' },
+  pickerCardioThumb: { width: 49, height: 49, resizeMode: 'cover', borderRadius: 9 },
   pickerEmoji: { width: 49, textAlign: 'center', fontSize: 27 },
   pickerExerciseName: { color: colors.text, fontWeight: '900', fontSize: 13 },
   pickerExerciseMeta: { color: colors.muted, fontSize: 9, marginTop: 3 },
