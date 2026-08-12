@@ -10,13 +10,14 @@ import { supabase } from '../lib/supabase';
 type PrEvent = { exercise: string; weight: number; reps: number; score: number; date: string };
 type Badge = { key: string; icon: string; title: string; detail: string; unlocked: boolean };
 type GraphPoint = { x: number; y: number; date: string; label: string };
+export type ProgressFocus = 'overview' | 'prs' | 'badges' | 'streaks';
 
 const dateKey = (value: string | Date) => {
   const d = value instanceof Date ? value : new Date(value);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export default function ProgressScreen({ profile, onBack }: { profile: Profile; onBack: () => void }) {
+export default function ProgressScreen({ profile, focus = 'overview', onBack }: { profile: Profile; focus?: ProgressFocus; onBack: () => void }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -27,6 +28,8 @@ export default function ProgressScreen({ profile, onBack }: { profile: Profile; 
   const [search, setSearch] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+  const [mode, setMode] = useState<ProgressFocus>(focus);
+  useEffect(() => { setMode(focus); }, [focus]);
 
   const load = async () => {
     const [s, w, f, t] = await Promise.all([
@@ -161,15 +164,7 @@ export default function ProgressScreen({ profile, onBack }: { profile: Profile; 
     </ScrollView>;
   }
 
-  return <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
-    <Header title="Progress" subtitle="Badges, streaks and personal-record analytics" onBack={onBack} />
-    <View style={styles.stats}>
-      <Summary label="Badges" value={`${earned}`} sub="earned" />
-      <Summary label="Login streak" value={`${profile.login_streak}`} sub="days" />
-      <Summary label="Workouts" value={`${sessions.length}`} sub="completed" />
-      <Summary label="PRs" value={`${allPrCount}`} sub="recorded" />
-    </View>
-
+  const prSection = <>
     <SectionTitle title="My PR exercises" subtitle="Pin strength or cardio exercises. Tap one to open its progress graph." />
     {tracked.length ? tracked.map((name) => {
       const ex = exerciseLibrary.find((item) => item.name === name);
@@ -178,14 +173,41 @@ export default function ProgressScreen({ profile, onBack }: { profile: Profile; 
       const summary = ex?.metric_type === 'strength' ? (last ? `${Number(last.weight_kg ?? 0)} kg × ${Number(last.reps ?? 0)} reps` : 'No sets yet') : ex?.metric_type === 'time' ? (last ? `${Number(last.duration_min ?? 0)} min` : 'No cardio yet') : last ? `${Number(last.distance_km ?? 0)} km • ${Number(last.duration_min ?? 0)} min` : 'No cardio yet';
       return <Pressable key={name} onPress={() => setSelectedExercise(name)}><Card style={styles.prCard}><View style={{ flex: 1 }}><Text style={styles.prName}>{name}</Text><Text style={styles.meta}>{summary}</Text></View><Text style={styles.chevron}>›</Text></Card></Pressable>;
     }) : <Card><Text style={styles.meta}>No PR exercises pinned yet. Choose from exercises you have already logged.</Text></Card>}
-
     <Pressable onPress={() => setManage(!manage)} style={styles.manageButton}><Text style={styles.manageText}>{manage ? 'Done choosing exercises' : '+ Choose PR exercises'}</Text></Pressable>
     {manage ? <Card><Input value={search} onChangeText={setSearch} placeholder="Search your recorded exercises…" />{availableNames.length ? availableNames.slice(0, 80).map((name) => <Pressable key={name} onPress={() => toggleTracked(name)} style={styles.pickRow}><Text style={styles.pickName}>{name}</Text><Text style={[styles.pickState, tracked.includes(name) && { color: colors.green }]}>{tracked.includes(name) ? '✓ Pinned' : '＋ Add'}</Text></Pressable>) : <Text style={styles.meta}>Complete an exercise first and it will appear here.</Text>}</Card> : null}
+  </>;
 
+  const badgeSection = <>
     <SectionTitle title="Badges & achievements" subtitle="Unlocked badges stay visible here as your history grows." />
     <View style={styles.badgeGrid}>{badges.map((b) => <View key={b.key} style={[styles.badge, b.unlocked ? styles.badgeUnlocked : styles.badgeLocked]}><Text style={[styles.badgeIcon, !b.unlocked && { opacity: 0.35 }]}>{b.icon}</Text><Text style={styles.badgeTitle}>{b.title}</Text><Text style={styles.badgeDetail}>{b.unlocked ? 'ACHIEVED' : b.detail}</Text></View>)}</View>
-
     {(profile.age ?? 0) >= 18 ? <Card><SectionTitle title="Nutrition achievements" subtitle="Based on your current adult targets." /><Info label="Energy-target days" value={`${nutritionDays.calorie}`} /><Info label="Protein-target days" value={`${nutritionDays.protein}`} /><Info label="Both targets in one day" value={`${nutritionDays.both}`} /></Card> : null}
+  </>;
+
+  const streakSection = <>
+    <SectionTitle title="Streaks" subtitle="Your current consistency across FitHub and completed training days." />
+    <View style={styles.stats}>
+      <Summary label="Login streak" value={`${profile.login_streak}`} sub="days in a row" />
+      <Summary label="Workout streak" value={`${profile.workout_streak}`} sub="training days" />
+    </View>
+    <Card><SectionTitle title="Streak milestones" subtitle="Streak-related achievements from your badge history." />{badges.filter((b) => b.key.startsWith('login') || b.key.startsWith('streak')).map((b) => <View key={b.key} style={styles.streakRow}><Text style={styles.streakRowIcon}>{b.icon}</Text><View style={{ flex: 1 }}><Text style={styles.prName}>{b.title}</Text><Text style={styles.meta}>{b.unlocked ? 'Achieved' : b.detail}</Text></View><Text style={[styles.pickState, { color: b.unlocked ? colors.green : colors.muted }]}>{b.unlocked ? '✓' : '○'}</Text></View>)}</Card>
+  </>;
+
+  return <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+    <Header title={mode === 'prs' ? 'Personal Records' : mode === 'badges' ? 'Achievements' : mode === 'streaks' ? 'Streaks' : 'Progress'} subtitle={mode === 'overview' ? 'Badges, streaks and personal-record analytics' : mode === 'prs' ? 'Choose an exercise to open its performance graph' : mode === 'badges' ? 'Your earned and upcoming FitHub milestones' : 'Your login and workout consistency'} onBack={onBack} />
+    <View style={styles.modeTabs}>
+      {([['overview','Overview'],['prs','PRs'],['badges','Badges'],['streaks','Streaks']] as [ProgressFocus,string][]).map(([key,label]) => <Pressable key={key} onPress={() => setMode(key)} style={[styles.modeTab, mode === key && styles.modeTabActive]}><Text style={[styles.modeTabText, mode === key && styles.modeTabTextActive]}>{label}</Text></Pressable>)}
+    </View>
+
+    {mode === 'overview' ? <>
+      <View style={styles.stats}>
+        <Pressable style={styles.summaryPress} onPress={() => setMode('badges')}><Summary label="Badges" value={`${earned}`} sub="earned" /></Pressable>
+        <Pressable style={styles.summaryPress} onPress={() => setMode('streaks')}><Summary label="Login streak" value={`${profile.login_streak}`} sub="days" /></Pressable>
+        <View style={styles.summaryPress}><Summary label="Workouts" value={`${sessions.length}`} sub="completed" /></View>
+        <Pressable style={styles.summaryPress} onPress={() => setMode('prs')}><Summary label="PRs" value={`${allPrCount}`} sub="recorded" /></Pressable>
+      </View>
+      {prSection}
+      {badgeSection}
+    </> : mode === 'prs' ? prSection : mode === 'badges' ? badgeSection : streakSection}
   </ScrollView>;
 }
 
@@ -252,9 +274,11 @@ function Info({ label, value }: { label: string; value: string }) { const { colo
 
 const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 34 }, header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }, back: { width: 34, height: 42, justifyContent: 'center' }, backText: { color: colors.text, fontSize: 36, fontWeight: '300' }, title: { color: colors.text, fontSize: 28, fontWeight: '900' }, headerSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }, summary: { width: '48%', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 13 }, summaryLabel: { color: colors.muted, fontSize: 10 }, summaryValue: { color: colors.text, fontSize: 25, fontWeight: '900', marginTop: 5 }, meta: { color: colors.muted, fontSize: 11, marginTop: 3, lineHeight: 16 },
+  modeTabs: { flexDirection: 'row', gap: 6, marginBottom: 16 }, modeTab: { flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, borderRadius: 10, paddingVertical: 9, alignItems: 'center' }, modeTabActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, modeTabText: { color: colors.muted, fontSize: 10, fontWeight: '800' }, modeTabTextActive: { color: colors.primary },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }, summaryPress: { width: '48%' }, summary: { width: '100%', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 13 }, summaryLabel: { color: colors.muted, fontSize: 10 }, summaryValue: { color: colors.text, fontSize: 25, fontWeight: '900', marginTop: 5 }, meta: { color: colors.muted, fontSize: 11, marginTop: 3, lineHeight: 16 },
   prCard: { flexDirection: 'row', alignItems: 'center', padding: 13 }, prName: { color: colors.text, fontWeight: '900', fontSize: 15 }, chevron: { color: colors.muted, fontSize: 26 }, manageButton: { borderWidth: 1.5, borderColor: colors.blue, borderRadius: 12, padding: 12, alignItems: 'center', marginBottom: 14, backgroundColor: colors.panel }, manageText: { color: colors.blue, fontWeight: '900' }, pickRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 8 }, pickName: { color: colors.text, fontWeight: '800', flex: 1 }, pickState: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }, badge: { width: '48%', minHeight: 126, borderRadius: 15, padding: 13, borderWidth: 1 }, badgeUnlocked: { backgroundColor: colors.panel, borderColor: colors.gold }, badgeLocked: { backgroundColor: colors.panel2, borderColor: colors.border, opacity: 0.75 }, badgeIcon: { fontSize: 23 }, badgeTitle: { color: colors.text, fontWeight: '900', fontSize: 13, marginTop: 8 }, badgeDetail: { color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 5, lineHeight: 13 },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }, streakRowIcon: { fontSize: 19, width: 28, textAlign: 'center' },
   info: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: colors.border }, infoValue: { color: colors.text, fontWeight: '900' }, prHistoryRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }, prNumber: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' }, prNumberText: { color: colors.gold, fontWeight: '900' }, prWeight: { color: colors.text, fontWeight: '900', fontSize: 15 }, currentTag: { color: colors.green, fontWeight: '900', fontSize: 9, backgroundColor: colors.greenSoft, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 7 },
   exerciseTabs: { gap: 7, paddingBottom: 12 }, exerciseTab: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }, exerciseTabActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, exerciseTabText: { color: colors.muted, fontWeight: '800', fontSize: 11 }, exerciseTabTextActive: { color: colors.primary }, chartTitle: { color: colors.text, fontSize: 19, fontWeight: '900' }, chartSub: { color: colors.muted, marginTop: 3, fontSize: 11 }, emptyGraph: { color: colors.muted, paddingVertical: 28, textAlign: 'center' }, pointDetail: { backgroundColor: colors.panel2, borderRadius: 10, padding: 10, marginTop: 4 }, pointValue: { color: colors.text, fontWeight: '900', fontSize: 14 }, tapHint: { color: colors.muted, fontSize: 10, textAlign: 'center', marginTop: 5 },
 });

@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import Storage from 'expo-sqlite/kv-store';
 import {
   Alert,
+  AppState,
   Image,
   KeyboardAvoidingView,
   Modal,
@@ -122,9 +123,11 @@ const hydratePlan = (plan: SavedPlanItem[]): BuilderItem[] => {
 };
 
 type ActiveSavedItem = {
+  id?: string;
   exercise_slug: string;
   exercise_name: string;
-  strength_sets: Array<{ weight: string; reps: string; done: boolean }>;
+  metric_type?: 'strength' | 'distance' | 'time';
+  strength_sets: Array<{ id?: string; weight: string; reps: string; done: boolean }>;
   distance: string;
   duration: string;
   load: string;
@@ -135,14 +138,17 @@ type ActiveSavedState = {
   template_name: string;
   editing_template_id: string | null;
   active_index: number;
+  revision?: number;
   items: ActiveSavedItem[];
 };
 
 const serializeActive = (items: BuilderItem[]): ActiveSavedItem[] =>
   items.map((item) => ({
+    id: item.id,
     exercise_slug: item.exercise.slug,
     exercise_name: item.exercise.name,
-    strength_sets: item.strengthSets.map((set) => ({ weight: set.weight, reps: set.reps, done: set.done })),
+    metric_type: item.exercise.metric_type,
+    strength_sets: item.strengthSets.map((set) => ({ id: set.id, weight: set.weight, reps: set.reps, done: set.done })),
     distance: item.distance,
     duration: item.duration,
     load: item.load,
@@ -155,10 +161,10 @@ const hydrateActive = (items: ActiveSavedItem[]): BuilderItem[] => {
     const ex = exerciseLibrary.find((item) => item.slug === saved.exercise_slug) ?? exerciseLibrary.find((item) => item.name === saved.exercise_name);
     if (!ex) continue;
     hydrated.push({
-      id: `${ex.slug}-${makeId()}`,
+      id: saved.id ?? `${ex.slug}-${makeId()}`,
       exercise: ex,
       strengthSets: ex.metric_type === 'strength'
-        ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10', done: false }]).map((set) => ({ id: makeId(), weight: set.weight ?? '', reps: set.reps ?? '10', done: !!set.done }))
+        ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10', done: false }]).map((set) => ({ id: set.id ?? makeId(), weight: set.weight ?? '', reps: set.reps ?? '10', done: !!set.done }))
         : [],
       distance: saved.distance ?? '',
       duration: saved.duration ?? '',
@@ -191,12 +197,14 @@ export default function WorkoutTab({
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [activeStartedAt, setActiveStartedAt] = useState<number | null>(null);
+  const [activeRevision, setActiveRevision] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [restSeconds, setRestSeconds] = useState(0);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
   const activeStorageKey = `fithub_active_workout_${profile.id}`;
+  const activeRevisionKey = `fithub_active_revision_${profile.id}`;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -242,6 +250,7 @@ export default function WorkoutTab({
         setActiveStartedAt(saved.started_at);
         setElapsed(Math.max(0, Math.floor((Date.now() - saved.started_at) / 1000)));
         setActiveExerciseIndex(Math.min(saved.active_index ?? 0, Math.max(0, restored.length - 1)));
+        setActiveRevision(saved.revision ?? 0);
         setScreen('active');
       } catch {}
     }).catch(() => {});
@@ -306,14 +315,18 @@ export default function WorkoutTab({
 
   useEffect(() => {
     if (!activeStartedAt || !builder.length) return;
+    const revision = Date.now();
     const saved: ActiveSavedState = {
       started_at: activeStartedAt,
       template_name: templateName || 'Workout',
       editing_template_id: editingTemplateId,
       active_index: Math.min(activeExerciseIndex, Math.max(0, builder.length - 1)),
+      revision,
       items: serializeActive(builder),
     };
+    setActiveRevision(revision);
     Storage.setItem(activeStorageKey, JSON.stringify(saved)).catch(() => {});
+    Storage.setItem(activeRevisionKey, String(revision)).catch(() => {});
     const current = builder[Math.min(activeExerciseIndex, Math.max(0, builder.length - 1))];
     if (current) {
       let detail = '';
@@ -333,6 +346,38 @@ export default function WorkoutTab({
       }).catch(() => {});
     }
   }, [activeStartedAt, builder, activeExerciseIndex, templateName, editingTemplateId, Math.floor(elapsed / 30)]);
+
+  useEffect(() => {
+    if (!activeStartedAt) return;
+    let mounted = true;
+    const syncFromStorage = async () => {
+      const revisionRaw = await Storage.getItem(activeRevisionKey).catch(() => null);
+      const revision = Number(revisionRaw ?? 0);
+      if (!mounted || !revision || revision === activeRevision) return;
+      const raw = await Storage.getItem(activeStorageKey).catch(() => null);
+      if (!mounted) return;
+      if (!raw) {
+        setBuilder([]); setTemplateName(''); setEditingTemplateId(null); setActiveStartedAt(null);
+        setElapsed(0); setRestSeconds(0); setActiveExerciseIndex(0); setScreen('browse');
+        setActiveRevision(revision);
+        onProfileChanged();
+        return;
+      }
+      try {
+        const saved = JSON.parse(raw) as ActiveSavedState;
+        const restored = hydrateActive(saved.items);
+        if (!restored.length) return;
+        setBuilder(restored);
+        setTemplateName(saved.template_name ?? 'Workout');
+        setEditingTemplateId(saved.editing_template_id ?? null);
+        setActiveExerciseIndex(Math.min(saved.active_index ?? 0, Math.max(0, restored.length - 1)));
+        setActiveRevision(saved.revision ?? revision);
+      } catch {}
+    };
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active') syncFromStorage(); });
+    const id = setInterval(syncFromStorage, 1500);
+    return () => { mounted = false; sub.remove(); clearInterval(id); };
+  }, [activeStartedAt, activeRevision, profile.id]);
 
   useEffect(() => {
     if (restSeconds <= 0) return;
@@ -654,7 +699,10 @@ export default function WorkoutTab({
     setElapsed(0);
     setRestSeconds(0);
     setActiveExerciseIndex(0);
+    const revision = Date.now();
+    setActiveRevision(revision);
     await Storage.removeItem(activeStorageKey).catch(() => {});
+    await Storage.setItem(activeRevisionKey, String(revision)).catch(() => {});
     await clearActiveWorkoutNotification(profile.id).catch(() => {});
   };
 
@@ -699,9 +747,20 @@ export default function WorkoutTab({
     ]);
   };
 
-  const saveWorkout = async () => {
-    if (!allComplete) {
-      Alert.alert('Workout still in progress', 'Complete every exercise before finishing the workout.');
+  const saveWorkout = async (partial = false) => {
+    const completedRows = builder.reduce((count, item) => {
+      if (item.exercise.metric_type === 'strength') return count + item.strengthSets.filter((set) => set.done).length;
+      return count + (item.done ? 1 : 0);
+    }, 0);
+    if (!allComplete && !partial) {
+      Alert.alert('End workout now?', 'Completed sets and cardio entries will be saved. Anything unfinished will stay out of the workout history.', [
+        { text: 'Keep training', style: 'cancel' },
+        { text: 'End & save', onPress: () => saveWorkout(true) },
+      ]);
+      return;
+    }
+    if (partial && completedRows === 0) {
+      Alert.alert('Nothing completed yet', 'Complete at least one set/exercise to save this workout, or delete the session instead.');
       return;
     }
     setBusy(true);
@@ -722,7 +781,8 @@ export default function WorkoutTab({
       const rows: any[] = [];
       builder.forEach((item) => {
         if (item.exercise.metric_type === 'strength') {
-          item.strengthSets.forEach((set, index) =>
+          item.strengthSets.forEach((set, index) => {
+            if (partial && !set.done) return;
             rows.push({
               session_id: session.id,
               user_id: profile.id,
@@ -733,9 +793,9 @@ export default function WorkoutTab({
               reps: Number(set.reps),
               distance_km: null,
               duration_min: null,
-            }),
-          );
-        } else {
+            });
+          });
+        } else if (!partial || item.done) {
           rows.push({
             session_id: session.id,
             user_id: profile.id,
@@ -749,8 +809,10 @@ export default function WorkoutTab({
           });
         }
       });
-      const { error: setError } = await supabase.from('workout_sets').insert(rows);
-      if (setError) throw setError;
+      if (rows.length) {
+        const { error: setError } = await supabase.from('workout_sets').insert(rows);
+        if (setError) throw setError;
+      }
       await recordWorkoutDay(profile.id);
       await supabase.rpc('apply_workout_to_challenges', { p_session_id: session.id });
       setLastWorkout(
@@ -767,7 +829,10 @@ export default function WorkoutTab({
       setRestSeconds(0);
       setEditingTemplateId(null);
       setTemplateName('');
+      const revision = Date.now();
+      setActiveRevision(revision);
       await Storage.removeItem(activeStorageKey).catch(() => {});
+      await Storage.setItem(activeRevisionKey, String(revision)).catch(() => {});
       await clearActiveWorkoutNotification(profile.id).catch(() => {});
       onProfileChanged();
       offerWorkoutShare(session.id, summary);
@@ -777,6 +842,7 @@ export default function WorkoutTab({
       setBusy(false);
     }
   };
+
 
   if (screen === 'detail' && detailExercise) {
     const item = getItem(detailExercise);
@@ -970,10 +1036,19 @@ export default function WorkoutTab({
           ) : null}
           {!allComplete ? <OutlineButton title="NEXT UNFINISHED EXERCISE" onPress={nextIncomplete} /> : null}
           <Button
-            title={busy ? 'SAVING…' : allComplete ? 'FINISH WORKOUT  ✓' : 'FINISH WORKOUT'}
-            onPress={saveWorkout}
-            disabled={busy || !allComplete}
+            title={busy ? 'SAVING…' : allComplete ? 'FINISH WORKOUT  ✓' : 'END & SAVE WORKOUT'}
+            onPress={() => saveWorkout(false)}
+            disabled={busy}
           />
+          <Pressable
+            onPress={() => Alert.alert('Delete active workout?', 'This removes the current session without saving it to your history.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete workout', style: 'destructive', onPress: deleteActiveWorkout },
+            ])}
+            style={styles.deleteActiveButton}
+          >
+            <Text style={styles.deleteActiveText}>DELETE WORKOUT</Text>
+          </Pressable>
         </ScrollView>
 
         <Modal visible={showExercisePicker} animationType="slide" transparent onRequestClose={() => setShowExercisePicker(false)}>
@@ -1333,6 +1408,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   liveMeta: { color: colors.muted, fontSize: 11, marginTop: 4 },
   activeRemoveExercise: { alignItems: 'center', paddingTop: 11, paddingBottom: 3 },
   activeRemoveExerciseText: { color: colors.danger, fontWeight: '800', fontSize: 10 },
+  deleteActiveButton: { borderWidth: 1, borderColor: colors.danger, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
+  deleteActiveText: { color: colors.danger, fontWeight: '900', fontSize: 11 },
   restBanner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.blueSoft, borderRadius: 13, padding: 12, marginBottom: 8 },
   restLabel: { color: colors.blue, fontSize: 9, fontWeight: '900' },
   restTime: { color: colors.text, fontSize: 25, fontWeight: '900', marginTop: 2 },

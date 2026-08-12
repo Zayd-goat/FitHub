@@ -1,3 +1,4 @@
+import './src/lib/notifications';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, SafeAreaView, StyleSheet, Text } from 'react-native';
 import { supabase } from './src/lib/supabase';
