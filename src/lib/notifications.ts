@@ -4,9 +4,12 @@ import * as TaskManager from 'expo-task-manager';
 import Storage from 'expo-sqlite/kv-store';
 import { supabase } from './supabase';
 import { recordWorkoutDay } from './streaks';
+import { detectAndSavePrEvents } from './prs';
+import { kgToDisplay, kmToDisplay } from './units';
 
 const ACTIVE_CHANNEL = 'active-workout';
 const GYM_CHANNEL = 'gym-reminders';
+const SUPPLEMENT_CHANNEL = 'supplement-reminders';
 const ACTIVE_WORKOUT_CATEGORY = 'ACTIVEWORKOUT';
 const WORKOUT_NOTIFICATION_TASK = 'FITHUB_WORKOUT_NOTIFICATION_TASK';
 export const NEXT_SET_ACTION = 'NEXT_SET';
@@ -30,6 +33,8 @@ type StoredWorkout = {
   editing_template_id: string | null;
   active_index: number;
   revision?: number;
+  weight_unit?: 'kg' | 'lb';
+  distance_unit?: 'km' | 'mi';
   items: StoredItem[];
 };
 
@@ -58,16 +63,20 @@ const formatElapsed = (startedAt: number) => {
   return `${hours ? `${String(hours).padStart(2, '0')}:` : ''}${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const detailForStoredItem = (item?: StoredItem) => {
+const detailForStoredItem = (item: StoredItem | undefined, state?: StoredWorkout) => {
   if (!item) return '';
+  const weightUnit = state?.weight_unit ?? 'kg';
+  const distanceUnit = state?.distance_unit ?? 'km';
   if (item.metric_type === 'strength' || item.strength_sets?.length) {
     const next = item.strength_sets.findIndex((set) => !set.done);
     const index = next >= 0 ? next : Math.max(0, item.strength_sets.length - 1);
     const set = item.strength_sets[index];
     if (!set) return '';
-    return `Set ${index + 1}/${item.strength_sets.length}${set.weight ? ` • ${set.weight} kg` : ''}${set.reps ? ` × ${set.reps}` : ''}`;
+    const displayWeight = set.weight ? Math.round(kgToDisplay(Number(set.weight), weightUnit) * 100) / 100 : null;
+    return `Set ${index + 1}/${item.strength_sets.length}${displayWeight != null ? ` • ${displayWeight} ${weightUnit}` : ''}${set.reps ? ` × ${set.reps}` : ''}`;
   }
-  return `${item.distance ? `${item.distance} km` : ''}${item.distance && item.duration ? ' • ' : ''}${item.duration ? `${item.duration} min` : ''}`;
+  const displayDistance = item.distance ? Math.round(kmToDisplay(Number(item.distance), distanceUnit) * 100) / 100 : null;
+  return `${displayDistance != null ? `${displayDistance} ${distanceUnit}` : ''}${displayDistance != null && item.duration ? ' • ' : ''}${item.duration ? `${item.duration} min` : ''}`;
 };
 
 async function readStoredWorkout(userId: string) {
@@ -93,7 +102,7 @@ async function refreshStoredNotification(userId: string, state: StoredWorkout) {
     workoutName: state.template_name || 'Workout',
     exerciseName: allDone ? 'All exercises complete' : current?.exercise_name || 'Workout in progress',
     startedAt: state.started_at,
-    detail: allDone ? 'Tap END WORKOUT to save' : detailForStoredItem(current),
+    detail: allDone ? 'Tap END WORKOUT to save' : detailForStoredItem(current, state),
     requestPermission: false,
   });
 }
@@ -175,12 +184,22 @@ async function finalizeStoredWorkout(userId: string) {
         });
       }
     });
+    let insertedRows: any[] = [];
     if (rows.length) {
-      const { error: rowError } = await supabase.from('workout_sets').insert(rows);
+      const { data: inserted, error: rowError } = await supabase.from('workout_sets').insert(rows).select('id,exercise_name,weight_kg,reps,distance_km,duration_min');
       if (rowError) throw rowError;
+      insertedRows = inserted ?? rows;
+    }
+    let newPrs: any[] = [];
+    if (insertedRows.length) {
+      const { data: profileRow } = await supabase.from('profiles').select('age').eq('id', userId).maybeSingle();
+      newPrs = await detectAndSavePrEvents({ userId, sessionId: session.id, rows: insertedRows, age: profileRow?.age ?? null });
+      if (newPrs.length) {
+        await Storage.setItem(`fithub_pending_pr_${userId}`, JSON.stringify({ events: newPrs, sessionId: session.id, summary }));
+      }
     }
     await recordWorkoutDay(userId).catch(() => {});
-    await supabase.rpc('apply_workout_to_challenges', { p_session_id: session.id }).catch(() => {});
+    try { await supabase.rpc('apply_workout_to_challenges', { p_session_id: session.id }); } catch {}
     await Storage.removeItem(activeStorageKey(userId));
     await Storage.setItem(activeRevisionKey(userId), String(Date.now()));
     await clearActiveWorkoutNotification(userId);
@@ -231,6 +250,11 @@ export async function ensureNotificationSetup(requestPermission = true) {
       name: 'Gym session reminders',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 180, 120, 180],
+    });
+    await Notifications.setNotificationChannelAsync(SUPPLEMENT_CHANNEL, {
+      name: 'Supplement reminders',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 120],
     });
   }
   await Notifications.setNotificationCategoryAsync(ACTIVE_WORKOUT_CATEGORY, [
@@ -337,5 +361,44 @@ export async function showActiveWorkoutNotification({
 export async function clearActiveWorkoutNotification(userId: string) {
   const identifier = `active-workout-${userId}`;
   await Notifications.dismissNotificationAsync(identifier).catch(() => {});
+  await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
+}
+
+
+export async function scheduleDailySupplementReminder({
+  identifier,
+  supplementName,
+  hour,
+  minute,
+}: {
+  identifier?: string | null;
+  supplementName: string;
+  hour: number;
+  minute: number;
+}) {
+  const allowed = await ensureNotificationSetup(true);
+  if (!allowed) return null;
+  if (identifier) await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
+  const id = identifier || `supplement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  await Notifications.scheduleNotificationAsync({
+    identifier: id,
+    content: {
+      title: 'Supplement reminder',
+      body: supplementName.trim(),
+      data: { type: 'supplement_reminder', supplementName: supplementName.trim() },
+      sound: 'default',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+      ...(Platform.OS === 'android' ? { channelId: SUPPLEMENT_CHANNEL } : {}),
+    } as any,
+  });
+  return id;
+}
+
+export async function cancelSupplementReminder(identifier?: string | null) {
+  if (!identifier) return;
   await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
 }

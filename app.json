@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitHub",
     "slug": "fithub",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.fithub.app",
-      "versionCode": 7,
+      "versionCode": 8,
       "permissions": [
         "INTERNET",
         "SCHEDULE_EXACT_ALARM"
@@ -43,6 +43,7 @@
           "defaultChannel": "gym-reminders"
         }
       ]
-    ]
+    ],
+    "scheme": "fithub"
   }
 }

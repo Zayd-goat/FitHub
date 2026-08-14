@@ -4,11 +4,12 @@ import { Card, SectionTitle, useTheme } from '../components/UI';
 import { estimateActivityEnergyBySession } from '../lib/calories';
 import { Profile } from '../lib/types';
 import { supabase } from '../lib/supabase';
+import { formatDistance, formatWeight, kgToDisplay } from '../lib/units';
 
 type Focus = 'volume' | 'energy';
 
 export default function DailyActivityScreen({ profile, focus, onBack }: { profile: Profile; focus: Focus; onBack: () => void }) {
-  const { colors } = useTheme();
+  const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
@@ -51,7 +52,7 @@ export default function DailyActivityScreen({ profile, focus, onBack }: { profil
 
     <Card style={styles.hero}>
       <Text style={styles.heroLabel}>{focus === 'volume' ? 'TOTAL VOLUME TODAY' : 'ESTIMATED EXERCISE ENERGY'}</Text>
-      <Text style={styles.heroValue}>{focus === 'volume' ? `${volume.toLocaleString()} kg` : locked ? '—' : `~${energy.total} kcal`}</Text>
+      <Text style={styles.heroValue}>{focus === 'volume' ? `${Math.round(kgToDisplay(volume, weightUnit)).toLocaleString()} ${weightUnit}` : locked ? '—' : `~${energy.total} kcal`}</Text>
       <Text style={styles.heroHint}>{focus === 'volume' ? 'Weight × completed reps across today’s saved strength sets.' : locked ? 'Use workout time, distance and progress instead.' : 'Estimate only — not a medical or wearable-grade measurement.'}</Text>
     </Card>
 
@@ -61,9 +62,9 @@ export default function DailyActivityScreen({ profile, focus, onBack }: { profil
       return <Card key={session.id}>
         <Text style={styles.sessionTitle}>{sessionTitle(session.summary)}</Text>
         <Text style={styles.sessionMeta}>{new Date(session.ended_at ?? session.started_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</Text>
-        <View style={styles.metrics}><Metric label="Volume" value={session.volume ? `${session.volume.toLocaleString()} kg` : '—'} /><Metric label="Distance" value={session.distance ? `${session.distance.toFixed(2)} km` : '—'} /><Metric label="Energy" value={locked ? '—' : e ? `~${e.kcal} kcal` : '—'} /></View>
+        <View style={styles.metrics}><Metric label="Volume" value={session.volume ? `${Math.round(kgToDisplay(session.volume, weightUnit)).toLocaleString()} ${weightUnit}` : '—'} /><Metric label="Distance" value={session.distance ? formatDistance(session.distance, distanceUnit, 2) : '—'} /><Metric label="Energy" value={locked ? '—' : e ? `~${e.kcal} kcal` : '—'} /></View>
         {focus === 'energy' && !locked && e?.lines?.length ? <View style={styles.breakdown}>{e.lines.map((line:any, index:number) => <View key={`${line.exercise}-${index}`} style={styles.breakdownRow}><View style={{flex:1}}><Text style={styles.breakdownName}>{line.exercise}</Text><Text style={styles.breakdownMeta}>{Math.round(line.minutes)} min • MET {line.met.toFixed(1)}</Text></View><Text style={styles.breakdownValue}>~{Math.round(line.kcal)} kcal</Text></View>)}</View> : null}
-        {focus === 'volume' ? <View style={styles.breakdown}>{session.rows.filter((x:any)=>Number(x.weight_kg ?? 0)>0 && Number(x.reps ?? 0)>0).map((row:any,index:number)=><View key={`${row.exercise_name}-${index}`} style={styles.breakdownRow}><View style={{flex:1}}><Text style={styles.breakdownName}>{row.exercise_name}</Text><Text style={styles.breakdownMeta}>{Number(row.weight_kg)} kg × {Number(row.reps)} reps</Text></View><Text style={styles.breakdownValue}>{Math.round(Number(row.weight_kg)*Number(row.reps)).toLocaleString()} kg</Text></View>)}</View> : null}
+        {focus === 'volume' ? <View style={styles.breakdown}>{session.rows.filter((x:any)=>Number(x.weight_kg ?? 0)>0 && Number(x.reps ?? 0)>0).map((row:any,index:number)=><View key={`${row.exercise_name}-${index}`} style={styles.breakdownRow}><View style={{flex:1}}><Text style={styles.breakdownName}>{row.exercise_name}</Text><Text style={styles.breakdownMeta}>{formatWeight(Number(row.weight_kg), weightUnit, 2)} × {Number(row.reps)} reps</Text></View><Text style={styles.breakdownValue}>{Math.round(kgToDisplay(Number(row.weight_kg)*Number(row.reps), weightUnit)).toLocaleString()} {weightUnit}</Text></View>)}</View> : null}
       </Card>;
     })}
     {!sessions.length ? <Card><Text style={styles.empty}>Complete a workout and today’s breakdown will appear here.</Text></Card> : null}

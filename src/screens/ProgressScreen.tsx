@@ -6,6 +6,7 @@ import { Card, Input, SectionTitle, useTheme } from '../components/UI';
 import { exerciseLibrary } from '../data/exerciseLibrary';
 import { Profile } from '../lib/types';
 import { supabase } from '../lib/supabase';
+import { formatDistance, formatWeight, kgToDisplay, kmToDisplay } from '../lib/units';
 
 type PrEvent = { exercise: string; weight: number; reps: number; score: number; date: string };
 type Badge = { key: string; icon: string; title: string; detail: string; unlocked: boolean };
@@ -18,7 +19,7 @@ const dateKey = (value: string | Date) => {
 };
 
 export default function ProgressScreen({ profile, focus = 'overview', onBack }: { profile: Profile; focus?: ProgressFocus; onBack: () => void }) {
-  const { colors } = useTheme();
+  const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
@@ -143,12 +144,12 @@ export default function ProgressScreen({ profile, focus = 'overview', onBack }: 
     const ex = exerciseLibrary.find((item) => item.name === selectedExercise);
     const rows = sets.filter((row) => row.exercise_name === selectedExercise);
     const metricType = ex?.metric_type ?? (rows.some((r) => Number(r.distance_km ?? 0) > 0 || Number(r.duration_min ?? 0) > 0) ? 'distance' : 'strength');
-    const points = graphPoints(rows, metricType);
+    const points = graphPoints(rows, metricType, weightUnit, distanceUnit);
     const strength = metricType === 'strength';
     const timeOnly = metricType === 'time';
     const graphTitle = strength ? 'Weight vs reps' : timeOnly ? 'Duration by session' : 'Time vs distance';
-    const xLabel = strength ? 'Weight (kg)' : timeOnly ? 'Session' : 'Time (min)';
-    const yLabel = strength ? 'Reps' : timeOnly ? 'Duration (min)' : 'Distance (km)';
+    const xLabel = strength ? `Weight (${weightUnit})` : timeOnly ? 'Session' : 'Time (min)';
+    const yLabel = strength ? 'Reps' : timeOnly ? 'Duration (min)' : `Distance (${distanceUnit})`;
     return <ScrollView contentContainerStyle={styles.wrap}>
       <Header title="PR Progress" subtitle="Switch exercises to compare your recorded performances" onBack={() => { setSelectedExercise(null); setSelectedPoint(null); }} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.exerciseTabs}>
@@ -160,7 +161,7 @@ export default function ProgressScreen({ profile, focus = 'overview', onBack }: 
         {points.length ? <ProgressGraph points={points} xLabel={xLabel} yLabel={yLabel} selected={selectedPoint} onSelect={setSelectedPoint} /> : <Text style={styles.emptyGraph}>Not enough recorded data for this graph yet.</Text>}
         {selectedPoint != null && points[selectedPoint] ? <View style={styles.pointDetail}><Text style={styles.pointValue}>{points[selectedPoint].label}</Text><Text style={styles.meta}>{new Date(points[selectedPoint].date).toLocaleDateString()}</Text></View> : points.length ? <Text style={styles.tapHint}>Tap a point to see the exact result and date.</Text> : null}
       </Card>
-      {strength ? <Card><SectionTitle title="PR improvements" subtitle="Best strength performances recorded over time." />{(prEvents[selectedExercise] ?? []).map((x, i) => <View key={`${x.date}-${i}`} style={styles.prHistoryRow}><View style={styles.prNumber}><Text style={styles.prNumberText}>{(prEvents[selectedExercise] ?? []).length - i}</Text></View><View style={{ flex: 1 }}><Text style={styles.prWeight}>{x.weight} kg × {x.reps} reps</Text><Text style={styles.meta}>{new Date(x.date).toLocaleDateString()}</Text></View>{i === 0 ? <Text style={styles.currentTag}>CURRENT</Text> : null}</View>)}</Card> : null}
+      {strength ? <Card><SectionTitle title="PR improvements" subtitle="Best strength performances recorded over time." />{(prEvents[selectedExercise] ?? []).map((x, i) => <View key={`${x.date}-${i}`} style={styles.prHistoryRow}><View style={styles.prNumber}><Text style={styles.prNumberText}>{(prEvents[selectedExercise] ?? []).length - i}</Text></View><View style={{ flex: 1 }}><Text style={styles.prWeight}>{formatWeight(x.weight, weightUnit)} × {x.reps} reps</Text><Text style={styles.meta}>{new Date(x.date).toLocaleDateString()}</Text></View>{i === 0 ? <Text style={styles.currentTag}>CURRENT</Text> : null}</View>)}</Card> : null}
     </ScrollView>;
   }
 
@@ -170,7 +171,7 @@ export default function ProgressScreen({ profile, focus = 'overview', onBack }: 
       const ex = exerciseLibrary.find((item) => item.name === name);
       const history = sets.filter((row) => row.exercise_name === name);
       const last = history.at(-1);
-      const summary = ex?.metric_type === 'strength' ? (last ? `${Number(last.weight_kg ?? 0)} kg × ${Number(last.reps ?? 0)} reps` : 'No sets yet') : ex?.metric_type === 'time' ? (last ? `${Number(last.duration_min ?? 0)} min` : 'No cardio yet') : last ? `${Number(last.distance_km ?? 0)} km • ${Number(last.duration_min ?? 0)} min` : 'No cardio yet';
+      const summary = ex?.metric_type === 'strength' ? (last ? `${formatWeight(Number(last.weight_kg ?? 0), weightUnit)} × ${Number(last.reps ?? 0)} reps` : 'No sets yet') : ex?.metric_type === 'time' ? (last ? `${Number(last.duration_min ?? 0)} min` : 'No cardio yet') : last ? `${formatDistance(Number(last.distance_km ?? 0), distanceUnit)} • ${Number(last.duration_min ?? 0)} min` : 'No cardio yet';
       return <Pressable key={name} onPress={() => setSelectedExercise(name)}><Card style={styles.prCard}><View style={{ flex: 1 }}><Text style={styles.prName}>{name}</Text><Text style={styles.meta}>{summary}</Text></View><Text style={styles.chevron}>›</Text></Card></Pressable>;
     }) : <Card><Text style={styles.meta}>No PR exercises pinned yet. Choose from exercises you have already logged.</Text></Card>}
     <Pressable onPress={() => setManage(!manage)} style={styles.manageButton}><Text style={styles.manageText}>{manage ? 'Done choosing exercises' : '+ Choose PR exercises'}</Text></Pressable>
@@ -211,14 +212,14 @@ export default function ProgressScreen({ profile, focus = 'overview', onBack }: 
   </ScrollView>;
 }
 
-function graphPoints(rows: any[], metricType: string): GraphPoint[] {
+function graphPoints(rows: any[], metricType: string, weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): GraphPoint[] {
   const bySession = new Map<string, any[]>();
   rows.forEach((row) => { const key = row.session_id ?? row.created_at; const arr = bySession.get(key) ?? []; arr.push(row); bySession.set(key, arr); });
   const sessions = Array.from(bySession.values()).sort((a, b) => new Date(a[0].created_at).getTime() - new Date(b[0].created_at).getTime());
   if (metricType === 'strength') {
     return sessions.map((group) => {
       const best = [...group].filter((r) => Number(r.weight_kg ?? 0) > 0 && Number(r.reps ?? 0) > 0).sort((a, b) => Number(b.weight_kg) * (1 + Number(b.reps) / 30) - Number(a.weight_kg) * (1 + Number(a.reps) / 30))[0];
-      return best ? { x: Number(best.weight_kg), y: Number(best.reps), date: best.created_at, label: `${Number(best.weight_kg)} kg × ${Number(best.reps)} reps` } : null;
+      return best ? { x: kgToDisplay(Number(best.weight_kg), weightUnit), y: Number(best.reps), date: best.created_at, label: `${formatWeight(Number(best.weight_kg), weightUnit)} × ${Number(best.reps)} reps` } : null;
     }).filter(Boolean) as GraphPoint[];
   }
   if (metricType === 'time') {
@@ -229,7 +230,7 @@ function graphPoints(rows: any[], metricType: string): GraphPoint[] {
   }
   return sessions.map((group) => {
     const row = group.find((r) => Number(r.distance_km ?? 0) > 0 && Number(r.duration_min ?? 0) > 0);
-    return row ? { x: Number(row.duration_min), y: Number(row.distance_km), date: row.created_at, label: `${Number(row.distance_km)} km in ${Number(row.duration_min)} min` } : null;
+    return row ? { x: Number(row.duration_min), y: kmToDisplay(Number(row.distance_km), distanceUnit), date: row.created_at, label: `${formatDistance(Number(row.distance_km), distanceUnit)} in ${Number(row.duration_min)} min` } : null;
   }).filter(Boolean) as GraphPoint[];
 }
 

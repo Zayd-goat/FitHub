@@ -3,9 +3,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, useTheme } from '../components/UI';
 import { Profile } from '../lib/types';
 import { supabase } from '../lib/supabase';
+import { formatDistance, formatWeight, kgToDisplay } from '../lib/units';
 
 export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack }: { profile: Profile; initialSessionId?: string; onBack: () => void }) {
-  const { colors } = useTheme(); const styles = createStyles(colors);
+  const { colors, weightUnit, distanceUnit } = useTheme(); const styles = createStyles(colors);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(initialSessionId ?? null);
@@ -47,8 +48,8 @@ export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack
         <Card>
           <View style={styles.top}><View style={styles.number}><Text style={styles.numberText}>{index + 1}</Text></View><View style={{ flex: 1 }}><Text style={styles.name}>{sessionTitle(s.summary)}</Text><Text style={styles.meta}>{new Date(s.ended_at ?? s.started_at).toLocaleString()}</Text></View><Text style={styles.expand}>{expanded ? '⌃' : '›'}</Text></View>
           <Text style={styles.exercises} numberOfLines={expanded ? undefined : 2}>{Array.from(new Set(s.rows.map((x: any) => x.exercise_name))).join(' • ') || 'Workout'}</Text>
-          <View style={styles.stats}><Mini label="Exercises" value={`${s.exercises}`} /><Mini label="Sets" value={`${s.rows.length}`} /><Mini label="Time" value={`${s.minutes}m`} /><Mini label="Volume" value={s.volume > 0 ? `${s.volume.toLocaleString()} kg` : s.distance > 0 ? `${s.distance.toFixed(1)} km` : '—'} /></View>
-          {expanded ? <View style={styles.details}>{groupedExercises.map(({ name, rows }: any) => <View key={name} style={styles.exerciseGroup}><Text style={styles.exerciseName}>{name}</Text>{rows.map((row: any, i: number) => <View key={`${name}-${row.set_number ?? i}-${i}`} style={styles.setRow}><Text style={styles.setLabel}>{row.weight_kg != null || row.reps != null ? `Set ${row.set_number ?? i + 1}` : 'Result'}</Text><Text style={styles.setValue}>{rowText(row)}</Text></View>)}</View>)}</View> : null}
+          <View style={styles.stats}><Mini label="Exercises" value={`${s.exercises}`} /><Mini label="Sets" value={`${s.rows.length}`} /><Mini label="Time" value={`${s.minutes}m`} /><Mini label="Volume" value={s.volume > 0 ? `${Math.round(kgToDisplay(s.volume, weightUnit)).toLocaleString()} ${weightUnit}` : s.distance > 0 ? formatDistance(s.distance, distanceUnit, 1) : '—'} /></View>
+          {expanded ? <View style={styles.details}>{groupedExercises.map(({ name, rows }: any) => <View key={name} style={styles.exerciseGroup}><Text style={styles.exerciseName}>{name}</Text>{rows.map((row: any, i: number) => <View key={`${name}-${row.set_number ?? i}-${i}`} style={styles.setRow}><Text style={styles.setLabel}>{row.weight_kg != null || row.reps != null ? `Set ${row.set_number ?? i + 1}` : 'Result'}</Text><Text style={styles.setValue}>{rowText(row, weightUnit, distanceUnit)}</Text></View>)}</View>)}</View> : null}
         </Card>
       </Pressable>;
     }) : <Card><Text style={styles.meta}>No completed workouts yet.</Text></Card>}
@@ -60,10 +61,10 @@ function groupExerciseRows(rows: any[]) {
   rows.forEach((row) => { const current = map.get(row.exercise_name) ?? []; current.push(row); map.set(row.exercise_name, current); });
   return Array.from(map.entries()).map(([name, grouped]) => ({ name, rows: grouped }));
 }
-function rowText(row: any) {
-  if (Number(row.weight_kg ?? 0) > 0 || Number(row.reps ?? 0) > 0) return `${Number(row.weight_kg ?? 0)} kg × ${Number(row.reps ?? 0)} reps`;
+function rowText(row: any, weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi') {
+  if (Number(row.weight_kg ?? 0) > 0 || Number(row.reps ?? 0) > 0) return `${formatWeight(Number(row.weight_kg ?? 0), weightUnit, 2)} × ${Number(row.reps ?? 0)} reps`;
   const parts: string[] = [];
-  if (Number(row.distance_km ?? 0) > 0) parts.push(`${Number(row.distance_km).toFixed(2)} km`);
+  if (Number(row.distance_km ?? 0) > 0) parts.push(formatDistance(Number(row.distance_km), distanceUnit, 2));
   if (Number(row.duration_min ?? 0) > 0) parts.push(`${Number(row.duration_min)} min`);
   return parts.join(' • ') || 'Completed';
 }

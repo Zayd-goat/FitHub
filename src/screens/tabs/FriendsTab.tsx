@@ -5,6 +5,7 @@ import { exerciseLibrary } from '../../data/exerciseLibrary';
 import { cancelGymReminder, scheduleGymReminder } from '../../lib/notifications';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
+import { displayToKm, formatDistance, kgToDisplay, kmToDisplay } from '../../lib/units';
 
 type FriendsView = 'feed' | 'following' | 'invites' | 'challenges';
 
@@ -28,7 +29,7 @@ const tomorrowKey = () => {
 };
 
 export default function FriendsTab({ profile }: { profile: Profile }) {
-  const { colors } = useTheme();
+  const { colors, hiddenFeatures, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [view, setView] = useState<FriendsView>('feed');
   const [search, setSearch] = useState('');
@@ -39,9 +40,12 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   const [comments, setComments] = useState<Record<string, any[]>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [challenges, setChallenges] = useState<any[]>([]);
+  const [communityChallenges, setCommunityChallenges] = useState<any[]>([]);
+  const [communityMembers, setCommunityMembers] = useState<any[]>([]);
   const [gymInvites, setGymInvites] = useState<GymInvite[]>([]);
   const [customOpen, setCustomOpen] = useState(false);
   const [custom, setCustom] = useState({ title: '', description: '', metric: 'workouts', target: '3', days: '7' });
+  const [communityDraft, setCommunityDraft] = useState({ title: '', description: '', targetType: 'workouts', target: '3', days: '7', visibility: 'private' as 'private'|'friends'|'public', inviteIds: [] as string[] });
   const [inviteFriendId, setInviteFriendId] = useState('');
   const [inviteDate, setInviteDate] = useState(tomorrowKey());
   const [inviteTime, setInviteTime] = useState('17:00');
@@ -49,6 +53,42 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   const [inviteWorkout, setInviteWorkout] = useState('');
   const [inviteNote, setInviteNote] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
+
+
+  async function calculateCommunityProgress(challenge: any) {
+    const start = challenge.starts_at || new Date(0).toISOString();
+    const end = challenge.ends_at || new Date(8640000000000000).toISOString();
+    if (challenge.target_type === 'prs') {
+      const { count } = await supabase.from('pr_events').select('id', { count: 'exact', head: true }).eq('user_id', profile.id).gte('achieved_at', start).lte('achieved_at', end);
+      return Number(count ?? 0);
+    }
+    if (challenge.target_type === 'distance') {
+      const { data } = await supabase.from('workout_sets').select('distance_km,created_at').eq('user_id', profile.id).gte('created_at', start).lte('created_at', end);
+      return (data ?? []).reduce((sum:number,row:any)=>sum+Number(row.distance_km ?? 0),0);
+    }
+    const { data } = await supabase.from('workout_sessions').select('ended_at').eq('user_id', profile.id).eq('completed', true).gte('ended_at', start).lte('ended_at', end);
+    if (challenge.target_type === 'active_days') return new Set((data ?? []).map((row:any)=>new Date(row.ended_at).toDateString())).size;
+    return (data ?? []).length;
+  }
+
+  async function loadCommunityChallenges() {
+    const { data: cc } = await supabase.from('community_challenges').select('*').order('created_at', { ascending: false }).limit(50);
+    const list = cc ?? [];
+    setCommunityChallenges(list);
+    if (!list.length) { setCommunityMembers([]); return; }
+    const ids = list.map((x:any)=>x.id);
+    const { data: members } = await supabase.from('community_challenge_members').select('*').in('challenge_id', ids);
+    const memberRows = members ?? [];
+    setCommunityMembers(memberRows);
+    const mine = memberRows.filter((m:any)=>m.user_id===profile.id && (m.status==='joined' || m.status==='completed'));
+    for (const member of mine) {
+      const challenge = list.find((x:any)=>x.id===member.challenge_id);
+      if (!challenge) continue;
+      const progress = await calculateCommunityProgress(challenge);
+      const done = progress >= Number(challenge.target_value);
+      try { await supabase.from('community_challenge_members').update({ progress_value: progress, status: done ? 'completed' : 'joined', completed_at: done ? (member.completed_at || new Date().toISOString()) : null, updated_at: new Date().toISOString() }).eq('challenge_id', challenge.id).eq('user_id', profile.id); } catch {}
+    }
+  }
 
   const load = async () => {
     const [req, fr, ch, gi] = await Promise.all([
@@ -65,6 +105,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
     setRequests(req.data ?? []);
     setFriends(fr.data ?? []);
     setChallenges(ch.data ?? []);
+    await loadCommunityChallenges();
     const invites = (gi.data ?? []) as GymInvite[];
     setGymInvites(invites);
 
@@ -106,6 +147,8 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'challenge_participants' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'public_profiles' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gym_invites' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_challenges' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_challenge_members' }, load)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [profile.id]);
@@ -152,6 +195,38 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
     setCustom({ title: '', description: '', metric: 'workouts', target: '3', days: '7' });
     setCustomOpen(false);
     load();
+  };
+
+  const toggleCommunityInvite = (userId: string) => setCommunityDraft((prev) => ({ ...prev, inviteIds: prev.inviteIds.includes(userId) ? prev.inviteIds.filter((id) => id !== userId) : [...prev.inviteIds, userId] }));
+
+  const createCommunityChallenge = async () => {
+    const displayTarget = Number(communityDraft.target), days = Number(communityDraft.days);
+    const target = communityDraft.targetType === 'distance' ? displayToKm(displayTarget, distanceUnit) : displayTarget;
+    if (!communityDraft.title.trim() || !displayTarget || displayTarget <= 0 || !days || days < 1 || days > 365) return Alert.alert('Challenge details', 'Enter a title, positive target and duration.');
+    const ends = new Date(); ends.setDate(ends.getDate() + days);
+    const unitMap: Record<string,string> = { workouts: 'workouts', active_days: 'days', distance: 'km', prs: 'PRs' };
+    const { data, error } = await supabase.from('community_challenges').insert({ creator_id: profile.id, creator_display_name: profile.username, title: communityDraft.title.trim(), description: communityDraft.description.trim() || null, target_type: communityDraft.targetType, target_value: target, unit: unitMap[communityDraft.targetType] || 'units', visibility: communityDraft.visibility, starts_at: new Date().toISOString(), ends_at: ends.toISOString() }).select('id').single();
+    if (error) return Alert.alert('Could not create challenge', error.message);
+    const members:any[] = [{ challenge_id:data.id, user_id:profile.id, display_name:profile.username, status:'joined', joined_at:new Date().toISOString() }];
+    for (const id of communityDraft.inviteIds) { const friend=friends.find((x:any)=>x.user_id===id); members.push({ challenge_id:data.id, user_id:id, display_name:friend?.username || 'FitHub user', status:'invited' }); }
+    const { error: memberError } = await supabase.from('community_challenge_members').insert(members);
+    if (memberError) return Alert.alert('Challenge created', `The challenge was created, but some invites could not be added: ${memberError.message}`);
+    setCommunityDraft({ title:'',description:'',targetType:'workouts',target:'3',days:'7',visibility:'private',inviteIds:[] }); setCustomOpen(false); await load();
+  };
+
+  const joinCommunityChallenge = async (challenge:any) => {
+    const mine = communityMembers.find((m:any)=>m.challenge_id===challenge.id && m.user_id===profile.id);
+    if (mine) {
+      const { error } = await supabase.from('community_challenge_members').update({ status:'joined', joined_at:mine.joined_at || new Date().toISOString(), updated_at:new Date().toISOString() }).eq('challenge_id',challenge.id).eq('user_id',profile.id);
+      if (error) Alert.alert('Challenge',error.message); else load();
+    } else {
+      const { error } = await supabase.from('community_challenge_members').insert({ challenge_id:challenge.id,user_id:profile.id,display_name:profile.username,status:'joined',joined_at:new Date().toISOString() });
+      if (error) Alert.alert('Challenge',error.message); else load();
+    }
+  };
+
+  const declineCommunityInvite = async (challengeId:string) => {
+    await supabase.from('community_challenge_members').update({status:'declined',updated_at:new Date().toISOString()}).eq('challenge_id',challengeId).eq('user_id',profile.id); load();
   };
 
   const sendGymInvite = async () => {
@@ -206,7 +281,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
       <Tab label="Feed" active={view === 'feed'} onPress={() => setView('feed')} />
       <Tab label="Following" active={view === 'following'} onPress={() => setView('following')} />
       <Tab label={`Invites${pendingReceived.length ? ` ${pendingReceived.length}` : ''}`} active={view === 'invites'} onPress={() => setView('invites')} />
-      <Tab label="Challenges" active={view === 'challenges'} onPress={() => setView('challenges')} />
+      {!hiddenFeatures.includes('challenges') ? <Tab label="Challenges" active={view === 'challenges'} onPress={() => setView('challenges')} /> : null}
     </ScrollView>
 
     {view === 'feed' ? <View style={styles.feedArea}>
@@ -251,22 +326,44 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
 
     {view === 'challenges' ? <View style={styles.tabContent}>
       <Card>
-        <SectionTitle title="Challenges" subtitle="Join presets or make a friends-only challenge." />
-        <Button title={customOpen ? 'Close challenge builder' : 'Create a challenge'} onPress={() => setCustomOpen(!customOpen)} secondary />
+        <SectionTitle title="Create a challenge" subtitle="Choose the target, privacy and friends you want to invite. Every challenge shows who created it." />
+        <Button title={customOpen ? 'Close challenge builder' : 'Create private / community challenge'} onPress={() => setCustomOpen(!customOpen)} secondary />
         {customOpen ? <View style={{ marginTop: 10 }}>
-          <Input value={custom.title} onChangeText={(v) => setCustom({ ...custom, title: v })} placeholder="Challenge title" />
-          <Input value={custom.description} onChangeText={(v) => setCustom({ ...custom, description: v })} placeholder="Description" />
-          <View style={styles.chips}>{(['workouts', 'active_days', 'distance', 'strength_sessions'] as const).map((v) => <Chip key={v} label={v.replace('_', ' ')} active={custom.metric === v} onPress={() => setCustom({ ...custom, metric: v })} />)}</View>
-          <View style={styles.two}><Input style={{ flex: 1 }} value={custom.target} onChangeText={(v) => setCustom({ ...custom, target: v })} keyboardType="decimal-pad" placeholder="Target" /><Input style={{ flex: 1 }} value={custom.days} onChangeText={(v) => setCustom({ ...custom, days: v })} keyboardType="number-pad" placeholder="Days" /></View>
-          <Button title="Create & join" onPress={createChallenge} />
+          <Input value={communityDraft.title} onChangeText={(v) => setCommunityDraft({ ...communityDraft, title: v })} placeholder="Challenge title" />
+          <Input value={communityDraft.description} onChangeText={(v) => setCommunityDraft({ ...communityDraft, description: v })} placeholder="Description (optional)" />
+          <Text style={styles.fieldLabel}>Target</Text>
+          <View style={styles.chips}>{(['workouts','active_days','distance','prs'] as const).map((v)=><Chip key={v} label={v.replace('_',' ')} active={communityDraft.targetType===v} onPress={()=>setCommunityDraft({...communityDraft,targetType:v})}/>)}</View>
+          <View style={styles.two}><Input style={{flex:1}} value={communityDraft.target} onChangeText={(v)=>setCommunityDraft({...communityDraft,target:v})} keyboardType="decimal-pad" placeholder={communityDraft.targetType === 'distance' ? `Target (${distanceUnit})` : "Target"}/><Input style={{flex:1}} value={communityDraft.days} onChangeText={(v)=>setCommunityDraft({...communityDraft,days:v})} keyboardType="number-pad" placeholder="Days"/></View>
+          <Text style={styles.fieldLabel}>Who can see it?</Text>
+          <View style={styles.chips}>{(['private','friends','public'] as const).map((v)=><Chip key={v} label={v} active={communityDraft.visibility===v} onPress={()=>setCommunityDraft({...communityDraft,visibility:v})}/>)}</View>
+          {friends.length ? <><Text style={styles.fieldLabel}>Invite friends (optional)</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.friendPicker}>{friends.map((friend:any)=>{const active=communityDraft.inviteIds.includes(friend.user_id);return <Pressable key={friend.user_id} onPress={()=>toggleCommunityInvite(friend.user_id)} style={[styles.friendChip,active&&styles.friendChipActive]}><AvatarSmall name={friend.username} url={friend.avatar_url}/><Text style={[styles.friendChipText,active&&{color:colors.blue}]}>@{friend.username}</Text></Pressable>;})}</ScrollView></> : null}
+          <Button title="CREATE CHALLENGE" onPress={createCommunityChallenge} />
         </View> : null}
       </Card>
-      {challenges.map((ch) => <Card key={ch.id}>
+
+      <SectionTitle title="Your community challenges" subtitle="Progress updates from your FitHub workout history." />
+      {communityChallenges.length ? communityChallenges.map((ch:any)=>{
+        const mine=communityMembers.find((m:any)=>m.challenge_id===ch.id&&m.user_id===profile.id);
+        const progress=Number(mine?.progress_value??0);
+        const target=Number(ch.target_value??1);
+        const invited=mine?.status==='invited';
+        const completed=mine?.status==='completed'||progress>=target;
+        const creator=ch.creator_id===profile.id;
+        return <Card key={ch.id}>
+          <View style={styles.challengeTop}><View style={{flex:1}}><Text style={styles.challenge}>{completed?'✓ ':invited?'✉ ':''}{ch.title}</Text><Text style={styles.meta}>Created by @{ch.creator_display_name} • {ch.visibility}</Text>{ch.description?<Text style={styles.meta}>{ch.description}</Text>:null}</View>{!creator&&!mine?<OutlineButton title="Join" onPress={()=>joinCommunityChallenge(ch)} compact/>:null}</View>
+          <Text style={styles.progress}>{ch.target_type==='distance' ? `${kmToDisplay(progress, distanceUnit).toFixed(1)} / ${kmToDisplay(target, distanceUnit).toFixed(1)} ${distanceUnit}` : `${progress.toFixed(0)} / ${target.toFixed(0)} ${ch.unit}`}</Text>
+          <View style={styles.track}><View style={[styles.fill,{width:`${Math.min(100,(progress/Math.max(1,target))*100)}%`}]} /></View>
+          <Text style={styles.meta}>{completed?'Completed':mine?.status==='joined'?'In progress':invited?'You were invited':'Available to join'}{ch.ends_at?` • ends ${new Date(ch.ends_at).toLocaleDateString()}`:''}</Text>
+          {invited?<View style={styles.inviteActions}><OutlineButton title="Accept" onPress={()=>joinCommunityChallenge(ch)} compact/><Pressable onPress={()=>declineCommunityInvite(ch.id)} style={styles.declineButton}><Text style={styles.declineText}>Decline</Text></Pressable></View>:null}
+        </Card>;
+      }) : <Card><Text style={styles.sub}>No community challenges yet. Create one above and invite friends.</Text></Card>}
+
+      {challenges.length ? <><SectionTitle title="FitHub preset challenges" subtitle="Existing FitHub challenges are still available." />{challenges.map((ch) => <Card key={ch.id}>
         <View style={styles.challengeTop}><View style={{ flex: 1 }}><Text style={styles.challenge}>{ch.preset ? '★ ' : ''}{ch.title}</Text><Text style={styles.meta}>{ch.description}</Text></View><OutlineButton title="Join" onPress={() => joinChallenge(ch.id)} compact /></View>
         <Text style={styles.progress}>{Number(ch.my_progress ?? 0).toFixed(ch.metric === 'distance' ? 1 : 0)} / {ch.target_value} {ch.unit}</Text>
         <View style={styles.track}><View style={[styles.fill, { width: `${Math.min(100, (Number(ch.my_progress ?? 0) / Math.max(1, Number(ch.target_value))) * 100)}%` }]} /></View>
         <Text style={styles.meta}>{ch.participant_count} joined · ends {new Date(ch.end_date).toLocaleDateString()}</Text>
-      </Card>)}
+      </Card>)}</> : null}
     </View> : null}
   </ScrollView>;
 }
@@ -280,7 +377,7 @@ function GymInviteCard({ invite, other, actions }: { invite: GymInvite; other?: 
 }
 
 function WorkoutPostCard({ post, comments, comment, setComment, send, quick }: { post: any; comments: any[]; comment: string; setComment: (v: string) => void; send: () => void; quick: (v: string) => void }) {
-  const { colors } = useTheme(); const s = createStyles(colors);
+  const { colors, weightUnit, distanceUnit } = useTheme(); const s = createStyles(colors);
   const names = String(post.exercise_names ?? post.summary ?? '').replace(/^Completed:\s*/i, '').split(',').map((x: string) => x.trim()).filter(Boolean);
   const groups = Array.from(new Set(names.map((n: string) => exerciseLibrary.find((e) => e.name === n)?.targetArea).filter(Boolean))) as string[];
   const start = post.started_at ? new Date(post.started_at).getTime() : 0;
@@ -300,7 +397,7 @@ function WorkoutPostCard({ post, comments, comment, setComment, send, quick }: {
       <PostStat label="Exercises" value={post.exercise_count != null ? String(post.exercise_count) : String(names.length || '—')} />
       <PostStat label="Sets" value={post.total_sets != null ? String(post.total_sets) : '—'} />
       <PostStat label="Duration" value={minutes ? formatMinutes(minutes) : '—'} />
-      <PostStat label={volume > 0 ? 'Volume' : 'Distance'} value={volume > 0 ? `${volume.toLocaleString()} kg` : distance > 0 ? `${distance.toFixed(1)} km` : '—'} />
+      <PostStat label={volume > 0 ? 'Volume' : 'Distance'} value={volume > 0 ? `${Math.round(kgToDisplay(volume, weightUnit)).toLocaleString()} ${weightUnit}` : distance > 0 ? formatDistance(distance, distanceUnit, 1) : '—'} />
     </View>
     {names.length ? <View style={s.highlight}><Text style={s.highlightTitle}>🔥 Workout highlights</Text><Text style={s.highlightText}>{names.slice(0, 4).join(' • ')}{names.length > 4 ? ` • +${names.length - 4} more` : ''}</Text></View> : null}
     <View style={s.actionRow}><Pressable onPress={() => quick('Great work! ❤️')} style={s.action}><Text style={s.heart}>♥</Text><Text style={s.actionText}>Cheer</Text></Pressable><View style={s.action}><Text style={s.commentIcon}>▢</Text><Text style={s.actionText}>{comments.length}</Text></View><View style={{ flex: 1 }} /><Text style={s.more}>•••</Text></View>

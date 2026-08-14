@@ -14,12 +14,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Button, Card, Input, OutlineButton, useTheme } from '../../components/UI';
+import { Button, Card, contrastText, Input, OutlineButton, useTheme } from '../../components/UI';
+import PRCelebrationModal from '../../components/PRCelebrationModal';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { progressionSuggestion } from '../../lib/progression';
 import { recordWorkoutDay } from '../../lib/streaks';
 import { clearActiveWorkoutNotification, showActiveWorkoutNotification } from '../../lib/notifications';
+import { detectAndSavePrEvents, NewPrEvent } from '../../lib/prs';
+import { displayToKg, displayToKm, formatDistance, formatPace, formatWeight, kgToDisplay, kmToDisplay } from '../../lib/units';
 import {
   exerciseLibrary,
   figureImages,
@@ -84,17 +87,17 @@ const formatTime = (sec: number) => {
     : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const serializeBuilder = (items: BuilderItem[]): SavedPlanItem[] =>
+const serializeBuilder = (items: BuilderItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): SavedPlanItem[] =>
   items.map((item) => ({
     exercise_slug: item.exercise.slug,
     exercise_name: item.exercise.name,
-    strength_sets: item.strengthSets.map((set) => ({ weight: set.weight, reps: set.reps })),
-    distance: item.distance,
+    strength_sets: item.strengthSets.map((set) => ({ weight: set.weight === '' ? '' : String(displayToKg(Number(set.weight), weightUnit)), reps: set.reps })),
+    distance: item.distance === '' ? '' : String(displayToKm(Number(item.distance), distanceUnit)),
     duration: item.duration,
-    load: item.load,
+    load: item.load === '' ? '' : String(displayToKg(Number(item.load), weightUnit)),
   }));
 
-const hydratePlan = (plan: SavedPlanItem[]): BuilderItem[] => {
+const hydratePlan = (plan: SavedPlanItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): BuilderItem[] => {
   const hydrated: BuilderItem[] = [];
   for (const saved of plan ?? []) {
     const ex =
@@ -108,14 +111,14 @@ const hydratePlan = (plan: SavedPlanItem[]): BuilderItem[] => {
         ex.metric_type === 'strength'
           ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10' }]).map((set) => ({
               id: makeId(),
-              weight: set.weight ?? '',
+              weight: set.weight === '' || set.weight == null ? '' : String(Math.round(kgToDisplay(Number(set.weight), weightUnit) * 100) / 100),
               reps: set.reps ?? '10',
               done: false,
             }))
           : [],
-      distance: saved.distance ?? '',
+      distance: saved.distance === '' || saved.distance == null ? '' : String(Math.round(kmToDisplay(Number(saved.distance), distanceUnit) * 100) / 100),
       duration: saved.duration ?? '',
-      load: saved.load ?? '',
+      load: saved.load === '' || saved.load == null ? '' : String(Math.round(kgToDisplay(Number(saved.load), weightUnit) * 100) / 100),
       done: false,
     });
   }
@@ -139,23 +142,25 @@ type ActiveSavedState = {
   editing_template_id: string | null;
   active_index: number;
   revision?: number;
+  weight_unit?: 'kg' | 'lb';
+  distance_unit?: 'km' | 'mi';
   items: ActiveSavedItem[];
 };
 
-const serializeActive = (items: BuilderItem[]): ActiveSavedItem[] =>
+const serializeActive = (items: BuilderItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): ActiveSavedItem[] =>
   items.map((item) => ({
     id: item.id,
     exercise_slug: item.exercise.slug,
     exercise_name: item.exercise.name,
     metric_type: item.exercise.metric_type,
-    strength_sets: item.strengthSets.map((set) => ({ id: set.id, weight: set.weight, reps: set.reps, done: set.done })),
-    distance: item.distance,
+    strength_sets: item.strengthSets.map((set) => ({ id: set.id, weight: set.weight === '' ? '' : String(displayToKg(Number(set.weight), weightUnit)), reps: set.reps, done: set.done })),
+    distance: item.distance === '' ? '' : String(displayToKm(Number(item.distance), distanceUnit)),
     duration: item.duration,
-    load: item.load,
+    load: item.load === '' ? '' : String(displayToKg(Number(item.load), weightUnit)),
     done: item.done,
   }));
 
-const hydrateActive = (items: ActiveSavedItem[]): BuilderItem[] => {
+const hydrateActive = (items: ActiveSavedItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): BuilderItem[] => {
   const hydrated: BuilderItem[] = [];
   for (const saved of items ?? []) {
     const ex = exerciseLibrary.find((item) => item.slug === saved.exercise_slug) ?? exerciseLibrary.find((item) => item.name === saved.exercise_name);
@@ -164,11 +169,11 @@ const hydrateActive = (items: ActiveSavedItem[]): BuilderItem[] => {
       id: saved.id ?? `${ex.slug}-${makeId()}`,
       exercise: ex,
       strengthSets: ex.metric_type === 'strength'
-        ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10', done: false }]).map((set) => ({ id: set.id ?? makeId(), weight: set.weight ?? '', reps: set.reps ?? '10', done: !!set.done }))
+        ? (saved.strength_sets?.length ? saved.strength_sets : [{ weight: '', reps: '10', done: false }]).map((set) => ({ id: set.id ?? makeId(), weight: set.weight === '' || set.weight == null ? '' : String(Math.round(kgToDisplay(Number(set.weight), weightUnit) * 100) / 100), reps: set.reps ?? '10', done: !!set.done }))
         : [],
-      distance: saved.distance ?? '',
+      distance: saved.distance === '' || saved.distance == null ? '' : String(Math.round(kmToDisplay(Number(saved.distance), distanceUnit) * 100) / 100),
       duration: saved.duration ?? '',
-      load: saved.load ?? '',
+      load: saved.load === '' || saved.load == null ? '' : String(Math.round(kgToDisplay(Number(saved.load), weightUnit) * 100) / 100),
       done: !!saved.done,
     });
   }
@@ -182,7 +187,7 @@ export default function WorkoutTab({
   profile: Profile;
   onProfileChanged: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [screen, setScreen] = useState<ScreenMode>('browse');
   const [detailTab, setDetailTab] = useState<DetailTab>('sets');
@@ -203,6 +208,9 @@ export default function WorkoutTab({
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
+  const [prEvents, setPrEvents] = useState<NewPrEvent[]>([]);
+  const [prSessionId, setPrSessionId] = useState<string | null>(null);
+  const [pendingWorkoutShare, setPendingWorkoutShare] = useState<{sessionId:string;summary:string}|null>(null);
   const activeStorageKey = `fithub_active_workout_${profile.id}`;
   const activeRevisionKey = `fithub_active_revision_${profile.id}`;
 
@@ -238,11 +246,28 @@ export default function WorkoutTab({
   };
 
   useEffect(() => {
+    const pendingPrKey = `fithub_pending_pr_${profile.id}`;
+    Storage.getItem(pendingPrKey).then((raw) => {
+      if (!raw) return;
+      try {
+        const pending = JSON.parse(raw);
+        if (Array.isArray(pending?.events) && pending.events.length && pending?.sessionId) {
+          setPrEvents(pending.events);
+          setPrSessionId(String(pending.sessionId));
+          setPendingWorkoutShare({ sessionId: String(pending.sessionId), summary: String(pending.summary ?? 'Workout') });
+        }
+      } catch {} finally {
+        Storage.removeItem(pendingPrKey).catch(() => {});
+      }
+    }).catch(() => {});
+  }, [profile.id]);
+
+  useEffect(() => {
     Storage.getItem(activeStorageKey).then((raw) => {
       if (!raw) return;
       try {
         const saved = JSON.parse(raw) as ActiveSavedState;
-        const restored = hydrateActive(saved.items);
+        const restored = hydrateActive(saved.items, weightUnit, distanceUnit);
         if (!saved.started_at || !restored.length) return;
         setBuilder(restored);
         setTemplateName(saved.template_name ?? 'Workout');
@@ -254,7 +279,7 @@ export default function WorkoutTab({
         setScreen('active');
       } catch {}
     }).catch(() => {});
-  }, [profile.id]);
+  }, [profile.id, weightUnit, distanceUnit]);
 
   useEffect(() => {
     const loadLast = async () => {
@@ -290,14 +315,14 @@ export default function WorkoutTab({
             ex.metric_type === 'strength'
               ? rows.map((row) => ({
                   id: makeId(),
-                  weight: row.weight_kg == null ? '' : String(row.weight_kg),
+                  weight: row.weight_kg == null ? '' : String(Math.round(kgToDisplay(Number(row.weight_kg), weightUnit) * 100) / 100),
                   reps: row.reps == null ? '' : String(row.reps),
                   done: false,
                 }))
               : [],
-          distance: rows[0]?.distance_km == null ? '' : String(rows[0].distance_km),
+          distance: rows[0]?.distance_km == null ? '' : String(Math.round(kmToDisplay(Number(rows[0].distance_km), distanceUnit) * 100) / 100),
           duration: rows[0]?.duration_min == null ? '' : String(rows[0].duration_min),
-          load: rows[0]?.weight_kg == null ? '' : String(rows[0].weight_kg),
+          load: rows[0]?.weight_kg == null ? '' : String(Math.round(kgToDisplay(Number(rows[0].weight_kg), weightUnit) * 100) / 100),
           done: false,
         });
       }
@@ -322,7 +347,9 @@ export default function WorkoutTab({
       editing_template_id: editingTemplateId,
       active_index: Math.min(activeExerciseIndex, Math.max(0, builder.length - 1)),
       revision,
-      items: serializeActive(builder),
+      weight_unit: weightUnit,
+      distance_unit: distanceUnit,
+      items: serializeActive(builder, weightUnit, distanceUnit),
     };
     setActiveRevision(revision);
     Storage.setItem(activeStorageKey, JSON.stringify(saved)).catch(() => {});
@@ -333,9 +360,9 @@ export default function WorkoutTab({
       if (current.exercise.metric_type === 'strength') {
         const next = current.strengthSets.findIndex((set) => !set.done);
         const set = current.strengthSets[Math.max(0, next >= 0 ? next : current.strengthSets.length - 1)];
-        if (set) detail = `Set ${Math.max(1, (next >= 0 ? next : current.strengthSets.length - 1) + 1)}/${current.strengthSets.length}${set.weight ? ` • ${set.weight} kg` : ''}${set.reps ? ` × ${set.reps}` : ''}`;
+        if (set) detail = `Set ${Math.max(1, (next >= 0 ? next : current.strengthSets.length - 1) + 1)}/${current.strengthSets.length}${set.weight ? ` • ${set.weight} ${weightUnit}` : ''}${set.reps ? ` × ${set.reps}` : ''}`;
       } else if (current.distance || current.duration) {
-        detail = `${current.distance ? `${current.distance} km` : ''}${current.distance && current.duration ? ' • ' : ''}${current.duration ? `${current.duration} min` : ''}`;
+        detail = `${current.distance ? `${current.distance} ${distanceUnit}` : ''}${current.distance && current.duration ? ' • ' : ''}${current.duration ? `${current.duration} min` : ''}`;
       }
       showActiveWorkoutNotification({
         userId: profile.id,
@@ -365,7 +392,7 @@ export default function WorkoutTab({
       }
       try {
         const saved = JSON.parse(raw) as ActiveSavedState;
-        const restored = hydrateActive(saved.items);
+        const restored = hydrateActive(saved.items, weightUnit, distanceUnit);
         if (!restored.length) return;
         setBuilder(restored);
         setTemplateName(saved.template_name ?? 'Workout');
@@ -551,7 +578,9 @@ export default function WorkoutTab({
       template_name: templateName || 'Workout',
       editing_template_id: editingTemplateId,
       active_index: 0,
-      items: serializeActive(reset),
+      weight_unit: weightUnit,
+      distance_unit: distanceUnit,
+      items: serializeActive(reset, weightUnit, distanceUnit),
     };
     Storage.setItem(activeStorageKey, JSON.stringify(saved)).catch(() => {});
     const first = reset[0];
@@ -620,7 +649,7 @@ export default function WorkoutTab({
       const payload = {
         user_id: profile.id,
         name,
-        plan: serializeBuilder(builder),
+        plan: serializeBuilder(builder, weightUnit, distanceUnit),
         updated_at: new Date().toISOString(),
       };
       if (editingTemplateId) {
@@ -650,7 +679,7 @@ export default function WorkoutTab({
   };
 
   const editSavedWorkout = (saved: SavedWorkout) => {
-    setBuilder(hydratePlan(saved.plan));
+    setBuilder(hydratePlan(saved.plan, weightUnit, distanceUnit));
     setTemplateName(saved.name);
     setEditingTemplateId(saved.id);
     setShowSaveForm(false);
@@ -658,7 +687,7 @@ export default function WorkoutTab({
   };
 
   const startSavedWorkout = (saved: SavedWorkout) => {
-    const items = hydratePlan(saved.plan);
+    const items = hydratePlan(saved.plan, weightUnit, distanceUnit);
     setEditingTemplateId(saved.id);
     setTemplateName(saved.name);
     beginWorkout(items);
@@ -739,6 +768,26 @@ export default function WorkoutTab({
     }
   };
 
+  const postPrInApp = async () => {
+    if (!prSessionId || !prEvents.length) return;
+    const normalSummary = pendingWorkoutShare?.summary ?? prEvents.map((x) => x.exercise_name).join(', ');
+    const caption = `🏆 New PR • ${prEvents.slice(0,3).map((event) => {
+      if (event.metric === 'max_weight') return `${event.exercise_name}: ${formatWeight(Number(event.value_numeric), weightUnit)}${event.details?.reps ? ` × ${event.details.reps}` : ''}`;
+      if (event.metric === 'reps_at_weight') return `${event.exercise_name}: ${formatWeight(Number(event.details?.weight_kg ?? 0), weightUnit)} × ${event.value_numeric} reps`;
+      if (event.metric === 'distance') return `${event.exercise_name}: ${formatDistance(Number(event.value_numeric), distanceUnit)}`;
+      if (event.metric === 'pace') return `${event.exercise_name}: ${formatPace(Number(event.value_numeric), distanceUnit)}`;
+      return `${event.exercise_name}: ${event.value_numeric} ${event.unit}`;
+    }).join(' • ')}`;
+    const { error } = await supabase.from('workout_posts').insert({ user_id: profile.id, session_id: prSessionId, summary: normalSummary, caption, photo_path: null });
+    if (error) Alert.alert('PR post', error.message); else Alert.alert('Shared', 'Your PR was posted to your FitHub friends.');
+  };
+
+  const closePrCelebration = () => {
+    const pending = pendingWorkoutShare;
+    setPrEvents([]); setPrSessionId(null); setPendingWorkoutShare(null);
+    if (pending) offerWorkoutShare(pending.sessionId, pending.summary);
+  };
+
   const offerWorkoutShare = (sessionId: string, summary: string) => {
     Alert.alert('Workout complete', 'Your workout is saved. Would you like to share the stats with your friends?', [
       { text: 'Keep private', style: 'cancel' },
@@ -789,7 +838,7 @@ export default function WorkoutTab({
               exercise_id: null,
               exercise_name: item.exercise.name,
               set_number: index + 1,
-              weight_kg: set.weight === '' ? 0 : Number(set.weight),
+              weight_kg: set.weight === '' ? 0 : displayToKg(Number(set.weight), weightUnit),
               reps: Number(set.reps),
               distance_km: null,
               duration_min: null,
@@ -802,17 +851,20 @@ export default function WorkoutTab({
             exercise_id: null,
             exercise_name: item.exercise.name,
             set_number: 1,
-            weight_kg: item.load ? Number(item.load) : null,
+            weight_kg: item.load ? displayToKg(Number(item.load), weightUnit) : null,
             reps: null,
-            distance_km: item.distance ? Number(item.distance) : null,
+            distance_km: item.distance ? displayToKm(Number(item.distance), distanceUnit) : null,
             duration_min: item.duration ? Number(item.duration) : null,
           });
         }
       });
+      let insertedRows: any[] = [];
       if (rows.length) {
-        const { error: setError } = await supabase.from('workout_sets').insert(rows);
+        const { data: inserted, error: setError } = await supabase.from('workout_sets').insert(rows).select('id,exercise_name,weight_kg,reps,distance_km,duration_min');
         if (setError) throw setError;
+        insertedRows = inserted ?? rows;
       }
+      const newPrs = insertedRows.length ? await detectAndSavePrEvents({ userId: profile.id, sessionId: session.id, rows: insertedRows, age: profile.age }) : [];
       await recordWorkoutDay(profile.id);
       await supabase.rpc('apply_workout_to_challenges', { p_session_id: session.id });
       setLastWorkout(
@@ -835,7 +887,8 @@ export default function WorkoutTab({
       await Storage.setItem(activeRevisionKey, String(revision)).catch(() => {});
       await clearActiveWorkoutNotification(profile.id).catch(() => {});
       onProfileChanged();
-      offerWorkoutShare(session.id, summary);
+      if (newPrs.length) { setPrEvents(newPrs); setPrSessionId(session.id); setPendingWorkoutShare({ sessionId: session.id, summary }); }
+      else offerWorkoutShare(session.id, summary);
     } catch (error: any) {
       Alert.alert('Could not save workout', error?.message ?? 'Please try again.');
     } finally {
@@ -844,10 +897,13 @@ export default function WorkoutTab({
   };
 
 
+  const celebrationModal = <PRCelebrationModal visible={prEvents.length > 0} events={prEvents} sessionId={prSessionId} onClose={closePrCelebration} onPostInApp={postPrInApp} />;
+
   if (screen === 'detail' && detailExercise) {
     const item = getItem(detailExercise);
     const img = detailExercise.visualKey ? figureImages[detailExercise.visualKey] : undefined;
     return (
+      <>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
           <View style={styles.detailHeader}>
@@ -924,6 +980,8 @@ export default function WorkoutTab({
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
+      {celebrationModal}
+      </>
     );
   }
 
@@ -931,6 +989,7 @@ export default function WorkoutTab({
     const current = builder[activeExerciseIndex];
     const img = current?.exercise.visualKey ? figureImages[current.exercise.visualKey] : undefined;
     return (
+      <>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.activeWrap} keyboardShouldPersistTaps="handled">
           <View style={styles.activeHeader}>
@@ -1082,10 +1141,13 @@ export default function WorkoutTab({
           </View>
         </Modal>
       </KeyboardAvoidingView>
+      {celebrationModal}
+      </>
     );
   }
 
   return (
+    <>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
         <View style={styles.browseHeader}>
@@ -1100,7 +1162,7 @@ export default function WorkoutTab({
 
         {activeStartedAt ? <Card style={styles.activeResumeCard}>
           <View style={{flex:1}}><Text style={styles.activeResumeTitle}>ACTIVE WORKOUT</Text><Text style={styles.activeResumeName}>{templateName || 'Workout'}</Text><Text style={styles.activeResumeMeta}>{formatTime(elapsed)} • {builder[activeExerciseIndex]?.exercise.name ?? 'In progress'}</Text></View>
-          <View style={styles.activeResumeActions}><Pressable onPress={() => setScreen('active')} style={styles.activeResumeButton}><Text style={styles.activeResumeButtonText}>RESUME</Text></Pressable><Pressable onPress={() => Alert.alert('Delete workout?', 'This active workout will be removed and the notification will stop.', [{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:deleteActiveWorkout}])}><Text style={styles.activeResumeDelete}>Delete</Text></Pressable></View>
+          <View style={styles.activeResumeActions}><Pressable onPress={() => setScreen('active')} style={styles.activeResumeButton}><Text style={[styles.activeResumeButtonText,{color:contrastText(colors.primary)}]}>RESUME</Text></Pressable><Pressable onPress={() => Alert.alert('Delete workout?', 'This active workout will be removed and the notification will stop.', [{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:deleteActiveWorkout}])}><Text style={styles.activeResumeDelete}>Delete</Text></Pressable></View>
         </Card> : null}
 
         {savedWorkouts.length ? (
@@ -1116,7 +1178,7 @@ export default function WorkoutTab({
                     {(saved.plan ?? []).map((item) => item.exercise_name).join(' • ')}
                   </Text>
                   <Pressable onPress={() => startSavedWorkout(saved)} style={styles.savedStart}>
-                    <Text style={styles.savedStartText}>START</Text>
+                    <Text style={[styles.savedStartText,{color:contrastText(colors.primary)}]}>START</Text>
                   </Pressable>
                   <View style={styles.savedActions}>
                     <Pressable onPress={() => editSavedWorkout(saved)}><Text style={styles.savedEdit}>Edit</Text></Pressable>
@@ -1157,7 +1219,7 @@ export default function WorkoutTab({
                 <Text style={styles.selectedTitle}>{builder.length} exercise{builder.length === 1 ? '' : 's'} configured</Text>
                 <Text style={styles.selectedMeta}>Save it for later, add another exercise, or start now.</Text>
               </View>
-              <Pressable onPress={startWorkout} style={styles.startSmall}><Text style={styles.startSmallText}>START</Text></Pressable>
+              <Pressable onPress={startWorkout} style={styles.startSmall}><Text style={[styles.startSmallText,{color:contrastText(colors.primary)}]}>START</Text></Pressable>
             </View>
             <View style={styles.builderButtons}>
               <Pressable onPress={openSaveForm} style={styles.saveOutline}>
@@ -1203,6 +1265,8 @@ export default function WorkoutTab({
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    {celebrationModal}
+    </>
   );
 }
 
@@ -1219,13 +1283,13 @@ function SetTable({
   onToggle: (setId: string) => void;
   onRemove: (setId: string) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, weightUnit } = useTheme();
   const styles = createStyles(colors);
   return (
     <View>
       <View style={styles.tableHead}>
         <Text style={styles.setCol}>SET</Text>
-        <Text style={styles.flexCol}>WEIGHT (kg)</Text>
+        <Text style={styles.flexCol}>WEIGHT ({weightUnit})</Text>
         <Text style={styles.flexCol}>REPS</Text>
         <Text style={styles.actionCol}>{active ? '✓ / −' : '−'}</Text>
       </View>
@@ -1264,17 +1328,17 @@ function SetTable({
 }
 
 function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch: Partial<BuilderItem>) => void }) {
-  const { colors } = useTheme();
+  const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   return (
     <View>
       <Text style={styles.cardioHint}>Record the fields that best match this exercise. You can change them during the workout.</Text>
       {item.exercise.allowsLoad ? (
-        <Input value={item.load} onChangeText={(value) => onChange({ load: value })} keyboardType="decimal-pad" placeholder="Load (kg), if used" />
+        <Input value={item.load} onChangeText={(value) => onChange({ load: value })} keyboardType="decimal-pad" placeholder={`Load (${weightUnit}), if used`} />
       ) : null}
       <View style={styles.two}>
         {item.exercise.metric_type === 'distance' ? (
-          <Input style={{ flex: 1 }} value={item.distance} onChangeText={(value) => onChange({ distance: value })} keyboardType="decimal-pad" placeholder="Distance (km)" />
+          <Input style={{ flex: 1 }} value={item.distance} onChangeText={(value) => onChange({ distance: value })} keyboardType="decimal-pad" placeholder={`Distance (${distanceUnit})`} />
         ) : null}
         <Input style={{ flex: 1 }} value={item.duration} onChangeText={(value) => onChange({ duration: value })} keyboardType="decimal-pad" placeholder="Duration (min)" />
       </View>

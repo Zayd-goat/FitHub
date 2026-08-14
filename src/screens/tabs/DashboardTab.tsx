@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Card, useTheme } from '../../components/UI';
+import { Card, contrastText, useTheme } from '../../components/UI';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { estimateActivityEnergyBySession } from '../../lib/calories';
 import { exerciseLibrary, figureImages } from '../../data/exerciseLibrary';
+import { kgToDisplay } from '../../lib/units';
 
 export type HomeProgressFocus = 'overview' | 'prs' | 'badges' | 'streaks';
 export type DailyActivityFocus = 'volume' | 'energy';
@@ -15,10 +16,12 @@ type Props = {
   onViewProgress: (focus?: HomeProgressFocus) => void;
   onViewWorkouts: (sessionId?: string) => void;
   onViewDailyActivity: (focus: DailyActivityFocus) => void;
+  onOpenJourney: (period?: 'week' | 'month') => void;
+  onOpenClubs: () => void;
 };
 
-export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity }: Props) {
-  const { colors } = useTheme();
+export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity, onOpenJourney, onOpenClubs }: Props) {
+  const { colors, hiddenFeatures, weightUnit } = useTheme();
   const styles = createStyles(colors);
   const [weekWorkouts, setWeekWorkouts] = useState(0);
   const [todayVolume, setTodayVolume] = useState(0);
@@ -26,6 +29,9 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
   const [prCount, setPrCount] = useState(0);
   const [recent, setRecent] = useState<any[]>([]);
   const [dayKey, setDayKey] = useState(new Date().toDateString());
+  const [todayPlan, setTodayPlan] = useState<string | null>(null);
+  const [weekPrs, setWeekPrs] = useState(0);
+  const [monthPrs, setMonthPrs] = useState(0);
   const locked = (profile.age ?? 0) < 18;
 
   useEffect(() => {
@@ -41,11 +47,18 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
       const now = new Date();
       const today = new Date(now); today.setHours(0, 0, 0, 0);
       const week = new Date(now); week.setDate(now.getDate() - 6); week.setHours(0, 0, 0, 0);
-      const [sessionRes, weekSetRes, allStrengthRes] = await Promise.all([
+      const month = new Date(now); month.setDate(now.getDate() - 29); month.setHours(0,0,0,0);
+      const [sessionRes, weekSetRes, allStrengthRes, prRes, splitRes] = await Promise.all([
         supabase.from('workout_sessions').select('id,summary,started_at,ended_at').eq('user_id', profile.id).eq('completed', true).order('ended_at', { ascending: false }).limit(50),
         supabase.from('workout_sets').select('session_id,exercise_name,weight_kg,reps,distance_km,duration_min,created_at').eq('user_id', profile.id).gte('created_at', week.toISOString()).limit(3000),
         supabase.from('workout_sets').select('exercise_name,weight_kg,reps').eq('user_id', profile.id).not('weight_kg', 'is', null).gt('weight_kg', 0).limit(3000),
+        supabase.from('pr_events').select('achieved_at').eq('user_id', profile.id).gte('achieved_at', month.toISOString()).limit(1000),
+        supabase.from('workout_split_days').select('label').eq('user_id', profile.id).eq('day_of_week', now.getDay()).maybeSingle(),
       ]);
+      const prRows = prRes.data ?? [];
+      setMonthPrs(prRows.length);
+      setWeekPrs(prRows.filter((x:any)=>new Date(x.achieved_at)>=week).length);
+      setTodayPlan(splitRes.data?.label ?? null);
 
       const sessions = sessionRes.data ?? [];
       const weekSets = weekSetRes.data ?? [];
@@ -75,8 +88,8 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
   const recentFirstExercise = recent[0]?.summary?.split(',')?.[0]?.trim();
   const recentLib = recentFirstExercise ? exerciseLibrary.find((x) => x.name === recentFirstExercise) : undefined;
   const heroImage = recentLib?.visualKey ? figureImages[recentLib.visualKey] : figureImages.chest;
-  const workoutTitle = recent.length ? sessionTitle(recent[0]?.summary) : 'Start Training';
-  const workoutGroups = recentLib ? `${recentLib.targetArea} • ${recentLib.subsection}` : 'Choose exercises that fit your session';
+  const workoutTitle = todayPlan || (recent.length ? sessionTitle(recent[0]?.summary) : 'Start Training');
+  const workoutGroups = todayPlan ? 'Your planned split for today' : (recentLib ? `${recentLib.targetArea} • ${recentLib.subsection}` : 'Choose exercises that fit your session');
 
   return <ScrollView contentContainerStyle={styles.wrap}>
     <View style={styles.header}>
@@ -87,17 +100,28 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
     </View>
 
     <Card style={styles.heroCard}>
-      <View style={styles.heroLeft}><Text style={styles.smallLabel}>Today's Workout</Text><Text style={styles.heroTitle}>{workoutTitle}</Text><Text style={styles.heroMeta}>{workoutGroups}</Text><Pressable onPress={onStartWorkout} style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}><Text style={styles.startText}>START WORKOUT  ›</Text></Pressable></View>
+      <View style={styles.heroLeft}><Text style={styles.smallLabel}>Today's Workout</Text><Text style={styles.heroTitle}>{workoutTitle}</Text><Text style={styles.heroMeta}>{workoutGroups}</Text><Pressable onPress={onStartWorkout} style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}><Text style={[styles.startText,{color:contrastText(colors.primary)}]}>START WORKOUT  ›</Text></Pressable></View>
       <Image source={heroImage} style={styles.heroFigure}/>
     </Card>
 
     <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Your Progress</Text><Pressable onPress={() => onViewProgress('overview')}><Text style={styles.viewAll}>View all</Text></Pressable></View>
     <View style={styles.statsRow}>
       <Stat label="Workouts" value={`${weekWorkouts}`} sub="This week" accent={colors.blue} icon="◒" onPress={() => onViewWorkouts()} />
-      <Stat label="Volume" value={todayVolume > 999 ? `${(todayVolume / 1000).toFixed(1)}k` : `${todayVolume}`} sub="kg today" accent={colors.blue} icon="↗" onPress={() => onViewDailyActivity('volume')} />
-      <Stat label="Activity" value={locked ? '—' : `~${todayEnergy}`} sub={locked ? '18+ estimate' : 'est. kcal today'} accent={colors.primary} icon="◉" onPress={locked ? undefined : () => onViewDailyActivity('energy')} />
+      <Stat label="Volume" value={kgToDisplay(todayVolume, weightUnit) > 999 ? `${(kgToDisplay(todayVolume, weightUnit) / 1000).toFixed(1)}k` : `${Math.round(kgToDisplay(todayVolume, weightUnit))}`} sub={`${weightUnit} today`} accent={colors.blue} icon="↗" onPress={() => onViewDailyActivity('volume')} />
+      {!hiddenFeatures.includes('activity') ? <Stat label="Activity" value={locked ? '—' : `~${todayEnergy}`} sub={locked ? '18+ estimate' : 'est. kcal today'} accent={colors.primary} icon="◉" onPress={locked ? undefined : () => onViewDailyActivity('energy')} /> : null}
       <Stat label="PR lifts" value={`${prCount}`} sub="Recorded" accent={colors.gold} icon="🏆" onPress={() => onViewProgress('prs')} />
     </View>
+
+
+    {!hiddenFeatures.includes('journey') ? <>
+      <View style={styles.sectionRow}><Text style={styles.sectionTitle}>My Fitness Journey</Text><Pressable onPress={() => onOpenJourney('week')}><Text style={styles.viewAll}>Open</Text></Pressable></View>
+      <View style={styles.reportRow}>
+        <Pressable onPress={() => onOpenJourney('week')} style={({pressed})=>[styles.reportCard,pressed&&styles.pressed]}><Text style={styles.reportEyebrow}>WEEKLY REPORT</Text><Text style={styles.reportTitle}>{weekWorkouts} workouts • {weekPrs} PR{weekPrs===1?'':'s'}</Text><Text style={styles.reportSub}>See lift highlights, consistency and recommendations ›</Text></Pressable>
+        <Pressable onPress={() => onOpenJourney('month')} style={({pressed})=>[styles.reportCard,pressed&&styles.pressed]}><Text style={styles.reportEyebrow}>MONTHLY REPORT</Text><Text style={styles.reportTitle}>{monthPrs} PR{monthPrs===1?'':'s'} this month</Text><Text style={styles.reportSub}>Review improvements across the last 30 days ›</Text></Pressable>
+      </View>
+    </> : null}
+
+    {!hiddenFeatures.includes('clubs') && (profile.age ?? 0) >= 18 ? <Pressable onPress={onOpenClubs} style={({pressed})=>pressed?styles.pressed:undefined}><Card><View style={styles.cardTitleRow}><View><Text style={styles.sectionTitle}>Clubs</Text><Text style={styles.goalText}>Bench, squat, deadlift and overhead-press milestone clubs</Text></View><Text style={styles.cardArrow}>›</Text></View></Card></Pressable> : null}
 
     <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Recent Workouts</Text><Pressable onPress={() => onViewWorkouts()}><Text style={styles.viewAll}>View more</Text></Pressable></View>
     {recent.length ? recent.map((s: any) => <RecentWorkout key={s.id} session={s} onPress={() => onViewWorkouts(s.id)} />) : <Card style={styles.recentCard}><View style={styles.recentIcon}><Image source={require('../../../assets/nav/workout.png')} style={[styles.recentIconImage, { tintColor: colors.text }]}/></View><View style={{ flex: 1 }}><Text style={styles.recentName}>No recent workout</Text><Text style={styles.recentMeta}>This section clears after 7 days without a workout. Your full history is still saved.</Text></View></Card>}
@@ -134,5 +158,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5, marginBottom: 9 }, sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' }, viewAll: { color: colors.blue, fontSize: 11, fontWeight: '900' },
   statsRow: { flexDirection: 'row', gap: 7, marginBottom: 16 }, statPress: { flex: 1, minWidth: 0 }, stat: { flex: 1, minWidth: 0, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 10 }, statTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, statArrow: { color: colors.muted, fontSize: 15, fontWeight: '800' }, statIcon: { fontSize: 15, fontWeight: '900' }, statLabel: { color: colors.muted, fontSize: 9, marginTop: 6 }, statValue: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 2 }, statSub: { color: colors.muted, fontSize: 8, marginTop: 2 },
   recentCard: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 }, recentIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, recentIconImage: { width: 20, height: 20, resizeMode: 'contain' }, recentName: { color: colors.text, fontWeight: '900', fontSize: 14 }, recentMeta: { color: colors.muted, fontSize: 10, marginTop: 3, lineHeight: 14 }, done: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }, doneText: { color: '#fff', fontWeight: '900' },
+  reportRow: { gap: 8, marginBottom: 14 }, reportCard: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 13 }, reportEyebrow: { color: colors.primary, fontWeight: '900', fontSize: 9 }, reportTitle: { color: colors.text, fontWeight: '900', fontSize: 15, marginTop: 5 }, reportSub: { color: colors.muted, fontSize: 10, marginTop: 4, lineHeight: 14 },
   cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, cardArrow: { color: colors.muted, fontSize: 24, fontWeight: '500' }, goalText: { color: colors.muted, marginTop: 4, fontSize: 12 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginTop: 12 }, fill: { height: '100%', backgroundColor: colors.green }, pressed: { opacity: 0.68 },
 });

@@ -10,7 +10,7 @@ import MainApp from './src/screens/MainApp';
 import { ThemeProvider, useTheme } from './src/components/UI';
 
 function AppContent() {
-  const { colors } = useTheme();
+  const { colors, syncUserPreferences } = useTheme();
   const styles = StyleSheet.create({
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
     loading: { color: colors.text, marginTop: 12, fontSize: 16 }
@@ -45,6 +45,11 @@ function AppContent() {
     });
     return () => { mounted = false; listener.subscription.unsubscribe(); };
   }, []);
+
+
+  useEffect(() => {
+    if (sessionUserId) syncUserPreferences(sessionUserId).catch(() => {});
+  }, [sessionUserId]);
 
   if (loading) return <SafeAreaView style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.loading}>Opening FitHub…</Text></SafeAreaView>;
   if (!sessionUserId) return <AuthScreen />;
