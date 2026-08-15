@@ -5,7 +5,7 @@ async function accessToken(){
  if(token&&token.expires>Date.now()+60000)return token.value;
  const id=Deno.env.get('FATSECRET_CLIENT_ID'),secret=Deno.env.get('FATSECRET_CLIENT_SECRET');
  if(!id||!secret)throw new Error('FatSecret server secrets are not configured');
- const body=new URLSearchParams({grant_type:'client_credentials',scope:'basic'});
+ const body=new URLSearchParams({grant_type:'client_credentials',scope:Deno.env.get('FATSECRET_SCOPES')??'basic'});
  const r=await fetch('https://oauth.fatsecret.com/connect/token',{method:'POST',headers:{Authorization:'Basic '+btoa(id+':'+secret),'Content-Type':'application/x-www-form-urlencoded'},body});
  if(!r.ok)throw new Error('Nutrition provider authentication failed ('+r.status+')');
  const j=await r.json();token={value:j.access_token,expires:Date.now()+Number(j.expires_in??3600)*1000};return token.value;
@@ -17,8 +17,9 @@ serve(async req=>{
  try{
   if(!req.headers.get('authorization'))return new Response(JSON.stringify({error:'Sign in required'}),{status:401,headers:cors});
   const input=await req.json(),action=input.action??'search',access=await accessToken();let url='https://platform.fatsecret.com/rest/';
-  if(action==='search'){const p=new URLSearchParams({method:'foods.search.v5',search_expression:String(input.query??''),format:'json',page_number:String(input.page??0),max_results:'25'});if(input.region)p.set('region',String(input.region));if(input.language)p.set('language',String(input.language));url+='server.api?'+p;}
-  else if(action==='food')url+='food/v5?food_id='+encodeURIComponent(input.food_id)+'&format=json'+(input.region?'&region='+encodeURIComponent(input.region):'');
+  const localized=(Deno.env.get('FATSECRET_SCOPES')??'basic').split(/\s+/).includes('localization');
+  if(action==='search'){const p=new URLSearchParams({method:'foods.search.v5',search_expression:String(input.query??''),format:'json',page_number:String(input.page??0),max_results:'25'});if(localized&&input.region)p.set('region',String(input.region));if(localized&&input.language)p.set('language',String(input.language));url+='server.api?'+p;}
+  else if(action==='food')url+='food/v5?food_id='+encodeURIComponent(input.food_id)+'&format=json'+(localized&&input.region?'&region='+encodeURIComponent(input.region):'');
   else if(action==='barcode')url+='server.api?method=food.find_id_for_barcode.v2&barcode='+encodeURIComponent(input.barcode)+'&format=json';
   else return new Response(JSON.stringify({error:'Unsupported action'}),{status:400,headers:cors});
   const r=await fetch(url,{headers:{Authorization:'Bearer '+access}});if(!r.ok)throw new Error('Nutrition provider returned '+r.status);const j=await r.json();
