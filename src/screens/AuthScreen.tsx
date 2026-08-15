@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { Button, Card, Input, useTheme } from '../components/UI';
 
@@ -68,6 +68,9 @@ export default function AuthScreen() {
             <Button title={mode === 'signin' ? 'Create an account' : 'I already have an account'} onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')} secondary />
           </Card>
           <Text style={styles.foot}>FitHub fitness estimates are informational and are not medical advice.</Text>
+          <Pressable onPress={() => Linking.openURL('https://platform.fatsecret.com')}>
+            <Text style={styles.attribution}>Nutrition information powered by fatsecret Platform API</Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -82,5 +85,6 @@ const createStyles = (colors: any) => StyleSheet.create({
   tag: { color: colors.cyan, fontWeight: '800', marginBottom: 24 },
   heading: { color: colors.text, fontSize: 22, fontWeight: '900', marginBottom: 4 },
   muted: { color: colors.muted, marginBottom: 16 },
-  foot: { color: colors.muted, fontSize: 12, textAlign: 'center', maxWidth: 340, lineHeight: 17 }
+  foot: { color: colors.muted, fontSize: 12, textAlign: 'center', maxWidth: 340, lineHeight: 17 },
+  attribution: { color: colors.blue, fontSize: 11, textAlign: 'center', marginTop: 10, textDecorationLine: 'underline' }
 });
