@@ -27,3 +27,12 @@
 - npm dependency install completed.
 - Strict TypeScript application check passes. Supabase Deno functions are checked/deployed separately.
 - Physical pedometer, barcode camera and FTMS testing still require a real Android build/device.
+# Queued update patch — 15 August 2026
+
+- Clubs now show only memberships the user has earned from completed-workout PR data.
+- PR celebrations show newly unlocked major-lift Clubs; active member totals use recent qualifying activity.
+- Food diary entries can be removed with confirmation and totals refresh afterward.
+- Supplements include a taken/missed calendar, in-app corrections, and a Taken notification action.
+- Friends can enable post and PR alerts separately for each friend.
+- Workout History includes a calendar and opens the exact completed workout with all recorded sets/results.
+- Android versionCode increased to 10.

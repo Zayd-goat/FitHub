@@ -8,6 +8,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import MainApp from './src/screens/MainApp';
 import { ThemeProvider, useTheme } from './src/components/UI';
+import { registerFriendPushToken } from './src/lib/notifications';
 
 function AppContent() {
   const { colors, syncUserPreferences } = useTheme();
@@ -48,7 +49,7 @@ function AppContent() {
 
 
   useEffect(() => {
-    if (sessionUserId) syncUserPreferences(sessionUserId).catch(() => {});
+    if (sessionUserId) { syncUserPreferences(sessionUserId).catch(() => {}); registerFriendPushToken(sessionUserId).catch(()=>{}); }
   }, [sessionUserId]);
 
   if (loading) return <SafeAreaView style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.loading}>Opening FitHub…</Text></SafeAreaView>;
