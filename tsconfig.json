@@ -4,5 +4,6 @@
     "strict": true,
     "noUncheckedIndexedAccess": false,
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["supabase/functions"]
 }

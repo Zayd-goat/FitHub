@@ -387,3 +387,53 @@ where not exists(select 1 from public.challenges where preset=true and title='10
 insert into public.challenges(created_by,title,description,metric,target_value,unit,start_date,end_date,preset,visibility)
 select null,'Strength 8','Complete eight resistance-training sessions.','strength_sessions',8,'sessions',now(),now()+interval '10 years',true,'public'
 where not exists(select 1 from public.challenges where preset=true and title='Strength 8');
+
+-- ---------- 2026-08-09 app update ----------
+alter table public.profiles add column if not exists weight_unit text default 'kg' check (weight_unit in ('kg','lb'));
+alter table public.profiles add column if not exists height_unit text default 'cm' check (height_unit in ('cm','in'));
+
+create table if not exists public.tracked_pr_exercises (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  exercise_name text not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, exercise_name)
+);
+alter table public.tracked_pr_exercises enable row level security;
+drop policy if exists "tracked pr own" on public.tracked_pr_exercises;
+create policy "tracked pr own" on public.tracked_pr_exercises for all to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
+
+create or replace function public.get_friend_feed_v2()
+returns table(id uuid,user_id uuid,session_id uuid,username text,avatar_url text,summary text,created_at timestamptz,started_at timestamptz,ended_at timestamptz,exercise_count bigint,total_sets bigint,total_volume numeric,total_distance numeric,exercise_names text)
+language sql stable security definer set search_path = public as $$
+  select wp.id,wp.user_id,wp.session_id,pp.username::text,pp.avatar_url,wp.summary,wp.created_at,ws.started_at,ws.ended_at,
+    count(distinct wset.exercise_name),count(wset.id),
+    coalesce(sum(coalesce(wset.weight_kg,0)*coalesce(wset.reps,0)),0),
+    coalesce(sum(coalesce(wset.distance_km,0)),0),
+    coalesce(string_agg(distinct wset.exercise_name, ', '),wp.summary)
+  from public.workout_posts wp
+  join public.public_profiles pp on pp.user_id=wp.user_id
+  join public.workout_sessions ws on ws.id=wp.session_id
+  left join public.workout_sets wset on wset.session_id=wp.session_id
+  where wp.user_id=auth.uid() or public.are_friends(auth.uid(),wp.user_id)
+  group by wp.id,wp.user_id,wp.session_id,pp.username,pp.avatar_url,wp.summary,wp.created_at,ws.started_at,ws.ended_at
+  order by wp.created_at desc limit 60;
+$$;
+grant execute on function public.get_friend_feed_v2() to authenticated;
+
+-- ---------- Saved workout templates ----------
+create table if not exists public.workout_templates (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null check (char_length(trim(name)) between 1 and 80),
+  plan jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.workout_templates enable row level security;
+drop policy if exists "workout templates own" on public.workout_templates;
+create policy "workout templates own" on public.workout_templates
+  for all to authenticated
+  using (user_id=auth.uid())
+  with check (user_id=auth.uid());
+create index if not exists workout_templates_user_updated_idx
+  on public.workout_templates(user_id, updated_at desc);

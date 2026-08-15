@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Linking, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, BackHandler, Image, Linking, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Profile } from '../lib/types';
 import { useTheme } from '../components/UI';
 import { supabase } from '../lib/supabase';
@@ -16,6 +16,9 @@ import ClubsScreen from './ClubsScreen';
 import SupplementRemindersScreen from './SupplementRemindersScreen';
 import WorkoutSplitScreen from './WorkoutSplitScreen';
 import CustomizationScreen from './CustomizationScreen';
+import StepsScreen from './StepsScreen';
+import StepGroupsScreen from './StepGroupsScreen';
+import SharedGymScreen from './SharedGymScreen';
 
 const allTabs = [
   ['home', require('../../assets/nav/home.png'), 'Home'],
@@ -26,7 +29,7 @@ const allTabs = [
 ] as const;
 
 type Tab = typeof allTabs[number][0];
-type Page = 'main' | 'progress' | 'history' | 'daily' | 'journey' | 'clubs' | 'supplements' | 'split' | 'customize';
+type Page = 'main' | 'progress' | 'history' | 'daily' | 'journey' | 'clubs' | 'supplements' | 'split' | 'customize' | 'steps' | 'stepGroups' | 'sharedGym';
 const localDateKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 export default function MainApp({ profile, onProfileChanged }: { profile: Profile; onProfileChanged: () => void }) {
@@ -40,6 +43,15 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
   const styles = createStyles(colors);
 
   const tabs = useMemo(() => allTabs.filter(([key]) => key !== 'food' || !hiddenFeatures.includes('food')).filter(([key]) => key !== 'friends' || !hiddenFeatures.includes('friends')), [hiddenFeatures]);
+
+  useEffect(() => {
+    const sub=BackHandler.addEventListener('hardwareBackPress',()=>{
+      if(page!=='main'){setPage('main');return true;}
+      if(tab!=='home'){setTab('home');return true;}
+      return false;
+    });
+    return()=>sub.remove();
+  },[page,tab]);
 
   useEffect(() => {
     if ((tab === 'food' && hiddenFeatures.includes('food')) || (tab === 'friends' && hiddenFeatures.includes('friends'))) setTab('home');
@@ -90,12 +102,15 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
        page === 'clubs' ? <ClubsScreen profile={profile} onBack={() => setPage('main')} /> :
        page === 'supplements' ? <SupplementRemindersScreen profile={profile} onBack={() => setPage('main')} /> :
        page === 'split' ? <WorkoutSplitScreen profile={profile} onBack={() => setPage('main')} /> :
-       page === 'customize' ? <CustomizationScreen onBack={() => setPage('main')} /> : <>
+       page === 'customize' ? <CustomizationScreen onBack={() => setPage('main')} /> :
+       page === 'steps' ? <StepsScreen profile={profile} onBack={() => setPage('main')} onGroups={()=>setPage('stepGroups')} /> :
+       page === 'stepGroups' ? <StepGroupsScreen profile={profile} onBack={()=>setPage('steps')} /> :
+       page === 'sharedGym' ? <SharedGymScreen profile={profile} onBack={()=>setPage('main')} /> : <>
         {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => chooseTab('workout')} onViewProgress={openProgress} onViewWorkouts={openHistory} onViewDailyActivity={openDaily} onOpenJourney={openJourney} onOpenClubs={() => setPage('clubs')} />}
         {tab === 'food' && <FoodTab profile={profile} />}
         {tab === 'workout' && <WorkoutTab profile={profile} onProfileChanged={onProfileChanged} />}
         {tab === 'friends' && <FriendsTab profile={profile} />}
-        {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => setPage('clubs')} onOpenJourney={openJourney} />}
+        {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => setPage('clubs')} onOpenJourney={openJourney} onOpenSteps={() => setPage('steps')} onOpenSharedGym={()=>setPage('sharedGym')} />}
       </>}
     </View>
     <View style={styles.nav}>{tabs.map(([key, icon, label]) => { const active = page === 'main' && tab === key; return <Pressable key={key} onPress={() => chooseTab(key)} style={styles.navItem}><Image source={icon} style={[styles.navIcon, { tintColor: active ? colors.primary : colors.muted }]} /><Text style={[styles.navLabel, active && { color: colors.primary, fontWeight: '900' }]}>{label}</Text></Pressable>; })}</View>
