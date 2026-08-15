@@ -12,6 +12,8 @@ jobs:
     env:
       EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      # Optional public FitHub landing/store page used in external PR shares.
+      EXPO_PUBLIC_FITHUB_DOWNLOAD_URL: ${{ vars.EXPO_PUBLIC_FITHUB_DOWNLOAD_URL }}
       CI: 1
 
     steps:
@@ -44,19 +46,22 @@ jobs:
           test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" || (echo "Missing EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY GitHub secret" && exit 1)
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Type-check application
+        run: npm run typecheck
 
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
-      - name: Build standalone FitHub APK
+      - name: Build installable debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Copy APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk FitHub.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk FitHub.apk
 
       - name: Upload FitHub APK
         uses: actions/upload-artifact@v4
