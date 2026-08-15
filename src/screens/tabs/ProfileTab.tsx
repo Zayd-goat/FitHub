@@ -14,9 +14,11 @@ type Props = {
   onOpenSplit: () => void;
   onOpenClubs: () => void;
   onOpenJourney: () => void;
+  onOpenSteps: () => void;
+  onOpenSharedGym: () => void;
 };
 
-export default function ProfileTab({ profile, onProfileChanged, onOpenCustomization, onOpenSupplements, onOpenSplit, onOpenClubs, onOpenJourney }: Props) {
+export default function ProfileTab({ profile, onProfileChanged, onOpenCustomization, onOpenSupplements, onOpenSplit, onOpenClubs, onOpenJourney, onOpenSteps, onOpenSharedGym }: Props) {
   const { colors, themeKey, hiddenFeatures } = useTheme();
   const styles = createStyles(colors);
   const [busy, setBusy] = useState(false);
@@ -77,6 +79,8 @@ export default function ProfileTab({ profile, onProfileChanged, onOpenCustomizat
       {!hiddenFeatures.includes('supplements') ? <SettingsRow title="Supplement reminders" sub="Choose your own reminder label and daily time" onPress={onOpenSupplements}/> : null}
       <SettingsRow title="Workout split" sub="Set Push / Pull / Legs / Rest or your own weekly schedule" onPress={onOpenSplit}/>
       {!hiddenFeatures.includes('journey') ? <SettingsRow title="My Fitness Journey" sub="Weekly and monthly training reports" onPress={onOpenJourney}/> : null}
+      {!hiddenFeatures.includes('steps') ? <SettingsRow title="Steps & groups" sub="Hardware pedometer, history and private friend leaderboards" onPress={onOpenSteps}/> : null}
+      <SettingsRow title="Shared gym sessions" sub="Invite friends and approve a joint completed-workout post" onPress={onOpenSharedGym}/>
       {!hiddenFeatures.includes('clubs') ? <SettingsRow title="Clubs" sub="Adult load-based milestones unlocked from PRs" onPress={onOpenClubs}/> : null}
     </Card>
 

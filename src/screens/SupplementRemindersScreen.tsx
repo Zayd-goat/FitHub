@@ -30,16 +30,19 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
   const [name, setName] = useState('');
   const [time, setTime] = useState('08:00');
   const [busy, setBusy] = useState(false);
+  const [checkins,setCheckins]=useState<any[]>([]);
+  const [month,setMonth]=useState(()=>new Date());
   const adult = (profile.age ?? 0) >= 18;
 
   const load = async () => {
-    const { data } = await supabase.from('supplement_reminders').select('*').eq('user_id', profile.id).order('reminder_hour').order('reminder_minute');
+    const [{ data },{data:checks}] = await Promise.all([supabase.from('supplement_reminders').select('*').eq('user_id', profile.id).order('reminder_hour').order('reminder_minute'),supabase.from('supplement_checkins').select('*').eq('user_id',profile.id).order('local_date',{ascending:false}).limit(400)]);
     const reminders = (data ?? []) as Reminder[];
     setRows(reminders);
+    setCheckins(checks??[]);
     // Re-create enabled local schedules when this screen is opened (useful after reinstall/device changes).
     for (const row of reminders.filter((item) => item.enabled)) {
       try {
-        const notificationId = await scheduleDailySupplementReminder({ identifier: row.notification_id, supplementName: row.supplement_name, hour: row.reminder_hour, minute: row.reminder_minute });
+        const notificationId = await scheduleDailySupplementReminder({ identifier: row.notification_id, supplementName: row.supplement_name, hour: row.reminder_hour, minute: row.reminder_minute, userId:profile.id, reminderId:row.id });
         if (notificationId && notificationId !== row.notification_id) {
           await supabase.from('supplement_reminders').update({ notification_id: notificationId, updated_at: new Date().toISOString() }).eq('id', row.id).eq('user_id', profile.id);
         }
@@ -54,9 +57,10 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
     if (!supplement || !parsed) return Alert.alert('Check reminder', 'Enter a supplement name and a time like 08:00.');
     setBusy(true);
     try {
-      const notificationId = await scheduleDailySupplementReminder({ supplementName: supplement, hour: parsed.h, minute: parsed.m });
-      const { error } = await supabase.from('supplement_reminders').insert({ user_id: profile.id, supplement_name: supplement, reminder_hour: parsed.h, reminder_minute: parsed.m, enabled: true, notification_id: notificationId });
-      if (error) { await cancelSupplementReminder(notificationId); throw error; }
+      const { data:created,error } = await supabase.from('supplement_reminders').insert({ user_id: profile.id, supplement_name: supplement, reminder_hour: parsed.h, reminder_minute: parsed.m, enabled: true }).select('id').single();
+      if (error) throw error;
+      const notificationId = await scheduleDailySupplementReminder({ supplementName: supplement, hour: parsed.h, minute: parsed.m,userId:profile.id,reminderId:created.id });
+      await supabase.from('supplement_reminders').update({notification_id:notificationId}).eq('id',created.id).eq('user_id',profile.id);
       setName('');
       await load();
     } catch (e: any) { Alert.alert('Reminder', e?.message ?? 'Could not create reminder.'); }
@@ -70,7 +74,7 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
         const { error } = await supabase.from('supplement_reminders').update({ enabled: false, notification_id: null, updated_at: new Date().toISOString() }).eq('id', row.id).eq('user_id', profile.id);
         if (error) throw error;
       } else {
-        const notificationId = await scheduleDailySupplementReminder({ supplementName: row.supplement_name, hour: row.reminder_hour, minute: row.reminder_minute });
+        const notificationId = await scheduleDailySupplementReminder({ supplementName: row.supplement_name, hour: row.reminder_hour, minute: row.reminder_minute,userId:profile.id,reminderId:row.id });
         const { error } = await supabase.from('supplement_reminders').update({ enabled: true, notification_id: notificationId, updated_at: new Date().toISOString() }).eq('id', row.id).eq('user_id', profile.id);
         if (error) throw error;
       }
@@ -82,6 +86,9 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
     { text: 'Cancel', style: 'cancel' },
     { text: 'Delete', style: 'destructive', onPress: async () => { await cancelSupplementReminder(row.notification_id); await supabase.from('supplement_reminders').delete().eq('id', row.id).eq('user_id', profile.id); load(); } },
   ]);
+
+  const localDate=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const markTaken=async(row:Reminder,date=localDate())=>{const existing=checkins.find(x=>x.reminder_id===row.id&&x.local_date===date);if(existing){await supabase.from('supplement_checkins').delete().eq('id',existing.id).eq('user_id',profile.id);}else{await supabase.from('supplement_checkins').upsert({user_id:profile.id,reminder_id:row.id,local_date:date,taken_at:new Date().toISOString(),source:'in_app'},{onConflict:'user_id,reminder_id,local_date'});}load();};
 
   return <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
     <View style={styles.header}><Pressable onPress={onBack}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Supplement reminders</Text><Text style={styles.sub}>Daily reminders for items you already choose to take.</Text></View></View>
@@ -103,11 +110,14 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
     <SectionTitle title="Your reminders" subtitle="Switch notifications off without deleting the reminder." />
     {rows.length ? rows.map((row) => <Card key={row.id} style={styles.row}>
       <View style={{ flex: 1 }}><Text style={styles.name}>{row.supplement_name}</Text><Text style={styles.time}>Daily • {timeText(row.reminder_hour, row.reminder_minute)}</Text></View>
-      <View style={styles.actions}><OutlineButton compact title={row.enabled ? 'ON' : 'OFF'} onPress={() => toggle(row)} /><Pressable onPress={() => remove(row)}><Text style={styles.delete}>Delete</Text></Pressable></View>
+      <View style={styles.actions}><OutlineButton compact title={checkins.some(x=>x.reminder_id===row.id&&x.local_date===localDate())?'TAKEN ✓':'MARK TAKEN'} onPress={()=>markTaken(row)} /><OutlineButton compact title={row.enabled ? 'ON' : 'OFF'} onPress={() => toggle(row)} /><Pressable onPress={() => remove(row)}><Text style={styles.delete}>Delete</Text></Pressable></View>
     </Card>) : <Card><Text style={styles.sub}>No supplement reminders yet.</Text></Card>}
+    <SupplementCalendar month={month} rows={rows} checkins={checkins} onMonth={setMonth} onToggle={markTaken}/>
   </ScrollView>;
 }
 
+function SupplementCalendar({month,rows,checkins,onMonth,onToggle}:{month:Date;rows:Reminder[];checkins:any[];onMonth:(d:Date)=>void;onToggle:(r:Reminder,d:string)=>void}){const{colors}=useTheme();const s=createStyles(colors);const y=month.getFullYear(),m=month.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),today=new Date();const key=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return <Card><View style={s.calHead}><Pressable onPress={()=>onMonth(new Date(y,m-1,1))}><Text style={s.calArrow}>‹</Text></Pressable><SectionTitle title={month.toLocaleDateString(undefined,{month:'long',year:'numeric'})} subtitle="Tap a day to mark or correct each supplement."/><Pressable onPress={()=>onMonth(new Date(y,m+1,1))}><Text style={s.calArrow}>›</Text></Pressable></View><View style={s.calGrid}>{['S','M','T','W','T','F','S'].map((x,i)=><Text key={i} style={s.week}>{x}</Text>)}{Array.from({length:first}).map((_,i)=><View key={`b${i}`} style={s.day}/>)}{Array.from({length:days}).map((_,i)=>{const d=new Date(y,m,i+1),date=key(d),taken=checkins.filter(x=>x.local_date===date).length,future=d>today;return <Pressable key={i} onPress={()=>rows[0]&&onToggle(rows[0],date)} style={[s.day,taken>0?s.taken:!future&&rows.length?s.missed:null]}><Text style={s.dayText}>{i+1}</Text><Text style={s.dayState}>{taken?`${taken} ✓`:future?'':'•'}</Text></Pressable>})}</View><Text style={s.sub}>Green = taken • outlined = missed/pending. With multiple supplements, use “Mark taken” above for the exact item.</Text></Card>}
+
 const createStyles = (colors: any) => StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 40 }, header: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 16 }, back: { color: colors.text, fontSize: 38, width: 28 }, title: { color: colors.text, fontSize: 25, fontWeight: '900' }, sub: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 }, chips: { flexDirection: 'row', flexWrap: 'wrap' }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, name: { color: colors.text, fontWeight: '900', fontSize: 16 }, time: { color: colors.muted, fontSize: 11, marginTop: 4 }, actions: { alignItems: 'center', gap: 7 }, delete: { color: colors.danger, fontSize: 10, fontWeight: '900' },
+  wrap: { padding: 16, paddingBottom: 40 }, header: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 16 }, back: { color: colors.text, fontSize: 38, width: 28 }, title: { color: colors.text, fontSize: 25, fontWeight: '900' }, sub: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 }, chips: { flexDirection: 'row', flexWrap: 'wrap' }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, name: { color: colors.text, fontWeight: '900', fontSize: 16 }, time: { color: colors.muted, fontSize: 11, marginTop: 4 }, actions: { alignItems: 'center', gap: 7 }, delete: { color: colors.danger, fontSize: 10, fontWeight: '900' },calHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},calArrow:{color:colors.primary,fontSize:30,padding:8},calGrid:{flexDirection:'row',flexWrap:'wrap'},week:{width:'14.285%',textAlign:'center',color:colors.muted,fontSize:9,fontWeight:'900',padding:5},day:{width:'14.285%',height:43,alignItems:'center',justifyContent:'center',borderRadius:8},taken:{backgroundColor:colors.greenSoft,borderWidth:1,borderColor:colors.green},missed:{borderWidth:1,borderColor:colors.border},dayText:{color:colors.text,fontSize:10,fontWeight:'800'},dayState:{color:colors.green,fontSize:8},
 });

@@ -75,6 +75,11 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     if(error) Alert.alert('Could not log food',error.message); else load();
   };
 
+  const removeLog=(row:any)=>Alert.alert('Remove logged food?',`${row.food_name} will be removed and today’s totals will update.`,[
+    {text:'Cancel',style:'cancel'},
+    {text:'Remove',style:'destructive',onPress:async()=>{const{error}=await supabase.from('food_logs').delete().eq('id',row.id).eq('user_id',profile.id);if(error)Alert.alert('Could not remove food',error.message);else load();}},
+  ]);
+
   const onlineSearch=async()=>{
     if(!query.trim()||locked) return;
     setSearching(true);
@@ -138,7 +143,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
           <SectionTitle title={locked?'Meals logged':'Foods eaten'}/>
           {dayRows.map((x:any)=><View key={x.id} style={styles.logRow}>
             <View style={{flex:1}}><Text style={styles.foodName}>{x.food_name}</Text><Text style={styles.foodMeta}>{x.serving}</Text></View>
-            {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}
+            {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}<Pressable onPress={()=>removeLog(x)}><Text style={styles.remove}>Remove</Text></Pressable>
           </View>)}
         </Card>
       </ScrollView>;
@@ -229,7 +234,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
         <SectionTitle title={locked?"Today's meals":"Today's log"}/>
         {todayLogs.length?todayLogs.map(x=><View key={x.id} style={styles.logRow}>
           <View style={{flex:1}}><Text style={styles.foodName}>{x.food_name}</Text><Text style={styles.foodMeta}>{x.serving}</Text></View>
-          {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}
+          {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}<Pressable onPress={()=>removeLog(x)}><Text style={styles.remove}>Remove</Text></Pressable>
         </View>):<Text style={styles.sub}>Nothing logged yet today.</Text>}
       </Card>
       <Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>
@@ -369,5 +374,5 @@ const createStyles=(colors:any)=>StyleSheet.create({
   goals:{alignItems:'flex-end',gap:5},
   goalPill:{color:colors.muted,fontSize:9,fontWeight:'900',backgroundColor:colors.panel2,paddingHorizontal:7,paddingVertical:4,borderRadius:7},
   hit:{color:colors.green,backgroundColor:colors.greenSoft},
-  chevron:{color:colors.muted,fontSize:25}
+  chevron:{color:colors.muted,fontSize:25},remove:{color:colors.danger,fontSize:9,fontWeight:'900',marginLeft:8}
 });

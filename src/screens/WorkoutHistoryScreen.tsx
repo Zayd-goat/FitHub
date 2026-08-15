@@ -10,6 +10,7 @@ export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack
   const [sessions, setSessions] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(initialSessionId ?? null);
+  const [month,setMonth]=useState(()=>new Date());
 
   useEffect(() => { setExpandedId(initialSessionId ?? null); }, [initialSessionId]);
 
@@ -41,6 +42,7 @@ export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack
 
   return <ScrollView contentContainerStyle={styles.wrap}>
     <View style={styles.header}><Pressable onPress={onBack} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable><View><Text style={styles.title}>Workout history</Text><Text style={styles.sub}>Your 15 most recent saved workouts</Text></View></View>
+    <WorkoutCalendar month={month} sessions={summaries} onMonth={setMonth} onPick={setExpandedId}/>
     {summaries.length ? summaries.map((s: any, index: number) => {
       const expanded = expandedId === s.id;
       const groupedExercises = groupExerciseRows(s.rows);
@@ -54,6 +56,13 @@ export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack
       </Pressable>;
     }) : <Card><Text style={styles.meta}>No completed workouts yet.</Text></Card>}
   </ScrollView>;
+}
+
+function WorkoutCalendar({month,sessions,onMonth,onPick}:{month:Date;sessions:any[];onMonth:(d:Date)=>void;onPick:(id:string)=>void}){
+ const{colors}=useTheme();const s=createStyles(colors);const y=month.getFullYear(),m=month.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+ const byDay=new Map<string,any>();sessions.forEach(x=>byDay.set(new Date(x.ended_at??x.started_at).toDateString(),x));
+ const move=(n:number)=>onMonth(new Date(y,m+n,1));
+ return <Card><View style={s.calendarHead}><Pressable onPress={()=>move(-1)}><Text style={s.calendarArrow}>‹</Text></Pressable><Text style={s.calendarTitle}>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</Text><Pressable onPress={()=>move(1)}><Text style={s.calendarArrow}>›</Text></Pressable></View><View style={s.calendarGrid}>{['S','M','T','W','T','F','S'].map((x,i)=><Text key={i} style={s.weekDay}>{x}</Text>)}{Array.from({length:first}).map((_,i)=><View key={`b${i}`} style={s.day}/>)}{Array.from({length:days}).map((_,i)=>{const d=new Date(y,m,i+1),workout=byDay.get(d.toDateString());return <Pressable key={i} onPress={()=>workout&&onPick(workout.id)} style={[s.day,workout&&s.workoutDay]}><Text style={[s.dayText,workout&&s.workoutDayText]}>{i+1}</Text>{workout?<Text style={s.dayDot}>●</Text>:null}</Pressable>})}</View><Text style={s.calendarHint}>Highlighted days contain completed workouts. Tap one to open it below.</Text></Card>
 }
 
 function groupExerciseRows(rows: any[]) {
@@ -79,5 +88,5 @@ function Mini({ label, value }: { label: string; value: string }) { const { colo
 const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 34 }, header: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }, back: { width: 34, height: 42, justifyContent: 'center' }, backText: { color: colors.text, fontSize: 36, fontWeight: '300' }, title: { color: colors.text, fontSize: 27, fontWeight: '900' }, sub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 10 }, number: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, numberText: { color: colors.blue, fontWeight: '900' }, name: { color: colors.text, fontWeight: '900', fontSize: 15 }, meta: { color: colors.muted, fontSize: 10, marginTop: 3, lineHeight: 15 }, expand: { color: colors.muted, fontSize: 24, fontWeight: '800' }, exercises: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 10 }, stats: { flexDirection: 'row', gap: 6, marginTop: 12 }, mini: { flex: 1, backgroundColor: colors.panel2, borderRadius: 9, paddingVertical: 8, paddingHorizontal: 5, alignItems: 'center' }, miniValue: { color: colors.text, fontSize: 11, fontWeight: '900', textAlign: 'center' }, miniLabel: { color: colors.muted, fontSize: 8, marginTop: 3 },
-  details: { marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4 }, exerciseGroup: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }, exerciseName: { color: colors.text, fontSize: 12, fontWeight: '900', marginBottom: 4 }, setRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 }, setLabel: { color: colors.muted, fontSize: 9 }, setValue: { color: colors.text, fontSize: 10, fontWeight: '800' },
+  details: { marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 4 }, exerciseGroup: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border }, exerciseName: { color: colors.text, fontSize: 12, fontWeight: '900', marginBottom: 4 }, setRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 }, setLabel: { color: colors.muted, fontSize: 9 }, setValue: { color: colors.text, fontSize: 10, fontWeight: '800' }, calendarHead:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},calendarArrow:{color:colors.primary,fontSize:30,fontWeight:'800',paddingHorizontal:8},calendarTitle:{color:colors.text,fontWeight:'900'},calendarGrid:{flexDirection:'row',flexWrap:'wrap',marginTop:8},weekDay:{width:'14.285%',textAlign:'center',color:colors.muted,fontSize:9,fontWeight:'900',paddingVertical:5},day:{width:'14.285%',height:42,alignItems:'center',justifyContent:'center',borderRadius:9},workoutDay:{backgroundColor:colors.blueSoft,borderWidth:1,borderColor:colors.blue},dayText:{color:colors.muted,fontSize:11},workoutDayText:{color:colors.text,fontWeight:'900'},dayDot:{color:colors.green,fontSize:7},calendarHint:{color:colors.muted,fontSize:9,marginTop:8,textAlign:'center'},
 });

@@ -36,6 +36,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   const [found, setFound] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
+  const [friendAlerts,setFriendAlerts]=useState<Record<string,{post_notifications:boolean;pr_notifications:boolean}>>({});
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<Record<string, any[]>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
@@ -91,11 +92,12 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   }
 
   const load = async () => {
-    const [req, fr, ch, gi] = await Promise.all([
+    const [req, fr, ch, gi, prefs] = await Promise.all([
       supabase.from('friend_requests').select('id,requester_id,status,created_at,requester:public_profiles!friend_requests_requester_id_fkey(username,avatar_url,login_streak,workout_streak,tokens)').eq('addressee_id', profile.id).eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.rpc('get_my_friends'),
       supabase.rpc('get_visible_challenges'),
       supabase.from('gym_invites').select('id,sender_id,recipient_id,session_at,gym_name,workout_name,note,status,created_at,sender:public_profiles!gym_invites_sender_id_fkey(username,avatar_url),recipient:public_profiles!gym_invites_recipient_id_fkey(username,avatar_url)').or(`sender_id.eq.${profile.id},recipient_id.eq.${profile.id}`).order('session_at', { ascending: true }),
+      supabase.from('friend_notification_preferences').select('friend_id,post_notifications,pr_notifications').eq('user_id',profile.id),
     ]);
 
     let feed = await supabase.rpc('get_friend_feed_v3');
@@ -104,6 +106,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
 
     setRequests(req.data ?? []);
     setFriends(fr.data ?? []);
+    setFriendAlerts(Object.fromEntries((prefs.data??[]).map((x:any)=>[x.friend_id,{post_notifications:x.post_notifications,pr_notifications:x.pr_notifications}])));
     setChallenges(ch.data ?? []);
     await loadCommunityChallenges();
     const invites = (gi.data ?? []) as GymInvite[];
@@ -165,6 +168,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
     if (error) Alert.alert('Friend request', error.message.includes('duplicate') ? 'A request already exists.' : error.message);
     else Alert.alert('Sent', 'Friend request sent.');
   };
+  const toggleFriendAlert=async(friendId:string,key:'post_notifications'|'pr_notifications')=>{const current=friendAlerts[friendId]??{post_notifications:false,pr_notifications:false};const next={...current,[key]:!current[key]};const{error}=await supabase.from('friend_notification_preferences').upsert({user_id:profile.id,friend_id:friendId,...next,updated_at:new Date().toISOString()},{onConflict:'user_id,friend_id'});if(error)Alert.alert('Notifications',error.message);else setFriendAlerts({...friendAlerts,[friendId]:next});};
 
   const accept = async (id: string) => {
     const { error } = await supabase.rpc('accept_friend_request', { request_id: id });
@@ -297,7 +301,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
         {found.map((x) => <View key={x.user_id} style={styles.person}><Avatar name={x.username} url={x.avatar_url} /><View style={{ flex: 1 }}><Text style={styles.name}>@{x.username}</Text><Text style={styles.meta}>🔥 {x.login_streak} login · ⚡ {x.workout_streak} workout</Text></View><OutlineButton title="Add" onPress={() => addFriend(x.user_id)} compact /></View>)}
       </Card>
       {requests.length ? <Card><SectionTitle title="Friend requests" />{requests.map((r) => <View key={r.id} style={styles.person}><Avatar name={r.requester?.username ?? '?'} url={r.requester?.avatar_url} /><View style={{ flex: 1 }}><Text style={styles.name}>@{r.requester?.username}</Text><Text style={styles.meta}>wants to connect</Text></View><OutlineButton title="Accept" onPress={() => accept(r.id)} compact /></View>)}</Card> : null}
-      <Card><SectionTitle title="Following" subtitle="Friends you train and compete with." />{friends.length ? friends.map((x) => <View key={x.user_id} style={styles.person}><Avatar name={x.username} url={x.avatar_url} /><View style={{ flex: 1 }}><Text style={styles.name}>@{x.username}</Text><Text style={styles.meta}>🔥 {x.login_streak} · ⚡ {x.workout_streak} · ✦ {x.tokens}</Text></View></View>) : <Text style={styles.sub}>No friends yet. Search above to add someone.</Text>}</Card>
+      <Card><SectionTitle title="Following" subtitle="Choose post and PR notifications separately for every friend." />{friends.length ? friends.map((x) => {const p=friendAlerts[x.user_id]??{post_notifications:false,pr_notifications:false};return <View key={x.user_id} style={styles.person}><Avatar name={x.username} url={x.avatar_url} /><View style={{ flex: 1 }}><Text style={styles.name}>@{x.username}</Text><Text style={styles.meta}>🔥 {x.login_streak} · ⚡ {x.workout_streak} · ✦ {x.tokens}</Text><View style={styles.quickRow}><Chip label={p.post_notifications?'Posts ON':'Posts OFF'} active={p.post_notifications} onPress={()=>toggleFriendAlert(x.user_id,'post_notifications')}/><Chip label={p.pr_notifications?'PRs ON':'PRs OFF'} active={p.pr_notifications} onPress={()=>toggleFriendAlert(x.user_id,'pr_notifications')}/></View></View></View>}) : <Text style={styles.sub}>No friends yet. Search above to add someone.</Text>}</Card>
     </View> : null}
 
     {view === 'invites' ? <View style={styles.tabContent}>
@@ -424,7 +428,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   wrap: { paddingBottom: 40 }, header: { paddingHorizontal: 18, paddingTop: 11, paddingBottom: 7, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, title: { color: colors.text, fontSize: 29, fontWeight: '900' }, profileGlyph: { color: colors.text, fontSize: 27 },
   tabs: { borderBottomWidth: 1, borderBottomColor: colors.border, paddingHorizontal: 12 }, tab: { paddingHorizontal: 14, paddingVertical: 13, borderBottomWidth: 3, borderBottomColor: 'transparent' }, tabActive: { borderBottomColor: colors.primary }, tabText: { color: colors.muted, fontWeight: '800', fontSize: 12 }, tabTextActive: { color: colors.primary },
   feedArea: { paddingTop: 0 }, tabContent: { padding: 16 }, requestStrip: { marginHorizontal: 16, marginTop: 12, padding: 11, borderRadius: 11, backgroundColor: colors.panel2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, requestText: { color: colors.text, fontWeight: '800', fontSize: 12 }, requestAction: { color: colors.blue, fontWeight: '900' }, emptyFeed: { margin: 16, padding: 20, borderWidth: 1, borderColor: colors.border, borderRadius: 14, backgroundColor: colors.panel }, emptyTitle: { color: colors.text, fontWeight: '900', fontSize: 16, marginBottom: 4 }, sub: { color: colors.muted, lineHeight: 19, marginTop: 4, marginBottom: 12 },
-  person: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 }, avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, avatarText: { color: colors.text, fontWeight: '900' }, avatarSmall: { width: 31, height: 31, borderRadius: 16, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, avatarSmallText: { color: colors.text, fontWeight: '900', fontSize: 10 }, name: { color: colors.text, fontWeight: '900' }, meta: { color: colors.muted, fontSize: 11, marginTop: 2, lineHeight: 16 },
+  person: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 10 }, quickRow:{flexDirection:'row',flexWrap:'wrap',marginTop:5}, avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, avatarText: { color: colors.text, fontWeight: '900' }, avatarSmall: { width: 31, height: 31, borderRadius: 16, backgroundColor: colors.blueSoft, alignItems: 'center', justifyContent: 'center' }, avatarSmallText: { color: colors.text, fontWeight: '900', fontSize: 10 }, name: { color: colors.text, fontWeight: '900' }, meta: { color: colors.muted, fontSize: 11, marginTop: 2, lineHeight: 16 },
   post: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.bg }, more: { color: colors.muted, fontWeight: '900', letterSpacing: 1 }, postTitle: { color: colors.text, fontSize: 21, fontWeight: '900', marginTop: 9 }, groupLine: { color: colors.muted, fontSize: 13, marginTop: 5 }, caption: { color: colors.text, fontSize: 13, lineHeight: 19, marginTop: 9 }, postPhoto: { width: '100%', aspectRatio: 1.3, borderRadius: 14, marginTop: 12, backgroundColor: colors.panel2 },
   postStats: { flexDirection: 'row', gap: 6, marginTop: 15 }, postStat: { flex: 1, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 3, alignItems: 'center' }, postStatValue: { color: colors.text, fontWeight: '900', fontSize: 13, textAlign: 'center' }, postStatLabel: { color: colors.muted, fontSize: 8, marginTop: 4 }, highlight: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: 12, marginTop: 13 }, highlightTitle: { color: colors.text, fontWeight: '900', fontSize: 13 }, highlightText: { color: colors.text, fontSize: 12, lineHeight: 18, marginTop: 5 }, actionRow: { flexDirection: 'row', alignItems: 'center', gap: 22, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border }, action: { flexDirection: 'row', alignItems: 'center', gap: 7 }, heart: { color: colors.primary, fontSize: 25, fontWeight: '900' }, commentIcon: { color: colors.text, fontSize: 20 }, actionText: { color: colors.muted, fontWeight: '800', fontSize: 12 }, commentsBox: { paddingTop: 5 }, commentRow: { flexDirection: 'row', gap: 9, alignItems: 'flex-start', marginTop: 10 }, commentHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 }, commentAuthor: { color: colors.text, fontWeight: '900', fontSize: 11 }, commentBody: { color: colors.text, marginTop: 2, fontSize: 12, lineHeight: 17 }, commentTime: { color: colors.muted, fontSize: 9 }, commentInput: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 12 }, send: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }, sendText: { color: colors.muted, fontWeight: '900', fontSize: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap' }, two: { flexDirection: 'row', gap: 8 }, challengeTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 }, challenge: { color: colors.text, fontSize: 17, fontWeight: '900' }, progress: { color: colors.blue, fontSize: 18, fontWeight: '900', marginTop: 10 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginVertical: 7 }, fill: { height: '100%', backgroundColor: colors.gold },

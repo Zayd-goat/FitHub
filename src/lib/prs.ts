@@ -10,6 +10,7 @@ export type NewPrEvent = {
   unit: string;
   details: Record<string, any>;
   achieved_at?: string;
+  new_clubs?: Array<{ club_key:string; exercise_name:string; threshold_kg:number }>;
 };
 
 type WorkoutRow = {
@@ -83,8 +84,12 @@ export async function detectAndSavePrEvents({ userId, sessionId, rows, age }: { 
   const payload = unique.map((event)=>({ ...event, user_id:userId, workout_session_id:sessionId, achieved_at:new Date().toISOString() }));
   const { data: inserted, error } = await supabase.from('pr_events').insert(payload).select('id,exercise_name,metric,value_numeric,previous_value_numeric,unit,details,achieved_at');
   if (error) return unique;
-  if ((age ?? 0) >= 18) await unlockClubs(userId, inserted ?? []);
-  return (inserted ?? unique) as NewPrEvent[];
+  const result=(inserted ?? unique) as NewPrEvent[];
+  if ((age ?? 0) >= 18) {
+    const newClubs=await unlockClubs(userId, inserted ?? []);
+    if (result[0] && newClubs.length) result[0].new_clubs=newClubs;
+  }
+  return result;
 }
 
 async function unlockClubs(userId:string, events:any[]) {
@@ -96,5 +101,14 @@ async function unlockClubs(userId:string, events:any[]) {
     const value=Number(event.value_numeric);
     for (const threshold of definition.thresholds) if (value >= threshold) unlockRows.push({ user_id:userId, club_key:`${slug(definition.canonical)}-${threshold}kg`, exercise_name:definition.canonical, threshold_kg:threshold, source_pr_event_id:event.id ?? null, unlocked_at:new Date().toISOString() });
   }
-  if (unlockRows.length) { try { await supabase.from('club_unlocks').upsert(unlockRows,{onConflict:'user_id,club_key'}); } catch {} }
+  if (!unlockRows.length) return [];
+  try {
+    const keys=unlockRows.map(x=>x.club_key);
+    const {data:existing}=await supabase.from('club_unlocks').select('club_key').eq('user_id',userId).in('club_key',keys);
+    const old=new Set((existing??[]).map((x:any)=>x.club_key));
+    const newlyUnlocked=unlockRows.filter(x=>!old.has(x.club_key));
+    await supabase.from('club_unlocks').upsert(unlockRows,{onConflict:'user_id,club_key',ignoreDuplicates:true});
+    await supabase.from('club_unlocks').update({last_qualified_at:new Date().toISOString()}).eq('user_id',userId).in('club_key',keys);
+    return newlyUnlocked;
+  } catch { return []; }
 }

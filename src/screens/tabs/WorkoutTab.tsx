@@ -23,6 +23,7 @@ import { recordWorkoutDay } from '../../lib/streaks';
 import { clearActiveWorkoutNotification, showActiveWorkoutNotification } from '../../lib/notifications';
 import { detectAndSavePrEvents, NewPrEvent } from '../../lib/prs';
 import { displayToKg, displayToKm, formatDistance, formatPace, formatWeight, kgToDisplay, kmToDisplay } from '../../lib/units';
+import { connectFirstFtms, FtmsState } from '../../lib/ftms';
 import {
   exerciseLibrary,
   figureImages,
@@ -1330,9 +1331,13 @@ function SetTable({
 function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch: Partial<BuilderItem>) => void }) {
   const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
+  const [ftms,setFtms]=useState<FtmsState|null>(null);
+  const connect=async()=>{try{await connectFirstFtms((state,name)=>{setFtms(state);if(state==='connected')Alert.alert('Equipment connected',name??'Compatible FTMS machine');});}catch(e:any){Alert.alert('Equipment connection',e?.message??"This machine doesn't support FitHub connectivity.",[{text:'Track manually'}]);}};
   return (
     <View>
       <Text style={styles.cardioHint}>Record the fields that best match this exercise. You can change them during the workout.</Text>
+      <OutlineButton title={ftms==='searching'?'Searching…':ftms==='connecting'?'Connecting…':ftms==='connected'?'Equipment connected':'Connect Equipment'} onPress={connect} disabled={ftms==='searching'||ftms==='connecting'||ftms==='connected'}/>
+      <Text style={styles.cardioHint}>FitHub records only metrics the machine exposes. Machine-reported calories are labelled separately from FitHub estimates. Manual tracking remains available.</Text>
       {item.exercise.allowsLoad ? (
         <Input value={item.load} onChangeText={(value) => onChange({ load: value })} keyboardType="decimal-pad" placeholder={`Load (${weightUnit}), if used`} />
       ) : null}

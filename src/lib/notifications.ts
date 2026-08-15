@@ -11,9 +11,11 @@ const ACTIVE_CHANNEL = 'active-workout';
 const GYM_CHANNEL = 'gym-reminders';
 const SUPPLEMENT_CHANNEL = 'supplement-reminders';
 const ACTIVE_WORKOUT_CATEGORY = 'ACTIVEWORKOUT';
+const SUPPLEMENT_CATEGORY = 'SUPPLEMENT_REMINDER';
 const WORKOUT_NOTIFICATION_TASK = 'FITHUB_WORKOUT_NOTIFICATION_TASK';
 export const NEXT_SET_ACTION = 'NEXT_SET';
 export const END_WORKOUT_ACTION = 'END_WORKOUT';
+export const SUPPLEMENT_TAKEN_ACTION = 'SUPPLEMENT_TAKEN';
 
 type StoredSet = { id?: string; weight: string; reps: string; done: boolean };
 type StoredItem = {
@@ -233,6 +235,10 @@ if (!TaskManager.isTaskDefined(WORKOUT_NOTIFICATION_TASK)) {
     if (!userId) return;
     if (action === NEXT_SET_ACTION) await advanceStoredWorkout(userId);
     if (action === END_WORKOUT_ACTION) await finalizeStoredWorkout(userId);
+    if (action === SUPPLEMENT_TAKEN_ACTION && content?.reminderId) {
+      const now=new Date();const localDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      try { await supabase.from('supplement_checkins').upsert({user_id:userId,reminder_id:String(content.reminderId),local_date:localDate,taken_at:now.toISOString(),source:'notification'},{onConflict:'user_id,reminder_id,local_date'}); } catch {}
+    }
   });
 }
 Notifications.registerTaskAsync(WORKOUT_NOTIFICATION_TASK).catch(() => {});
@@ -269,12 +275,18 @@ export async function ensureNotificationSetup(requestPermission = true) {
       options: { opensAppToForeground: false, isAuthenticationRequired: false, isDestructive: true },
     },
   ]).catch(() => null);
+  await Notifications.setNotificationCategoryAsync(SUPPLEMENT_CATEGORY,[{identifier:SUPPLEMENT_TAKEN_ACTION,buttonTitle:'TAKEN',options:{opensAppToForeground:false,isAuthenticationRequired:false,isDestructive:false}}]).catch(()=>null);
 
   const current = await Notifications.getPermissionsAsync();
   if (current.status === 'granted') return true;
   if (!requestPermission) return false;
   const next = await Notifications.requestPermissionsAsync();
   return next.status === 'granted';
+}
+
+export async function registerFriendPushToken(userId:string){
+  const allowed=await ensureNotificationSetup(true);if(!allowed)return;
+  try{const token=(await Notifications.getExpoPushTokenAsync()).data;if(token)await supabase.from('push_tokens').upsert({user_id:userId,token,platform:Platform.OS,enabled:true,updated_at:new Date().toISOString()},{onConflict:'user_id,token'});}catch{}
 }
 
 export async function scheduleGymReminder({
@@ -370,11 +382,15 @@ export async function scheduleDailySupplementReminder({
   supplementName,
   hour,
   minute,
+  userId,
+  reminderId,
 }: {
   identifier?: string | null;
   supplementName: string;
   hour: number;
   minute: number;
+  userId?: string;
+  reminderId?: string;
 }) {
   const allowed = await ensureNotificationSetup(true);
   if (!allowed) return null;
@@ -385,7 +401,8 @@ export async function scheduleDailySupplementReminder({
     content: {
       title: 'Supplement reminder',
       body: supplementName.trim(),
-      data: { type: 'supplement_reminder', supplementName: supplementName.trim() },
+      data: { type: 'supplement_reminder', supplementName: supplementName.trim(), userId, reminderId },
+      categoryIdentifier: SUPPLEMENT_CATEGORY,
       sound: 'default',
     },
     trigger: {

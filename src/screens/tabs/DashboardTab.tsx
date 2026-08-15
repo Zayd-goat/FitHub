@@ -95,7 +95,7 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
     <View style={styles.header}>
       <View><Text style={styles.greeting}>Good morning,</Text><Text style={styles.name}>{firstName}</Text></View>
       <Pressable onPress={() => onViewProgress('streaks')} style={({ pressed }) => [styles.streak, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel="View streak progress">
-        <Text style={styles.streakValue}>🔥 {profile.login_streak}</Text><Text style={styles.streakLabel}>DAY STREAK  ›</Text>
+        <Text style={styles.streakValue}>🔥 {profile.workout_streak}</Text><Text style={styles.streakLabel}>WORKOUT STREAK  ›</Text>
       </Pressable>
     </View>
 
