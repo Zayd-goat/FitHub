@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Card, Input, OutlineButton, SectionTitle, useTheme } from '../../components/UI';
 import { presetFoods } from '../../data/presets';
 import { Food, Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { searchUsda } from '../../lib/usda';
+import { barcodeFood, foodDetails, searchFoods } from '../../lib/nutritionApi';
+import NutritionLibraryScreen from '../NutritionLibraryScreen';
 
 const localKey = (value: string | Date) => {
   const d = value instanceof Date ? value : new Date(value);
@@ -24,6 +27,11 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const [manual, setManual] = useState({ name:'', serving:'1 serving', calories:'', protein:'', carbs:'', fat:'' });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [mealType,setMealType]=useState<'breakfast'|'lunch'|'dinner'|'snacks'>('breakfast');
+  const [scannerOpen,setScannerOpen]=useState(false);
+  const [cameraPermission,requestCameraPermission]=useCameraPermissions();
+  const [scanned,setScanned]=useState(false);
+  const [libraryOpen,setLibraryOpen]=useState(false);
 
   const load = async () => {
     const since = new Date();
@@ -59,6 +67,10 @@ export default function FoodTab({ profile }: { profile: Profile }) {
       protein_g:food.protein_g,
       carbs_g:food.carbs_g,
       fat_g:food.fat_g
+      ,fibre_g:(food as any).fibre_g??0
+      ,meal_type:mealType
+      ,provider_food_id:(food as any).provider_food_id??null
+      ,serving_id:(food as any).serving_id??null
     });
     if(error) Alert.alert('Could not log food',error.message); else load();
   };
@@ -66,9 +78,15 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const onlineSearch=async()=>{
     if(!query.trim()||locked) return;
     setSearching(true);
-    try{setUsdaFoods(await searchUsda(query));}
+    try{const result=await searchFoods(query);setUsdaFoods(result.foods??[]);}
     catch(e:any){Alert.alert('Food search',e?.message??'Online search failed.');}
     finally{setSearching(false);}
+  };
+
+  const scanBarcode=async({data}:{data:string})=>{
+    if(scanned)return;setScanned(true);
+    try{const match=await barcodeFood(data);if(!match.provider_food_id)throw new Error('No verified match was found.');const detail=await foodDetails(String(match.provider_food_id));setScannerOpen(false);await addLog(detail.food as Food);}
+    catch(e:any){setScannerOpen(false);Alert.alert('Barcode not found',e?.message??'Use custom food to add it manually.');}
   };
 
   const saveManual=async()=>{
@@ -97,6 +115,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     return Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0]));
   },[allLogs]);
 
+  if(libraryOpen)return <NutritionLibraryScreen profile={profile} onBack={()=>setLibraryOpen(false)}/>;
   if (historyOpen) {
     const dayRows = selectedDate ? (grouped.find(([k])=>k===selectedDate)?.[1] ?? []) : [];
     if (selectedDate) {
@@ -150,10 +169,16 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   }
 
   return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>
+    <Modal visible={scannerOpen} animationType="slide" onRequestClose={()=>setScannerOpen(false)}>
+      <View style={{flex:1,backgroundColor:'#000'}}>
+        {cameraPermission?.granted?<CameraView style={{flex:1}} barcodeScannerSettings={{barcodeTypes:['ean13','ean8','upc_a','upc_e']}} onBarcodeScanned={scanBarcode}/>:<View style={{flex:1,justifyContent:'center',padding:24}}><Text style={{color:'#fff',textAlign:'center',marginBottom:16}}>Camera access is required only while scanning a food barcode.</Text><OutlineButton title="Allow camera" onPress={requestCameraPermission}/></View>}
+        <View style={{padding:16}}><OutlineButton title="Cancel scanner" onPress={()=>setScannerOpen(false)}/></View>
+      </View>
+    </Modal>
     <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
       <View style={styles.headerRow}>
         <Text style={styles.title}>Food</Text>
-        <OutlineButton title="History" onPress={()=>setHistoryOpen(true)} compact/>
+        <View style={styles.two}><OutlineButton title="Meals & recipes" onPress={()=>setLibraryOpen(true)} compact/><OutlineButton title="History" onPress={()=>setHistoryOpen(true)} compact/></View>
       </View>
 
       {!locked? <>
@@ -183,8 +208,9 @@ export default function FoodTab({ profile }: { profile: Profile }) {
 
       <Card>
         <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':'Meals & foods'}/><OutlineButton title="+ Add Food" onPress={()=>setManualOpen(!manualOpen)} compact/></View>
+        <View style={styles.two}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.goalPill,mealType===x&&styles.hit]}><Text style={styles.foodMeta}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
         <Input value={query} onChangeText={setQuery} placeholder={locked?'Search saved/common foods…':'Search chicken, oats, banana…'}/>
-        {!locked?<OutlineButton title={searching?'Searching…':'Search online'} onPress={onlineSearch} disabled={searching}/>:null}
+        {!locked?<><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={onlineSearch} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></>:null}
         {manualOpen?<View style={styles.manualBox}>
           <Input value={manual.name} onChangeText={v=>setManual({...manual,name:v})} placeholder="Food or meal name"/>
           <Input value={manual.serving} onChangeText={v=>setManual({...manual,serving:v})} placeholder="Serving, e.g. 1 bowl"/>
@@ -206,6 +232,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
           {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}
         </View>):<Text style={styles.sub}>Nothing logged yet today.</Text>}
       </Card>
+      <Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>
     </ScrollView>
   </KeyboardAvoidingView>;
 }
