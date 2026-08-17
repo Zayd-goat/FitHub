@@ -17,10 +17,9 @@ type Props = {
   onViewWorkouts: (sessionId?: string) => void;
   onViewDailyActivity: (focus: DailyActivityFocus) => void;
   onOpenJourney: (period?: 'week' | 'month') => void;
-  onOpenClubs: () => void;
 };
 
-export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity, onOpenJourney, onOpenClubs }: Props) {
+export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity, onOpenJourney }: Props) {
   const { colors, hiddenFeatures, weightUnit } = useTheme();
   const styles = createStyles(colors);
   const [weekWorkouts, setWeekWorkouts] = useState(0);
@@ -120,11 +119,6 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
         <Pressable onPress={() => onOpenJourney('month')} style={({pressed})=>[styles.reportCard,pressed&&styles.pressed]}><Text style={styles.reportEyebrow}>MONTHLY REPORT</Text><Text style={styles.reportTitle}>{monthPrs} PR{monthPrs===1?'':'s'} this month</Text><Text style={styles.reportSub}>Review improvements across the last 30 days ›</Text></Pressable>
       </View>
     </> : null}
-
-    {!hiddenFeatures.includes('clubs') && (profile.age ?? 0) >= 18 ? <Pressable onPress={onOpenClubs} style={({pressed})=>pressed?styles.pressed:undefined}><Card><View style={styles.cardTitleRow}><View><Text style={styles.sectionTitle}>Clubs</Text><Text style={styles.goalText}>Bench, squat, deadlift and overhead-press milestone clubs</Text></View><Text style={styles.cardArrow}>›</Text></View></Card></Pressable> : null}
-
-    <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Recent Workouts</Text><Pressable onPress={() => onViewWorkouts()}><Text style={styles.viewAll}>View more</Text></Pressable></View>
-    {recent.length ? recent.map((s: any) => <RecentWorkout key={s.id} session={s} onPress={() => onViewWorkouts(s.id)} />) : <Card style={styles.recentCard}><View style={styles.recentIcon}><Image source={require('../../../assets/nav/workout.png')} style={[styles.recentIconImage, { tintColor: colors.text }]}/></View><View style={{ flex: 1 }}><Text style={styles.recentName}>No recent workout</Text><Text style={styles.recentMeta}>This section clears after 7 days without a workout. Your full history is still saved.</Text></View></Card>}
 
     <Pressable onPress={() => onViewWorkouts()} style={({ pressed }) => pressed ? styles.pressed : undefined}>
       <Card><View style={styles.cardTitleRow}><Text style={styles.sectionTitle}>Weekly target</Text><Text style={styles.cardArrow}>›</Text></View><Text style={styles.goalText}>{weekWorkouts} of {profile.workout_days_target} planned training days complete.</Text><View style={styles.track}><View style={[styles.fill, { width: `${Math.min(100, (weekWorkouts / Math.max(1, profile.workout_days_target)) * 100)}%` }]} /></View></Card>

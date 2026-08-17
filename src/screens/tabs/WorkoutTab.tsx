@@ -471,6 +471,7 @@ export default function WorkoutTab({
   };
 
   const removeExercise = (slug: string) => setBuilder((previous) => previous.filter((item) => item.exercise.slug !== slug));
+  const moveExercise=(from:number,to:number)=>{if(from===to||from<0||to<0||from>=builder.length||to>=builder.length)return;const currentId=builder[activeExerciseIndex]?.id;setBuilder(previous=>{const next=[...previous];const[moved]=next.splice(from,1);next.splice(to,0,moved);const newCurrent=next.findIndex(x=>x.id===currentId);setActiveExerciseIndex(Math.max(0,newCurrent));return next;});};
   const updateItem = (id: string, patch: Partial<BuilderItem>) =>
     setBuilder((previous) => previous.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   const updateSet = (itemId: string, setId: string, patch: Partial<StrengthSet>) =>
@@ -1030,9 +1031,10 @@ export default function WorkoutTab({
                   ]}
                 >
                   <Text style={[styles.activeExerciseName, done && { opacity: 0.45 }]} numberOfLines={1}>{item.exercise.name}</Text>
-                  <Text style={[styles.activeExerciseState, done && { color: colors.green }]}>
+                  <Text style={[styles.activeExerciseState, done && { color: colors.green }]}> 
                     {done ? '✓ Complete' : index === activeExerciseIndex ? 'Current' : 'Pending'}
                   </Text>
+                  {!done?<View style={{flexDirection:'row',gap:8,marginTop:5}}>{index>0?<Pressable onPress={()=>moveExercise(index,index-1)}><Text style={styles.activeExerciseState}>↑</Text></Pressable>:null}{index<builder.length-1?<Pressable onPress={()=>moveExercise(index,index+1)}><Text style={styles.activeExerciseState}>↓</Text></Pressable>:null}{index!==activeExerciseIndex?<Pressable onPress={()=>moveExercise(index,Math.min(builder.length-1,activeExerciseIndex+1))}><Text style={styles.activeExerciseState}>NEXT</Text></Pressable>:null}<Pressable onPress={()=>moveExercise(index,builder.length-1)}><Text style={styles.activeExerciseState}>LAST</Text></Pressable></View>:null}
                 </Pressable>
               );
             })}

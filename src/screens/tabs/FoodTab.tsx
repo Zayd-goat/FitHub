@@ -23,6 +23,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const [usdaFoods, setUsdaFoods] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
   const [allLogs, setAllLogs] = useState<any[]>([]);
+  const [waterLogs,setWaterLogs]=useState<any[]>([]);
   const [manualOpen, setManualOpen] = useState(false);
   const [manual, setManual] = useState({ name:'', serving:'1 serving', calories:'', protein:'', carbs:'', fat:'' });
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -37,18 +38,24 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     const since = new Date();
     since.setDate(since.getDate()-90);
     since.setHours(0,0,0,0);
-    const [foodsRes, logsRes] = await Promise.all([
+    const [foodsRes, logsRes,waterRes] = await Promise.all([
       supabase.from('foods').select('id,name,serving,calories,protein_g,carbs_g,fat_g,source').eq('owner_id',profile.id).order('created_at',{ascending:false}),
-      supabase.from('food_logs').select('*').eq('user_id',profile.id).gte('logged_at',since.toISOString()).order('logged_at',{ascending:false}).limit(3000)
+      supabase.from('food_logs').select('*').eq('user_id',profile.id).gte('logged_at',since.toISOString()).order('logged_at',{ascending:false}).limit(3000),
+      supabase.from('water_logs').select('*').eq('user_id',profile.id).gte('logged_at',since.toISOString()).order('logged_at',{ascending:false}).limit(1000)
     ]);
     setCustomFoods((foodsRes.data ?? []) as Food[]);
     setAllLogs(logsRes.data ?? []);
+    setWaterLogs(waterRes.data??[]);
   };
 
   useEffect(()=>{ load(); },[profile.id]);
 
   const todayKey = localKey(new Date());
   const todayLogs = allLogs.filter(x=>localKey(x.logged_at)===todayKey);
+  const todayWater=waterLogs.filter(x=>localKey(x.logged_at)===todayKey);
+  const waterTotal=todayWater.reduce((n,x)=>n+Number(x.amount_ml??0),0);
+  const addWater=async(amount:number)=>{const{error}=await supabase.from('water_logs').insert({user_id:profile.id,amount_ml:amount});if(error)Alert.alert('Water',error.message);else load();};
+  const removeWater=async(row:any)=>{await supabase.from('water_logs').delete().eq('id',row.id).eq('user_id',profile.id);load();};
   const filtered = useMemo(()=>{
     const all=[...customFoods,...presetFoods];
     if(!query.trim()) return all.slice(0,20);
@@ -210,6 +217,8 @@ export default function FoodTab({ profile }: { profile: Profile }) {
           </View>
         </Card>
       </> : <Card><SectionTitle title="Meal journal" subtitle="FitHub keeps calorie and macro targets off for under-18 accounts. You can still record meals and review your history."/></Card>}
+
+      <Card><SectionTitle title="Water" subtitle={`${waterTotal.toLocaleString()} ml recorded today`} /><View style={styles.two}><OutlineButton title="+250 ml" onPress={()=>addWater(250)} compact/><OutlineButton title="+500 ml" onPress={()=>addWater(500)} compact/></View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.remove}>Undo last water entry</Text></Pressable>:null}</Card>
 
       <Card>
         <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':'Meals & foods'}/><OutlineButton title="+ Add Food" onPress={()=>setManualOpen(!manualOpen)} compact/></View>

@@ -16,6 +16,7 @@ const WORKOUT_NOTIFICATION_TASK = 'FITHUB_WORKOUT_NOTIFICATION_TASK';
 export const NEXT_SET_ACTION = 'NEXT_SET';
 export const END_WORKOUT_ACTION = 'END_WORKOUT';
 export const SUPPLEMENT_TAKEN_ACTION = 'SUPPLEMENT_TAKEN';
+export const SUPPLEMENT_RESCHEDULE_ACTION = 'SUPPLEMENT_RESCHEDULE';
 
 type StoredSet = { id?: string; weight: string; reps: string; done: boolean };
 type StoredItem = {
@@ -275,7 +276,7 @@ export async function ensureNotificationSetup(requestPermission = true) {
       options: { opensAppToForeground: false, isAuthenticationRequired: false, isDestructive: true },
     },
   ]).catch(() => null);
-  await Notifications.setNotificationCategoryAsync(SUPPLEMENT_CATEGORY,[{identifier:SUPPLEMENT_TAKEN_ACTION,buttonTitle:'TAKEN',options:{opensAppToForeground:false,isAuthenticationRequired:false,isDestructive:false}}]).catch(()=>null);
+  await Notifications.setNotificationCategoryAsync(SUPPLEMENT_CATEGORY,[{identifier:SUPPLEMENT_TAKEN_ACTION,buttonTitle:'TAKEN',options:{opensAppToForeground:false,isAuthenticationRequired:false,isDestructive:false}},{identifier:SUPPLEMENT_RESCHEDULE_ACTION,buttonTitle:'RESCHEDULE',options:{opensAppToForeground:true,isAuthenticationRequired:false,isDestructive:false}}]).catch(()=>null);
 
   const current = await Notifications.getPermissionsAsync();
   if (current.status === 'granted') return true;
@@ -418,4 +419,9 @@ export async function scheduleDailySupplementReminder({
 export async function cancelSupplementReminder(identifier?: string | null) {
   if (!identifier) return;
   await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
+}
+
+export async function scheduleOneTimeSupplementReminder({supplementName,userId,reminderId,date}:{supplementName:string;userId:string;reminderId:string;date:Date}){
+ const allowed=await ensureNotificationSetup(true);if(!allowed||date.getTime()<=Date.now())return null;
+ return Notifications.scheduleNotificationAsync({content:{title:'Supplement reminder',body:supplementName,data:{type:'supplement_reminder',supplementName,userId,reminderId},categoryIdentifier:SUPPLEMENT_CATEGORY,sound:'default'},trigger:{type:Notifications.SchedulableTriggerInputTypes.DATE,date,...(Platform.OS==='android'?{channelId:SUPPLEMENT_CHANNEL}:{})} as any});
 }
