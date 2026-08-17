@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitHub",
     "slug": "fithub",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,11 +13,10 @@
     },
     "android": {
       "package": "com.fithub.app",
-      "versionCode": 10,
+      "versionCode": 11,
       "permissions": [
         "INTERNET",
         "SCHEDULE_EXACT_ALARM",
-        "ACTIVITY_RECOGNITION",
         "BLUETOOTH_SCAN",
         "BLUETOOTH_CONNECT"
       ],
@@ -31,7 +30,6 @@
       "supportsTablet": true
     },
     "plugins": [
-      ["expo-sensors", {"motionPermission": "FitHub uses motion sensors to count your steps. Step data is private unless you join a step group."}],
       ["expo-camera", {"cameraPermission": "FitHub uses the camera only when you scan a food barcode or take a photo you choose to share."}],
       ["react-native-ble-plx", {"isBackgroundEnabled": false, "modes": ["central"], "bluetoothAlwaysPermission": "FitHub uses Bluetooth only when you choose Connect Equipment."}],
       [
