@@ -33,6 +33,9 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const [cameraPermission,requestCameraPermission]=useCameraPermissions();
   const [scanned,setScanned]=useState(false);
   const [libraryOpen,setLibraryOpen]=useState(false);
+  const [finderOpen,setFinderOpen]=useState(false);
+  const [nutritionOpen,setNutritionOpen]=useState(false);
+  const [expandedMeals,setExpandedMeals]=useState<Record<string,boolean>>({breakfast:true,lunch:true,dinner:false,snacks:false});
 
   const load = async () => {
     const since = new Date();
@@ -189,39 +192,26 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     </Modal>
     <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Food</Text>
-        <View style={styles.two}><OutlineButton title="Meals & recipes" onPress={()=>setLibraryOpen(true)} compact/><OutlineButton title="History" onPress={()=>setHistoryOpen(true)} compact/></View>
+        <Text style={styles.title}>FOOD</Text>
+        <Pressable onPress={()=>setHistoryOpen(true)}><Text style={styles.todayTitle}>▣  Today⌄</Text></Pressable>
       </View>
 
-      {!locked? <>
-        <View style={styles.progressPanel}>
-          <View style={styles.dayRow}><Text style={styles.dayLabel}>Today⌄</Text><Text style={styles.dayNote}>Daily progress</Text></View>
-          <View style={styles.ringRow}>
-            <RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/>
-            <RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/>
-            <RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/>
-            <RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/>
-          </View>
-        </View>
+      <View style={styles.weekStrip}>{[-2,-1,0,1,2,3,4].map((offset)=>{const d=new Date();d.setDate(d.getDate()+offset);const active=offset===0;return <View key={offset} style={[styles.weekDay,active&&styles.weekDayOn]}><Text style={[styles.weekName,active&&styles.weekNameOn]}>{d.toLocaleDateString(undefined,{weekday:'short'}).toUpperCase()}</Text><Text style={[styles.weekNumber,active&&styles.weekNameOn]}>{d.getDate()}</Text></View>})}</View>
 
-        <Card style={styles.macroCard}>
-          <SectionTitle title="Macronutrient Breakdown"/>
-          <View style={styles.breakdownRow}>
-            <MacroDonut protein={totals.protein} carbs={totals.carbs} fat={totals.fat}/>
-            <View style={styles.legend}>
-              <LegendRow color={colors.blue} label="Protein" value={`${Math.round(totals.protein)}g (${macroPct(totals.protein)}%)`}/>
-              <LegendRow color={colors.cyan} label="Carbs" value={`${Math.round(totals.carbs)}g (${macroPct(totals.carbs)}%)`}/>
-              <LegendRow color={colors.gold} label="Fat" value={`${Math.round(totals.fat)}g (${macroPct(totals.fat)}%)`}/>
-              <LegendRow color={colors.purple} label="Other" value={`${Math.max(0,100-macroPct(totals.protein)-macroPct(totals.carbs)-macroPct(totals.fat))}%`}/>
-            </View>
-          </View>
-        </Card>
-      </> : <Card><SectionTitle title="Meal journal" subtitle="FitHub keeps calorie and macro targets off for under-18 accounts. You can still record meals and review your history."/></Card>}
+      <Card style={styles.diaryHero}><View style={{flex:1}}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep your meals organised in one place</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View><Text style={styles.diaryIcon}>♨</Text></Card>
 
-      <Card><SectionTitle title="Water" subtitle={`${waterTotal.toLocaleString()} ml recorded today`} /><View style={styles.two}><OutlineButton title="+250 ml" onPress={()=>addWater(250)} compact/><OutlineButton title="+500 ml" onPress={()=>addWater(500)} compact/></View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.remove}>Undo last water entry</Text></Pressable>:null}</Card>
+      <View style={styles.quickActions}>{[
+        ['⌕','Search',()=>setFinderOpen(true)],['▦','Scan',()=>{setScanned(false);setScannerOpen(true)}],['↶','Recent',()=>setHistoryOpen(true)],['♡','Saved Meals',()=>setLibraryOpen(true)],
+      ].map(([icon,label,action]:any)=><Pressable key={label} onPress={action} style={styles.quickAction}><Text style={styles.quickIcon}>{icon}</Text><Text style={styles.quickLabel}>{label}</Text></Pressable>)}</View>
 
-      <Card>
-        <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':'Meals & foods'}/><OutlineButton title="+ Add Food" onPress={()=>setManualOpen(!manualOpen)} compact/></View>
+      {(['breakfast','lunch','dinner','snacks'] as const).map(type=><MealDiaryCard key={type} type={type} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog}/>)}
+
+      <Card style={styles.waterCard}><View style={styles.waterTop}><View><Text style={styles.waterTitle}>💧  WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View><Pressable onPress={()=>addWater(250)} style={styles.redPlus}><Text style={styles.redPlusText}>＋</Text></Pressable></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><View key={i} style={[styles.waterGlass,i<Math.min(6,Math.floor(waterTotal/250))&&styles.waterGlassFull]}/>)}</View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
+
+      {!locked?<Card><Pressable onPress={()=>setNutritionOpen(!nutritionOpen)} style={styles.nutritionHeader}><View><Text style={styles.nutritionTitle}>↗  Nutrition overview</Text><Text style={styles.foodMeta}>View nutrients and serving details</Text></View><Text style={styles.chevron}>{nutritionOpen?'⌃':'⌄'}</Text></Pressable>{nutritionOpen?<><View style={styles.ringRow}><RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/><RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/><RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/><RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/></View></>:null}</Card>:<Card><SectionTitle title="Meal journal" subtitle="You can record meals and review your routine. Nutrition targets are not shown for younger accounts."/></Card>}
+
+      {finderOpen?<Card>
+        <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':`Add to ${mealType}`}/><Pressable onPress={()=>setFinderOpen(false)}><Text style={styles.closeFinder}>×</Text></Pressable></View>
         <View style={styles.two}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.goalPill,mealType===x&&styles.hit]}><Text style={styles.foodMeta}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
         <Input value={query} onChangeText={setQuery} placeholder={locked?'Search saved/common foods…':'Search chicken, oats, banana…'}/>
         {!locked?<><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={onlineSearch} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></>:null}
@@ -234,21 +224,16 @@ export default function FoodTab({ profile }: { profile: Profile }) {
           </>:null}
           <OutlineButton title="Save & add" onPress={saveManual}/>
         </View>:null}
-      </Card>
-
-      <SectionTitle title="Foods" subtitle={query?`Matches for “${query}”`:'Common foods and your saved foods'}/>
-      {[...usdaFoods,...filtered].slice(0,35).map((food,i)=><FoodRow key={`${food.source}-${food.id??food.name}-${i}`} food={food} onAdd={()=>addLog(food)} hideNutrition={locked}/>)}
-
-      <Card>
-        <SectionTitle title={locked?"Today's meals":"Today's log"}/>
-        {todayLogs.length?todayLogs.map(x=><View key={x.id} style={styles.logRow}>
-          <View style={{flex:1}}><Text style={styles.foodName}>{x.food_name}</Text><Text style={styles.foodMeta}>{x.serving}</Text></View>
-          {!locked?<Text style={styles.kcal}>{Math.round(Number(x.calories))} kcal</Text>:null}<Pressable onPress={()=>removeLog(x)}><Text style={styles.remove}>Remove</Text></Pressable>
-        </View>):<Text style={styles.sub}>Nothing logged yet today.</Text>}
-      </Card>
+        <SectionTitle title="Foods" subtitle={query?`Matches for “${query}”`:'Common foods and your saved foods'}/>{[...usdaFoods,...filtered].slice(0,35).map((food,i)=><FoodRow key={`${food.source}-${food.id??food.name}-${i}`} food={food} onAdd={()=>addLog(food)} hideNutrition={locked}/>)}
+      </Card>:null}
       <Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>
     </ScrollView>
   </KeyboardAvoidingView>;
+}
+
+function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void}){
+  const {colors}=useTheme();const s=createStyles(colors);const icons={breakfast:'☼',lunch:'◉',dinner:'◒',snacks:'♧'};
+  return <Card style={s.mealCard}><View style={s.mealHead}><Pressable onPress={onToggle} style={s.mealHeadText}><Text style={s.mealIcon}>{icons[type]}</Text><View><Text style={s.mealTitle}>{type[0].toUpperCase()+type.slice(1)}</Text>{!rows.length?<Text style={s.foodMeta}>Nothing logged yet</Text>:null}</View></Pressable><Text style={s.chevron}>{expanded?'⌃':'⌄'}</Text><Pressable onPress={onAdd} style={s.redPlus}><Text style={s.redPlusText}>＋</Text></Pressable></View>{expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><Text style={s.foodThumbText}>◌</Text></View><View style={{flex:1}}><Text style={s.foodName}>{row.food_name}</Text><Text style={s.foodMeta}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)}><Text style={s.mealMore}>⋮</Text></Pressable></View>):null}</Card>;
 }
 
 function sumLogs(rows:any[]){
@@ -342,6 +327,38 @@ const createStyles=(colors:any)=>StyleSheet.create({
   wrap:{padding:16,paddingTop:10,paddingBottom:40},
   headerRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:12},
   title:{color:colors.text,fontSize:29,fontWeight:'900'},
+  todayTitle:{color:colors.text,fontSize:15,fontWeight:'900'},
+  weekStrip:{flexDirection:'row',justifyContent:'space-between',marginBottom:14},
+  weekDay:{width:39,alignItems:'center',paddingVertical:7,borderRadius:11},
+  weekDayOn:{backgroundColor:colors.primary},
+  weekName:{color:colors.muted,fontSize:8,fontWeight:'900'},
+  weekNameOn:{color:'#FFFFFF'},
+  weekNumber:{color:colors.text,fontSize:15,fontWeight:'900',marginTop:3},
+  diaryHero:{flexDirection:'row',alignItems:'center',padding:17},
+  diaryEyebrow:{color:colors.text,fontSize:17,fontWeight:'900'},
+  diarySub:{color:colors.muted,fontSize:11,marginTop:4},
+  diaryCount:{color:colors.text,fontSize:12,marginTop:14},
+  diaryTrack:{height:6,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:8},
+  diaryFill:{height:'100%',backgroundColor:colors.primary,borderRadius:99},
+  diaryIcon:{color:colors.primary,fontSize:40,marginLeft:18},
+  quickActions:{flexDirection:'row',gap:8,marginBottom:12},
+  quickAction:{flex:1,minHeight:76,borderRadius:13,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},
+  quickIcon:{color:colors.text,fontSize:24},
+  quickLabel:{color:colors.text,fontSize:10,marginTop:6,textAlign:'center'},
+  mealCard:{padding:0,overflow:'hidden'},
+  mealHead:{minHeight:60,flexDirection:'row',alignItems:'center',paddingHorizontal:13,gap:10},
+  mealHeadText:{flex:1,flexDirection:'row',alignItems:'center',gap:10},
+  mealIcon:{color:colors.primary,fontSize:23},
+  mealTitle:{color:colors.text,fontSize:17,fontWeight:'900'},
+  redPlus:{width:36,height:36,borderRadius:18,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center'},
+  redPlusText:{color:'#FFFFFF',fontSize:23,fontWeight:'600',lineHeight:27},
+  mealFood:{flexDirection:'row',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:colors.border,padding:11},
+  foodThumb:{width:54,height:45,borderRadius:10,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center'},
+  foodThumbText:{color:colors.primary,fontSize:22},
+  mealMore:{color:colors.muted,fontSize:24,paddingHorizontal:5},
+  waterCard:{padding:14},waterTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},waterTitle:{color:colors.text,fontSize:16,fontWeight:'900'},waterSub:{color:colors.muted,fontSize:11,marginTop:3},
+  waterGlasses:{flexDirection:'row',gap:9,marginTop:12},waterGlass:{width:27,height:33,borderWidth:2,borderColor:colors.muted,borderRadius:5},waterGlassFull:{backgroundColor:colors.blue,borderColor:colors.blue},undo:{color:colors.muted,fontSize:10,textDecorationLine:'underline',marginTop:10},
+  nutritionHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},nutritionTitle:{color:colors.text,fontSize:16,fontWeight:'900'},closeFinder:{color:colors.muted,fontSize:29,paddingHorizontal:8},
   sub:{color:colors.muted,lineHeight:19,marginTop:4,marginBottom:12,flexShrink:1},
   progressPanel:{backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border,borderRadius:17,padding:13,marginBottom:12},
   dayRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:10},

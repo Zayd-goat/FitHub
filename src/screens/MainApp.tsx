@@ -122,7 +122,7 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
        page === 'split' ? <WorkoutSplitScreen profile={profile} onBack={() => setPage('main')} /> :
        page === 'customize' ? <CustomizationScreen onBack={() => setPage('main')} /> :
        page === 'sharedGym' ? <SharedGymScreen profile={profile} onBack={()=>setPage('main')} /> : <>
-        {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => chooseTab('workout')} onViewProgress={openProgress} onViewWorkouts={openHistory} onViewDailyActivity={openDaily} onOpenJourney={openJourney} />}
+        {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => chooseTab('workout')} onViewProgress={openProgress} onViewWorkouts={openHistory} onViewDailyActivity={openDaily} onOpenJourney={openJourney} onOpenSupplements={()=>setPage('supplements')} onOpenFood={()=>chooseTab('food')} onOpenFriends={()=>chooseTab('friends')} />}
         {tab === 'food' && <FoodTab profile={profile} />}
         {tab === 'workout' && <WorkoutTab profile={profile} onProfileChanged={onProfileChanged} />}
         {tab === 'friends' && <FriendsTab profile={profile} />}

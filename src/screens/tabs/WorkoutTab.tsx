@@ -194,7 +194,7 @@ export default function WorkoutTab({
   const [detailTab, setDetailTab] = useState<DetailTab>('sets');
   const [detailExercise, setDetailExercise] = useState<LibraryExercise | null>(null);
   const [query, setQuery] = useState('');
-  const [muscleFilter, setMuscleFilter] = useState<(typeof muscleGroupFilters)[number]>('All');
+  const [muscleFilter, setMuscleFilter] = useState<string>('All');
   const [builder, setBuilder] = useState<BuilderItem[]>([]);
   const [lastWorkout, setLastWorkout] = useState<BuilderItem[]>([]);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
@@ -219,7 +219,7 @@ export default function WorkoutTab({
     const q = query.trim().toLowerCase();
     return exerciseLibrary.filter(
       (ex) =>
-        (muscleFilter === 'All' || ex.targetArea === muscleFilter) &&
+        (muscleFilter === 'All' || (muscleFilter === 'Arms' ? ['Biceps','Triceps','Forearms'].includes(ex.targetArea) : ex.targetArea === muscleFilter)) &&
         (!q || `${ex.name} ${ex.targetArea} ${ex.subsection} ${ex.equipment}`.toLowerCase().includes(q)),
     );
   }, [query, muscleFilter]);
@@ -1155,9 +1155,9 @@ export default function WorkoutTab({
       <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
         <View style={styles.browseHeader}>
           <View>
-            <Text style={styles.browseTitle}>{activeStartedAt ? 'Workout Running' : editingTemplateId ? 'Edit Saved Workout' : 'New Workout'}</Text>
+            <Text style={styles.browseTitle}>{activeStartedAt ? 'WORKOUT RUNNING' : editingTemplateId ? 'EDIT SAVED WORKOUT' : muscleFilter === 'All' ? 'TRAIN' : `${muscleFilter.toUpperCase()} EXERCISES`}</Text>
             <Text style={styles.browseSub}>
-              {activeStartedAt ? `${formatTime(elapsed)} elapsed • ${builder.length} exercise${builder.length === 1 ? '' : 's'}` : builder.length ? `${builder.length} exercise${builder.length === 1 ? '' : 's'} ready` : 'Choose an exercise to set it up'}
+              {activeStartedAt ? `${formatTime(elapsed)} elapsed • ${builder.length} exercise${builder.length === 1 ? '' : 's'}` : muscleFilter === 'All' ? 'Choose a muscle group' : `Select ${muscleFilter.toLowerCase()} exercises for your workout`}
             </Text>
           </View>
           <Pressable onPress={newWorkout}><Text style={styles.newWorkoutText}>NEW</Text></Pressable>
@@ -1193,27 +1193,13 @@ export default function WorkoutTab({
           </View>
         ) : null}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.muscleScroller}>
-          <Pressable onPress={() => setMuscleFilter('All')} style={styles.muscleChoice}>
-            <View style={[styles.circle, muscleFilter === 'All' && styles.circleActive]}>
-              <Image
-                source={require('../../../assets/nav/workout.png')}
-                style={[styles.circleIcon, { tintColor: muscleFilter === 'All' ? colors.primary : colors.muted }]}
-              />
-            </View>
-            <Text style={[styles.choiceLabel, muscleFilter === 'All' && styles.choiceLabelActive]}>All</Text>
-          </Pressable>
-          {muscleCards.map((muscle) => (
-            <Pressable key={muscle.label} onPress={() => setMuscleFilter(muscle.label as any)} style={styles.muscleChoice}>
-              <View style={[styles.circle, muscleFilter === muscle.label && styles.circleActive]}>
-                <Image source={muscle.image} style={muscle.label === 'Cardio' ? styles.circleCardio : styles.circleAnatomy} />
-              </View>
-              <Text style={[styles.choiceLabel, muscleFilter === muscle.label && styles.choiceLabelActive]}>{muscle.label}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        <Input value={query} onChangeText={setQuery} placeholder="Search exercises…" />
+        {muscleFilter === 'All' && !query ? <View style={styles.muscleGrid}>{[
+          {label:'Chest',image:figureImages.chest},{label:'Back',image:figureImages.back},{label:'Shoulders',image:figureImages.shoulders},{label:'Arms',image:figureImages.biceps},{label:'Legs',image:figureImages.legs},{label:'Core',image:figureImages.core},{label:'Full Body',image:figureImages.full_body},{label:'Cardio',image:figureImages.run},
+        ].map(muscle=><Pressable key={muscle.label} onPress={()=>setMuscleFilter(muscle.label)} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage}/><View style={styles.muscleShade}/><Text style={styles.muscleGridLabel}>{muscle.label}</Text></Pressable>)}</View> : <>
+          <View style={styles.exerciseBrowseTop}><Pressable onPress={()=>{setMuscleFilter('All');setQuery('')}}><Text style={styles.exerciseBack}>‹ Muscle groups</Text></Pressable><Text style={styles.exerciseCount}>{filtered.length} exercises</Text></View>
+          <Input value={query} onChangeText={setQuery} placeholder={`Search ${muscleFilter.toLowerCase()} exercises…`} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><View key={x} style={[styles.equipmentChip,x==='All'&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x==='All'&&styles.equipmentChipTextOn]}>{x}</Text></View>)}</ScrollView>
+        </>}
 
         {builder.length && !activeStartedAt ? (
           <Card style={styles.selectedCard}>
@@ -1241,7 +1227,7 @@ export default function WorkoutTab({
 
         {lastWorkout.length ? <Pressable onPress={repeatLast} style={styles.repeat}><Text style={styles.repeatText}>↻ Repeat last workout</Text></Pressable> : null}
 
-        <View style={styles.exerciseList}>
+        {muscleFilter !== 'All' || query ? <View style={styles.exerciseList}>
           {filtered.map((ex) => {
             const img = ex.visualKey ? figureImages[ex.visualKey] : undefined;
             const selected = builder.some((item) => item.exercise.slug === ex.slug);
@@ -1265,7 +1251,7 @@ export default function WorkoutTab({
               </Pressable>
             );
           })}
-        </View>
+        </View> : null}
       </ScrollView>
     </KeyboardAvoidingView>
     {celebrationModal}
@@ -1383,6 +1369,20 @@ const createStyles = (colors: any) => StyleSheet.create({
   savedEdit: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   savedDelete: { color: colors.muted, fontWeight: '800', fontSize: 11 },
   muscleScroller: { gap: 10, paddingBottom: 14 },
+  muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
+  muscleGridCard: { width: '48.5%', aspectRatio: 1.18, borderRadius: 15, overflow: 'hidden', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, position: 'relative' },
+  muscleGridImage: { width: '100%', height: '100%', resizeMode: 'contain' },
+  muscleGridCardio: { width: '100%', height: '100%', resizeMode: 'cover' },
+  muscleShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 48, backgroundColor: 'rgba(0,0,0,.62)' },
+  muscleGridLabel: { position: 'absolute', left: 12, bottom: 10, color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
+  exerciseBrowseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  exerciseBack: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  exerciseCount: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  equipmentFilters: { gap: 7, paddingBottom: 12 },
+  equipmentChip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 13, paddingVertical: 7, backgroundColor: colors.panel },
+  equipmentChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  equipmentChipText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  equipmentChipTextOn: { color: colors.primary },
   muscleChoice: { alignItems: 'center', width: 58 },
   circle: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   circleActive: { borderColor: colors.primary },

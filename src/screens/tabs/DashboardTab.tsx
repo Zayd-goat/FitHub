@@ -17,9 +17,12 @@ type Props = {
   onViewWorkouts: (sessionId?: string) => void;
   onViewDailyActivity: (focus: DailyActivityFocus) => void;
   onOpenJourney: (period?: 'week' | 'month') => void;
+  onOpenSupplements: () => void;
+  onOpenFood: () => void;
+  onOpenFriends: () => void;
 };
 
-export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity, onOpenJourney }: Props) {
+export default function DashboardTab({ profile, onStartWorkout, onViewProgress, onViewWorkouts, onViewDailyActivity, onOpenJourney, onOpenSupplements, onOpenFood, onOpenFriends }: Props) {
   const { colors, hiddenFeatures, weightUnit } = useTheme();
   const styles = createStyles(colors);
   const [weekWorkouts, setWeekWorkouts] = useState(0);
@@ -103,26 +106,17 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
       <Image source={heroImage} style={styles.heroFigure}/>
     </Card>
 
-    <View style={styles.sectionRow}><Text style={styles.sectionTitle}>Your Progress</Text><Pressable onPress={() => onViewProgress('overview')}><Text style={styles.viewAll}>View all</Text></Pressable></View>
-    <View style={styles.statsRow}>
-      <Stat label="Workouts" value={`${weekWorkouts}`} sub="This week" accent={colors.blue} icon="◒" onPress={() => onViewWorkouts()} />
-      <Stat label="Volume" value={kgToDisplay(todayVolume, weightUnit) > 999 ? `${(kgToDisplay(todayVolume, weightUnit) / 1000).toFixed(1)}k` : `${Math.round(kgToDisplay(todayVolume, weightUnit))}`} sub={`${weightUnit} today`} accent={colors.blue} icon="↗" onPress={() => onViewDailyActivity('volume')} />
-      {!hiddenFeatures.includes('activity') ? <Stat label="Activity" value={locked ? '—' : `~${todayEnergy}`} sub={locked ? '18+ estimate' : 'est. kcal today'} accent={colors.primary} icon="◉" onPress={locked ? undefined : () => onViewDailyActivity('energy')} /> : null}
-      <Stat label="PR lifts" value={`${prCount}`} sub="Recorded" accent={colors.gold} icon="🏆" onPress={() => onViewProgress('prs')} />
+    <Text style={styles.homeSection}>YOUR WEEK</Text>
+    <Pressable onPress={() => onOpenJourney('week')} style={({pressed})=>pressed?styles.pressed:undefined}><Card><View style={styles.weekCalendar}>{['M','T','W','T','F','S','S'].map((d,i)=><View key={i} style={styles.weekCell}><Text style={styles.weekLetter}>{d}</Text><View style={[styles.weekStatus,i<Math.min(7,weekWorkouts)&&styles.weekStatusDone]}><Text style={styles.weekCheck}>{i<Math.min(7,weekWorkouts)?'✓':i===3?'R':'·'}</Text></View></View>)}</View><View style={styles.weekSummary}><Text style={styles.weekSummaryText}>🏋  {weekWorkouts} workouts completed</Text><Text style={styles.viewAll}>View journey  ›</Text></View></Card></Pressable>
+
+    <Text style={styles.homeSection}>QUICK ACCESS</Text>
+    <View style={styles.quickGrid}>
+      {!hiddenFeatures.includes('journey')?<HomeQuick icon="⚑" label="Journey" onPress={()=>onOpenJourney('week')}/>:null}
+      {!hiddenFeatures.includes('food')?<HomeQuick icon="▤" label="Nutrition" onPress={onOpenFood}/>:null}
+      {!hiddenFeatures.includes('supplements')?<HomeQuick icon="▣" label="Supplements" onPress={onOpenSupplements}/>:null}
     </View>
-
-
-    {!hiddenFeatures.includes('journey') ? <>
-      <View style={styles.sectionRow}><Text style={styles.sectionTitle}>My Fitness Journey</Text><Pressable onPress={() => onOpenJourney('week')}><Text style={styles.viewAll}>Open</Text></Pressable></View>
-      <View style={styles.reportRow}>
-        <Pressable onPress={() => onOpenJourney('week')} style={({pressed})=>[styles.reportCard,pressed&&styles.pressed]}><Text style={styles.reportEyebrow}>WEEKLY REPORT</Text><Text style={styles.reportTitle}>{weekWorkouts} workouts • {weekPrs} PR{weekPrs===1?'':'s'}</Text><Text style={styles.reportSub}>See lift highlights, consistency and recommendations ›</Text></Pressable>
-        <Pressable onPress={() => onOpenJourney('month')} style={({pressed})=>[styles.reportCard,pressed&&styles.pressed]}><Text style={styles.reportEyebrow}>MONTHLY REPORT</Text><Text style={styles.reportTitle}>{monthPrs} PR{monthPrs===1?'':'s'} this month</Text><Text style={styles.reportSub}>Review improvements across the last 30 days ›</Text></Pressable>
-      </View>
-    </> : null}
-
-    <Pressable onPress={() => onViewWorkouts()} style={({ pressed }) => pressed ? styles.pressed : undefined}>
-      <Card><View style={styles.cardTitleRow}><Text style={styles.sectionTitle}>Weekly target</Text><Text style={styles.cardArrow}>›</Text></View><Text style={styles.goalText}>{weekWorkouts} of {profile.workout_days_target} planned training days complete.</Text><View style={styles.track}><View style={[styles.fill, { width: `${Math.min(100, (weekWorkouts / Math.max(1, profile.workout_days_target)) * 100)}%` }]} /></View></Card>
-    </Pressable>
+    <Pressable onPress={onOpenFriends} style={({pressed})=>[styles.feedCard,pressed&&styles.pressed]}><Text style={styles.feedIcon}>◉ ◉</Text><View style={{flex:1}}><Text style={styles.feedTitle}>See what your friends are training</Text><Text style={styles.feedLink}>Open feed  ›</Text></View></Pressable>
+    <Pressable onPress={()=>onViewProgress('overview')}><Text style={styles.allProgress}>View all progress, PRs and reports  ›</Text></Pressable>
   </ScrollView>;
 }
 
@@ -145,6 +139,7 @@ function Stat({ label, value, sub, accent, icon, onPress }: { label: string; val
   const content = <View style={styles.stat}><View style={styles.statTop}><Text style={[styles.statIcon, { color: accent }]}>{icon}</Text>{onPress ? <Text style={styles.statArrow}>›</Text> : null}</View><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text><Text style={styles.statSub}>{sub}</Text></View>;
   return onPress ? <Pressable onPress={onPress} style={({ pressed }) => [styles.statPress, pressed && styles.pressed]}>{content}</Pressable> : <View style={styles.statPress}>{content}</View>;
 }
+function HomeQuick({icon,label,onPress}:{icon:string;label:string;onPress:()=>void}){const{colors}=useTheme();const s=createStyles(colors);return <Pressable onPress={onPress} style={({pressed})=>[s.homeQuick,pressed&&s.pressed]}><Text style={s.homeQuickIcon}>{icon}</Text><Text style={s.homeQuickLabel}>{label}</Text></Pressable>}
 
 const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 28 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }, greeting: { color: colors.muted, fontSize: 12 }, name: { color: colors.text, fontSize: 28, fontWeight: '900', marginTop: 1, letterSpacing: -0.4 }, streak: { alignItems: 'center', borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 }, streakValue: { color: colors.text, fontWeight: '900', fontSize: 22 }, streakLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', marginTop: 1 },
@@ -154,4 +149,5 @@ const createStyles = (colors: any) => StyleSheet.create({
   recentCard: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 }, recentIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, recentIconImage: { width: 20, height: 20, resizeMode: 'contain' }, recentName: { color: colors.text, fontWeight: '900', fontSize: 14 }, recentMeta: { color: colors.muted, fontSize: 10, marginTop: 3, lineHeight: 14 }, done: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }, doneText: { color: '#fff', fontWeight: '900' },
   reportRow: { gap: 8, marginBottom: 14 }, reportCard: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 13 }, reportEyebrow: { color: colors.primary, fontWeight: '900', fontSize: 9 }, reportTitle: { color: colors.text, fontWeight: '900', fontSize: 15, marginTop: 5 }, reportSub: { color: colors.muted, fontSize: 10, marginTop: 4, lineHeight: 14 },
   cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, cardArrow: { color: colors.muted, fontSize: 24, fontWeight: '500' }, goalText: { color: colors.muted, marginTop: 4, fontSize: 12 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginTop: 12 }, fill: { height: '100%', backgroundColor: colors.green }, pressed: { opacity: 0.68 },
+  homeSection:{color:colors.muted,fontSize:13,fontWeight:'900',marginTop:8,marginBottom:9},weekCalendar:{flexDirection:'row',justifyContent:'space-between'},weekCell:{alignItems:'center',gap:8},weekLetter:{color:colors.muted,fontSize:10,fontWeight:'900'},weekStatus:{width:28,height:28,borderRadius:14,borderWidth:1,borderColor:colors.border,alignItems:'center',justifyContent:'center'},weekStatusDone:{backgroundColor:colors.primary,borderColor:colors.primary},weekCheck:{color:colors.text,fontSize:11,fontWeight:'900'},weekSummary:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,marginTop:14,paddingTop:12},weekSummaryText:{color:colors.text,fontSize:11,fontWeight:'800'},quickGrid:{flexDirection:'row',gap:9,marginBottom:10},homeQuick:{flex:1,aspectRatio:1,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},homeQuickIcon:{color:colors.text,fontSize:29},homeQuickLabel:{color:colors.text,fontSize:11,fontWeight:'800',marginTop:9},feedCard:{flexDirection:'row',alignItems:'center',gap:14,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,padding:16},feedIcon:{color:colors.primary,fontSize:25},feedTitle:{color:colors.text,fontSize:14,fontWeight:'900'},feedLink:{color:colors.muted,fontSize:11,textDecorationLine:'underline',marginTop:5},allProgress:{color:colors.primary,fontSize:11,fontWeight:'900',textAlign:'center',paddingVertical:16},
 });
