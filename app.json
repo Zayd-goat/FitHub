@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitHub",
     "slug": "fithub",
-    "version": "1.6.1",
+    "version": "1.6.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,10 +13,11 @@
     },
     "android": {
       "package": "com.fithub.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "permissions": [
         "INTERNET",
         "SCHEDULE_EXACT_ALARM",
+        "ACCESS_FINE_LOCATION",
         "BLUETOOTH_SCAN",
         "BLUETOOTH_CONNECT"
       ],
