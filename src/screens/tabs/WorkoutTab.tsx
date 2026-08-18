@@ -23,7 +23,7 @@ import { recordWorkoutDay } from '../../lib/streaks';
 import { clearActiveWorkoutNotification, showActiveWorkoutNotification } from '../../lib/notifications';
 import { detectAndSavePrEvents, NewPrEvent } from '../../lib/prs';
 import { displayToKg, displayToKm, formatDistance, formatPace, formatWeight, kgToDisplay, kmToDisplay } from '../../lib/units';
-import { connectFirstFtms, FtmsState } from '../../lib/ftms';
+import { connectFirstFtms, FtmsMetrics, FtmsState } from '../../lib/ftms';
 import {
   exerciseLibrary,
   figureImages,
@@ -1334,12 +1334,14 @@ function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch:
   const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [ftms,setFtms]=useState<FtmsState|null>(null);
-  const connect=async()=>{try{await connectFirstFtms((state,name)=>{setFtms(state);if(state==='connected')Alert.alert('Equipment connected',name??'Compatible FTMS machine');});}catch(e:any){Alert.alert('Equipment connection',e?.message??"This machine doesn't support FitHub connectivity.",[{text:'Track manually'}]);}};
+  const [machine,setMachine]=useState<FtmsMetrics|null>(null);
+  const connect=async()=>{try{await connectFirstFtms((state,name)=>{setFtms(state);if(state==='connected')Alert.alert('Equipment connected',name??'Compatible FTMS machine');if(state==='lost')Alert.alert('Equipment disconnected','Captured fields remain available. Reconnect or continue manually.');},metrics=>{setMachine(previous=>({...previous,...metrics}));const patch:Partial<BuilderItem>={};if(metrics.distanceKm!=null)patch.distance=String(kmToDisplay(metrics.distanceKm,distanceUnit).toFixed(2));if(metrics.elapsedSeconds!=null)patch.duration=String((metrics.elapsedSeconds/60).toFixed(1));onChange(patch);});}catch(e:any){setFtms('unsupported');Alert.alert('Equipment connection',e?.message??"This machine doesn't support FitHub connectivity.",[{text:'Track manually'}]);}};
   return (
     <View>
       <Text style={styles.cardioHint}>Record the fields that best match this exercise. You can change them during the workout.</Text>
       <OutlineButton title={ftms==='searching'?'Searching…':ftms==='connecting'?'Connecting…':ftms==='connected'?'Equipment connected':'Connect Equipment'} onPress={connect} disabled={ftms==='searching'||ftms==='connecting'||ftms==='connected'}/>
       <Text style={styles.cardioHint}>FitHub records only metrics the machine exposes. Machine-reported calories are labelled separately from FitHub estimates. Manual tracking remains available.</Text>
+      {machine?<View style={styles.machineMetrics}><Text style={styles.machineTitle}>MACHINE-REPORTED</Text><Text style={styles.cardioHint}>{[machine.speedKph!=null?`${machine.speedKph.toFixed(1)} km/h`:null,machine.inclinePercent!=null?`${machine.inclinePercent.toFixed(1)}% incline`:null,machine.resistanceLevel!=null?`Level ${machine.resistanceLevel}`:null,machine.cadenceRpm!=null?`${machine.cadenceRpm.toFixed(0)} rpm`:null,machine.watts!=null?`${machine.watts} W`:null,machine.heartRate!=null?`${machine.heartRate} bpm`:null,machine.calories!=null?`${machine.calories} machine kcal`:null].filter(Boolean).join('  •  ')||'Connected; waiting for supported metrics.'}</Text></View>:null}
       {item.exercise.allowsLoad ? (
         <Input value={item.load} onChangeText={(value) => onChange({ load: value })} keyboardType="decimal-pad" placeholder={`Load (${weightUnit}), if used`} />
       ) : null}
@@ -1452,6 +1454,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   minimumSetHint: { color: colors.muted, fontSize: 9, marginTop: 6, textAlign: 'center' },
   two: { flexDirection: 'row', gap: 8 },
   cardioHint: { color: colors.muted, fontSize: 11, marginBottom: 9 },
+  machineMetrics: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.green, borderRadius: 10, padding: 10, marginBottom: 9 },
+  machineTitle: { color: colors.green, fontSize: 9, fontWeight: '900', marginBottom: 4 },
   activeWrap: { padding: 16, paddingTop: 10, paddingBottom: 34 },
   activeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   exit: { color: colors.text, fontSize: 14 },

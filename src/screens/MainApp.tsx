@@ -21,9 +21,9 @@ import SharedGymScreen from './SharedGymScreen';
 
 const allTabs = [
   ['home', require('../../assets/nav/home.png'), 'Home'],
-  ['food', require('../../assets/nav/food.png'), 'Food'],
-  ['workout', require('../../assets/nav/workout.png'), 'Train'],
   ['friends', require('../../assets/nav/friends.png'), 'Friends'],
+  ['workout', require('../../assets/nav/workout.png'), 'Train'],
+  ['food', require('../../assets/nav/food.png'), 'Food'],
   ['profile', require('../../assets/nav/profile.png'), 'You'],
 ] as const;
 
@@ -39,6 +39,7 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
   const [dailyFocus, setDailyFocus] = useState<DailyActivityFocus>('volume');
   const [historySessionId, setHistorySessionId] = useState<string | undefined>();
   const [journeyPeriod, setJourneyPeriod] = useState<'week'|'month'>('week');
+  const [friendsBadge, setFriendsBadge] = useState(0);
   const styles = createStyles(colors);
 
   const tabs = useMemo(() => allTabs.filter(([key]) => key !== 'food' || !hiddenFeatures.includes('food')).filter(([key]) => key !== 'friends' || !hiddenFeatures.includes('friends')), [hiddenFeatures]);
@@ -86,6 +87,23 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
     showSchedule();
   }, [profile.id]);
 
+  useEffect(() => {
+    let alive = true;
+    const loadBadge = async () => {
+      const { count } = await supabase
+        .from('friend_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('addressee_id', profile.id)
+        .eq('status', 'pending');
+      if (alive) setFriendsBadge(Math.min(99, count ?? 0));
+    };
+    loadBadge();
+    const channel = supabase.channel(`nav-feed-${profile.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: `addressee_id=eq.${profile.id}` }, loadBadge)
+      .subscribe();
+    return () => { alive = false; supabase.removeChannel(channel); };
+  }, [profile.id]);
+
   const chooseTab = (next: Tab) => { setTab(next); setPage('main'); };
   const openProgress = (focus: HomeProgressFocus = 'overview') => { setProgressFocus(focus); setPage('progress'); };
   const openHistory = (sessionId?: string) => { setHistorySessionId(sessionId); setPage('history'); };
@@ -111,8 +129,35 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
         {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => setPage('clubs')} onOpenJourney={openJourney} onOpenSharedGym={()=>setPage('sharedGym')} />}
       </>}
     </View>
-    <View style={styles.nav}>{tabs.map(([key, icon, label]) => { const active = page === 'main' && tab === key; return <Pressable key={key} onPress={() => chooseTab(key)} style={styles.navItem}><Image source={icon} style={[styles.navIcon, { tintColor: active ? colors.primary : colors.muted }]} /><Text style={[styles.navLabel, active && { color: colors.primary, fontWeight: '900' }]}>{label}</Text></Pressable>; })}</View>
+    <View style={styles.nav}>{tabs.map(([key, icon, label]) => {
+      const active = page === 'main' && tab === key;
+      const primary = key === 'workout';
+      return <Pressable key={key} onPress={() => chooseTab(key)} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label} style={({pressed})=>[styles.navItem,pressed&&styles.navPressed]}>
+        {active && !primary ? <View style={styles.activeBar}/> : null}
+        <View style={[styles.iconWrap, primary && styles.trainButton, primary && active && styles.trainButtonActive]}>
+          <Image source={icon} style={[styles.navIcon, primary && styles.trainIcon, { tintColor: primary ? '#FFFFFF' : active ? colors.primary : colors.muted }]} />
+          {key === 'friends' && friendsBadge > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{friendsBadge > 9 ? '9+' : friendsBadge}</Text></View> : null}
+        </View>
+        <Text style={[styles.navLabel, primary && styles.trainLabel, active && { color: colors.primary, fontWeight: '900' }]}>{label}</Text>
+      </Pressable>;
+    })}</View>
   </View>;
 }
 
-const createStyles = (colors: any) => StyleSheet.create({ safe: { flex: 1, backgroundColor: colors.bg }, content: { flex: 1 }, nav: { minHeight: 66, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.nav, paddingBottom: 5, paddingTop: 4 }, navItem: { flex: 1, alignItems: 'center', justifyContent: 'center' }, navIcon: { width: 23, height: 23, resizeMode: 'contain' }, navLabel: { color: colors.muted, fontSize: 9, fontWeight: '700', marginTop: 3 } });
+const createStyles = (colors: any) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
+  content: { flex: 1 },
+  nav: { minHeight: 76, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.nav, paddingBottom: 7, paddingTop: 5, overflow: 'visible' },
+  navItem: { flex: 1, minHeight: 60, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  navPressed: { opacity: 0.68 },
+  activeBar: { position: 'absolute', top: -5, width: 30, height: 3, borderRadius: 999, backgroundColor: colors.primary },
+  iconWrap: { width: 42, height: 34, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  trainButton: { width: 54, height: 54, borderRadius: 27, marginTop: -24, backgroundColor: colors.primary, borderWidth: 4, borderColor: colors.nav, shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 9 },
+  trainButtonActive: { transform: [{ scale: 1.04 }] },
+  navIcon: { width: 23, height: 23, resizeMode: 'contain' },
+  trainIcon: { width: 26, height: 26 },
+  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '700', marginTop: 2 },
+  trainLabel: { marginTop: 1, color: colors.text, fontWeight: '900' },
+  badge: { position: 'absolute', right: 0, top: -3, minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.nav, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: '#FFFFFF', fontSize: 8, fontWeight: '900' },
+});
