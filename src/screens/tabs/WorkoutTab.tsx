@@ -24,6 +24,7 @@ import { clearActiveWorkoutNotification, showActiveWorkoutNotification } from '.
 import { detectAndSavePrEvents, NewPrEvent } from '../../lib/prs';
 import { displayToKg, displayToKm, formatDistance, formatPace, formatWeight, kgToDisplay, kmToDisplay } from '../../lib/units';
 import { connectFirstFtms, FtmsMetrics, FtmsState } from '../../lib/ftms';
+import { BookmarkIcon, SearchIcon } from '../../components/FitHubIcons';
 import {
   exerciseLibrary,
   figureImages,
@@ -86,6 +87,39 @@ const formatTime = (sec: number) => {
   return hours > 0
     ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
     : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+const exerciseImages = {
+  bench: require('../../../assets/exercises/bench.png'),
+  pushup: require('../../../assets/exercises/pushup.png'),
+  row: require('../../../assets/exercises/row.png'),
+  latPulldown: require('../../../assets/exercises/lat_pulldown.png'),
+  squat: require('../../../assets/exercises/squat.png'),
+  deadlift: require('../../../assets/exercises/deadlift.png'),
+  legPress: require('../../../assets/exercises/leg_press.png'),
+  plank: require('../../../assets/exercises/plank.png'),
+};
+
+const imageForExercise = (exercise: LibraryExercise) => {
+  const name=exercise.name.toLowerCase();
+  if (name.includes('push-up') || name.includes('push up')) return exerciseImages.pushup;
+  if (name.includes('lat pulldown')) return exerciseImages.latPulldown;
+  if (name.includes('row') && exercise.targetArea !== 'Cardio') return exerciseImages.row;
+  if (name.includes('deadlift')) return exerciseImages.deadlift;
+  if (name.includes('leg press')) return exerciseImages.legPress;
+  if (name.includes('squat')) return exerciseImages.squat;
+  if (name.includes('plank')) return exerciseImages.plank;
+  if (name.includes('bench press') || name.includes('chest press')) return exerciseImages.bench;
+  return exercise.visualKey ? figureImages[exercise.visualKey] : undefined;
+};
+
+const matchesEquipment = (equipment:string, filter:string) => {
+  if (filter==='All') return true;
+  const value=equipment.toLowerCase();
+  if (filter==='Dumbbell') return value.includes('dumbbell');
+  if (filter==='Machine') return value.includes('machine') || value.includes('station');
+  if (filter==='Bodyweight') return value.includes('bodyweight') || value.includes('gym floor');
+  return value.includes(filter.toLowerCase());
 };
 
 const serializeBuilder = (items: BuilderItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): SavedPlanItem[] =>
@@ -195,6 +229,8 @@ export default function WorkoutTab({
   const [detailExercise, setDetailExercise] = useState<LibraryExercise | null>(null);
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState<string>('All');
+  const [equipmentFilter,setEquipmentFilter]=useState('All');
+  const [showSavedWorkouts,setShowSavedWorkouts]=useState(false);
   const [builder, setBuilder] = useState<BuilderItem[]>([]);
   const [lastWorkout, setLastWorkout] = useState<BuilderItem[]>([]);
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([]);
@@ -220,9 +256,10 @@ export default function WorkoutTab({
     return exerciseLibrary.filter(
       (ex) =>
         (muscleFilter === 'All' || (muscleFilter === 'Arms' ? ['Biceps','Triceps','Forearms'].includes(ex.targetArea) : ex.targetArea === muscleFilter)) &&
+        matchesEquipment(ex.equipment,equipmentFilter) &&
         (!q || `${ex.name} ${ex.targetArea} ${ex.subsection} ${ex.equipment}`.toLowerCase().includes(q)),
     );
-  }, [query, muscleFilter]);
+  }, [query, muscleFilter,equipmentFilter]);
 
   const pickerExercises = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
@@ -1160,7 +1197,10 @@ export default function WorkoutTab({
               {activeStartedAt ? `${formatTime(elapsed)} elapsed • ${builder.length} exercise${builder.length === 1 ? '' : 's'}` : muscleFilter === 'All' ? 'Choose a muscle group' : `Select ${muscleFilter.toLowerCase()} exercises for your workout`}
             </Text>
           </View>
-          <Pressable onPress={newWorkout}><Text style={styles.newWorkoutText}>NEW</Text></Pressable>
+          <View style={styles.headerActions}>
+            <Pressable onPress={()=>setMuscleFilter(muscleFilter==='All'?'Chest':muscleFilter)} style={styles.iconButton}><SearchIcon size={22} color={colors.text}/></Pressable>
+            <Pressable onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color={showSavedWorkouts?'#fff':colors.text}/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:'#fff'}]}>Saved Workouts</Text></Pressable>
+          </View>
         </View>
 
         {activeStartedAt ? <Card style={styles.activeResumeCard}>
@@ -1168,7 +1208,7 @@ export default function WorkoutTab({
           <View style={styles.activeResumeActions}><Pressable onPress={() => setScreen('active')} style={styles.activeResumeButton}><Text style={[styles.activeResumeButtonText,{color:contrastText(colors.primary)}]}>RESUME</Text></Pressable><Pressable onPress={() => Alert.alert('Delete workout?', 'This active workout will be removed and the notification will stop.', [{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:deleteActiveWorkout}])}><Text style={styles.activeResumeDelete}>Delete</Text></Pressable></View>
         </Card> : null}
 
-        {savedWorkouts.length ? (
+        {showSavedWorkouts && savedWorkouts.length ? (
           <View style={styles.savedSection}>
             <Text style={styles.sectionTitle}>Saved Workouts</Text>
             <Text style={styles.sectionSubtitle}>Build these ahead of time, then start them when you are ready to train.</Text>
@@ -1198,7 +1238,7 @@ export default function WorkoutTab({
         ].map(muscle=><Pressable key={muscle.label} onPress={()=>setMuscleFilter(muscle.label)} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage}/><View style={styles.muscleShade}/><Text style={styles.muscleGridLabel}>{muscle.label}</Text></Pressable>)}</View> : <>
           <View style={styles.exerciseBrowseTop}><Pressable onPress={()=>{setMuscleFilter('All');setQuery('')}}><Text style={styles.exerciseBack}>‹ Muscle groups</Text></Pressable><Text style={styles.exerciseCount}>{filtered.length} exercises</Text></View>
           <Input value={query} onChangeText={setQuery} placeholder={`Search ${muscleFilter.toLowerCase()} exercises…`} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><View key={x} style={[styles.equipmentChip,x==='All'&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x==='All'&&styles.equipmentChipTextOn]}>{x}</Text></View>)}</ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><Pressable key={x} onPress={()=>setEquipmentFilter(x)} style={[styles.equipmentChip,x===equipmentFilter&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x===equipmentFilter&&styles.equipmentChipTextOn]}>{x}</Text></Pressable>)}</ScrollView>
         </>}
 
         {builder.length && !activeStartedAt ? (
@@ -1229,7 +1269,7 @@ export default function WorkoutTab({
 
         {muscleFilter !== 'All' || query ? <View style={styles.exerciseList}>
           {filtered.map((ex) => {
-            const img = ex.visualKey ? figureImages[ex.visualKey] : undefined;
+            const img = imageForExercise(ex);
             const selected = builder.some((item) => item.exercise.slug === ex.slug);
             return (
               <Pressable key={ex.slug} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
@@ -1347,6 +1387,11 @@ const createStyles = (colors: any) => StyleSheet.create({
   browseTitle: { color: colors.text, fontSize: 24, fontWeight: '900' },
   browseSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
   newWorkoutText: { color: colors.blue, fontSize: 11, fontWeight: '900', borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 7 },
+  headerActions:{flexDirection:'row',alignItems:'center',gap:8},
+  iconButton:{width:38,height:38,borderRadius:12,alignItems:'center',justifyContent:'center'},
+  savedHeaderButton:{height:40,paddingHorizontal:12,borderWidth:1,borderColor:colors.border,borderRadius:11,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:colors.panel},
+  savedHeaderButtonOn:{backgroundColor:colors.primary,borderColor:colors.primary},
+  savedHeaderText:{color:colors.text,fontSize:10,fontWeight:'900'},
   activeResumeCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderColor: colors.primary, backgroundColor: colors.primarySoft },
   activeResumeTitle: { color: colors.primary, fontWeight: '900', fontSize: 9 },
   activeResumeName: { color: colors.text, fontWeight: '900', fontSize: 17, marginTop: 3 },

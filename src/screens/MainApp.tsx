@@ -18,6 +18,7 @@ import SupplementRemindersScreen from './SupplementRemindersScreen';
 import WorkoutSplitScreen from './WorkoutSplitScreen';
 import CustomizationScreen from './CustomizationScreen';
 import SharedGymScreen from './SharedGymScreen';
+import { scheduleOneTimeSupplementReminder, SUPPLEMENT_RESCHEDULE_ACTION } from '../lib/notifications';
 
 const allTabs = [
   ['home', require('../../assets/nav/home.png'), 'Home'],
@@ -69,7 +70,9 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
     const sub = Linking.addEventListener('url', ({ url }) => handleUrl(url));
     return () => sub.remove();
   }, []);
-  useEffect(()=>{const sub=Notifications.addNotificationResponseReceivedListener((response)=>{const data:any=response.notification.request.content.data;if(data?.type==='supplement_reminder')setPage('supplements');});return()=>sub.remove();},[]);
+  useEffect(()=>{const sub=Notifications.addNotificationResponseReceivedListener((response)=>{const data:any=response.notification.request.content.data;if(data?.type!=='supplement_reminder')return;if(response.actionIdentifier===SUPPLEMENT_RESCHEDULE_ACTION&&data?.reminderId){Alert.alert('Reschedule for today',`When should FitHub remind you about ${data.supplementName??'this supplement'}?`,[{text:'In 1 hour',onPress:()=>rescheduleSupplement(data,1)},{text:'In 2 hours',onPress:()=>rescheduleSupplement(data,2)},{text:'Cancel',style:'cancel'}]);return;}setPage('supplements');});return()=>sub.remove();},[]);
+
+  const rescheduleSupplement=async(data:any,hours:number)=>{const date=new Date(Date.now()+hours*60*60*1000);const id=await scheduleOneTimeSupplementReminder({supplementName:String(data.supplementName??'Supplement'),userId:profile.id,reminderId:String(data.reminderId),date});if(id){await supabase.from('supplement_reschedules').insert({user_id:profile.id,reminder_id:String(data.reminderId),scheduled_for:date.toISOString()});Alert.alert('Reminder rescheduled',`FitHub will remind you again in ${hours} hour${hours===1?'':'s'}. Tomorrow returns to the normal reminder time.`);}};
 
   useEffect(() => {
     const showSchedule = async () => {

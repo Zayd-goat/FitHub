@@ -10,7 +10,7 @@ export type NewPrEvent = {
   unit: string;
   details: Record<string, any>;
   achieved_at?: string;
-  new_clubs?: Array<{ club_key:string; exercise_name:string; threshold_kg:number }>;
+  new_clubs?: Array<{ club_key:string; exercise_name:string; threshold_kg:number; previous_threshold_kg?:number|null; active_member_count?:number }>;
 };
 
 type WorkoutRow = {
@@ -93,6 +93,12 @@ export async function detectAndSavePrEvents({ userId, sessionId, rows, age }: { 
 }
 
 async function unlockClubs(userId:string, events:any[]) {
+  let before:any[]=[];
+  try {
+    const response=await supabase.rpc('get_my_current_clubs_with_counts');
+    before=(response.data??[]) as any[];
+  } catch {}
+  const previousByExercise=new Map((before??[]).map((x:any)=>[x.exercise_name,Number(x.threshold_kg)]));
   const unlockRows:any[]=[];
   for (const event of events) {
     if (event.metric !== 'max_weight') continue;
@@ -109,6 +115,8 @@ async function unlockClubs(userId:string, events:any[]) {
     const newlyUnlocked=unlockRows.filter(x=>!old.has(x.club_key));
     await supabase.from('club_unlocks').upsert(unlockRows,{onConflict:'user_id,club_key',ignoreDuplicates:true});
     await supabase.from('club_unlocks').update({last_qualified_at:new Date().toISOString()}).eq('user_id',userId).in('club_key',keys);
-    return newlyUnlocked;
+    await supabase.rpc('refresh_my_current_clubs');
+    const {data:current}=await supabase.rpc('get_my_current_clubs_with_counts');
+    return (current??[]).filter((club:any)=>Number(club.threshold_kg)>Number(previousByExercise.get(club.exercise_name)??0)).map((club:any)=>({...club,previous_threshold_kg:previousByExercise.get(club.exercise_name)??null,active_member_count:Number(club.active_member_count??1)}));
   } catch { return []; }
 }

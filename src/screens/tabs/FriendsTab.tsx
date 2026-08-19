@@ -39,6 +39,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   const [friendAlerts,setFriendAlerts]=useState<Record<string,{post_notifications:boolean;pr_notifications:boolean}>>({});
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<Record<string, any[]>>({});
+  const [reactions, setReactions] = useState<Record<string, string[]>>({});
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [challenges, setChallenges] = useState<any[]>([]);
   const [communityChallenges, setCommunityChallenges] = useState<any[]>([]);
@@ -112,7 +113,10 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
     const invites = (gi.data ?? []) as GymInvite[];
     setGymInvites(invites);
 
-    const enriched = await Promise.all((feed.data ?? []).map(async (post: any) => {
+    let feedRows:any[] = feed.data ?? [];
+    const feedIds=feedRows.map((p:any)=>p.id);
+    if(feedIds.length){const{data:settings}=await supabase.from('workout_posts').select('id,hide_like_count,hide_comment_count').in('id',feedIds);const byId=Object.fromEntries((settings??[]).map((x:any)=>[x.id,x]));feedRows=feedRows.map((p:any)=>({...p,...byId[p.id]}));}
+    const enriched = await Promise.all(feedRows.map(async (post: any) => {
       if (!post.photo_path) return post;
       const { data } = await supabase.storage.from('workout-media').createSignedUrl(post.photo_path, 60 * 60);
       return { ...post, photo_url: data?.signedUrl ?? null };
@@ -121,11 +125,12 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
 
     const ids = enriched.map((p: any) => p.id);
     if (ids.length) {
-      const { data: c } = await supabase.from('comments').select('id,post_id,user_id,body,created_at,author:public_profiles!comments_user_id_fkey(username,avatar_url)').in('post_id', ids).order('created_at', { ascending: true });
+      const [{ data: c },{data:r}] = await Promise.all([supabase.from('comments').select('id,post_id,user_id,body,created_at,hidden_by_post_owner,hidden_at,author:public_profiles!comments_user_id_fkey(username,avatar_url)').in('post_id', ids).order('created_at', { ascending: true }),supabase.from('post_reactions').select('post_id,user_id').in('post_id',ids)]);
       const grouped: Record<string, any[]> = {};
       for (const row of c ?? []) (grouped[row.post_id] ??= []).push(row);
       setComments(grouped);
-    } else setComments({});
+      const reactionGroups:Record<string,string[]>={};for(const row of r??[])(reactionGroups[row.post_id]??=[]).push(row.user_id);setReactions(reactionGroups);
+    } else {setComments({});setReactions({});}
 
     // Re-create local reminders for accepted future sessions whenever Friends loads.
     const future = invites.filter((invite) => invite.status === 'accepted' && new Date(invite.session_at).getTime() > Date.now());
@@ -183,6 +188,10 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
     else { setCommentText({ ...commentText, [postId]: '' }); load(); }
   };
   const deletePost=(post:any)=>Alert.alert('Delete workout post?','The post, comments and reactions will be removed. Your private workout and PR records stay saved.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:async()=>{if(post.photo_path)await supabase.storage.from('workout-media').remove([post.photo_path]);const{error}=await supabase.from('workout_posts').delete().eq('id',post.id).eq('user_id',profile.id);if(error)Alert.alert('Delete post',error.message);else load();}}]);
+  const toggleReaction=async(postId:string)=>{const liked=(reactions[postId]??[]).includes(profile.id);const query=liked?supabase.from('post_reactions').delete().eq('post_id',postId).eq('user_id',profile.id):supabase.from('post_reactions').insert({post_id:postId,user_id:profile.id,reaction:'like'});const{error}=await query;if(error)Alert.alert('Like',error.message);else load();};
+  const deleteComment=(comment:any)=>Alert.alert('Delete comment?','This comment will be permanently removed.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:async()=>{const{error}=await supabase.from('comments').delete().eq('id',comment.id);if(error)Alert.alert('Comment',error.message);else load();}}]);
+  const toggleCommentHidden=async(comment:any)=>{const hidden=!comment.hidden_by_post_owner;const{error}=await supabase.from('comments').update({hidden_by_post_owner:hidden,hidden_at:hidden?new Date().toISOString():null}).eq('id',comment.id);if(error)Alert.alert('Comment',error.message);else load();};
+  const toggleCountVisibility=async(post:any,key:'hide_like_count'|'hide_comment_count')=>{const{error}=await supabase.from('workout_posts').update({[key]:!post[key]}).eq('id',post.id).eq('user_id',profile.id);if(error)Alert.alert('Post settings',error.message);else load();};
 
   const joinChallenge = async (challengeId: string) => {
     const { error } = await supabase.from('challenge_participants').upsert({ challenge_id: challengeId, user_id: profile.id }, { onConflict: 'challenge_id,user_id' });
@@ -291,7 +300,7 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
 
     {view === 'feed' ? <View style={styles.feedArea}>
       {requests.length ? <View style={styles.requestStrip}><Text style={styles.requestText}>{requests.length} friend request{requests.length === 1 ? '' : 's'} waiting</Text><Pressable onPress={() => setView('following')}><Text style={styles.requestAction}>View</Text></Pressable></View> : null}
-      {posts.length ? posts.map((p) => <WorkoutPostCard key={p.id} post={p} mine={p.user_id===profile.id} onDelete={()=>deletePost(p)} comments={comments[p.id] ?? []} comment={commentText[p.id] ?? ''} setComment={(v) => setCommentText({ ...commentText, [p.id]: v })} send={() => postComment(p.id)} quick={(text) => postComment(p.id, text)} />) : <View style={styles.emptyFeed}><Text style={styles.emptyTitle}>Your workout feed is ready.</Text><Text style={styles.sub}>Completed workouts your friends choose to share will appear here.</Text></View>}
+      {posts.length ? posts.map((p) => <WorkoutPostCard key={p.id} post={p} mine={p.user_id===profile.id} viewerId={profile.id} onDelete={()=>deletePost(p)} onLike={()=>toggleReaction(p.id)} liked={(reactions[p.id]??[]).includes(profile.id)} likeCount={(reactions[p.id]??[]).length} onDeleteComment={deleteComment} onToggleCommentHidden={toggleCommentHidden} onToggleCount={(key)=>toggleCountVisibility(p,key)} comments={comments[p.id] ?? []} comment={commentText[p.id] ?? ''} setComment={(v) => setCommentText({ ...commentText, [p.id]: v })} send={() => postComment(p.id)} />) : <View style={styles.emptyFeed}><Text style={styles.emptyTitle}>Your workout feed is ready.</Text><Text style={styles.sub}>Completed workouts your friends choose to share will appear here.</Text></View>}
     </View> : null}
 
     {view === 'following' ? <View style={styles.tabContent}>
@@ -383,7 +392,7 @@ function GymInviteCard({ invite, other, actions }: { invite: GymInvite; other?: 
   return <Card><View style={s.person}><Avatar name={other?.username ?? '?'} url={other?.avatar_url} /><View style={{ flex: 1 }}><Text style={s.name}>@{other?.username ?? 'friend'}</Text><Text style={s.sessionTitle}>{invite.workout_name?.trim() || 'Gym session'}</Text><Text style={s.meta}>{d.toLocaleDateString()} • {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>{invite.gym_name ? <Text style={s.meta}>⌖ {invite.gym_name}</Text> : null}{invite.note ? <Text style={s.inviteNote}>{invite.note}</Text> : null}</View></View>{actions}</Card>;
 }
 
-function WorkoutPostCard({ post, mine, onDelete, comments, comment, setComment, send, quick }: { post: any;mine:boolean;onDelete:()=>void; comments: any[]; comment: string; setComment: (v: string) => void; send: () => void; quick: (v: string) => void }) {
+function WorkoutPostCard({ post, mine, viewerId, onDelete, onLike, liked, likeCount, onDeleteComment, onToggleCommentHidden, onToggleCount, comments, comment, setComment, send }: { post: any;mine:boolean;viewerId:string;onDelete:()=>void;onLike:()=>void;liked:boolean;likeCount:number;onDeleteComment:(c:any)=>void;onToggleCommentHidden:(c:any)=>void;onToggleCount:(key:'hide_like_count'|'hide_comment_count')=>void;comments:any[];comment:string;setComment:(v:string)=>void;send:()=>void }) {
   const { colors, weightUnit, distanceUnit } = useTheme(); const s = createStyles(colors);
   const names = String(post.exercise_names ?? post.summary ?? '').replace(/^Completed:\s*/i, '').split(',').map((x: string) => x.trim()).filter(Boolean);
   const groups = Array.from(new Set(names.map((n: string) => exerciseLibrary.find((e) => e.name === n)?.targetArea).filter(Boolean))) as string[];
@@ -395,7 +404,7 @@ function WorkoutPostCard({ post, mine, onDelete, comments, comment, setComment, 
   const title = workoutTitle(groups);
 
   return <View style={s.post}>
-    <View style={s.person}><Avatar name={post.username} url={post.avatar_url} /><View style={{ flex: 1 }}><Text style={s.name}>{post.username}</Text><Text style={s.meta}>{relativeTime(post.created_at)}</Text></View><Text style={s.more}>•••</Text></View>
+    <View style={s.person}><Avatar name={post.username} url={post.avatar_url} /><View style={{ flex: 1 }}><Text style={s.name}>{post.username}</Text><Text style={s.meta}>{relativeTime(post.created_at)}</Text></View>{mine?<Pressable onPress={()=>Alert.alert('Post controls','Choose what other people can see.',[{text:post.hide_like_count?'Show like count':'Hide like count',onPress:()=>onToggleCount('hide_like_count')},{text:post.hide_comment_count?'Show comment count':'Hide comment count',onPress:()=>onToggleCount('hide_comment_count')},{text:'Delete post',style:'destructive',onPress:onDelete},{text:'Cancel',style:'cancel'}])}><Text style={s.more}>•••</Text></Pressable>:<Text style={s.more}>•••</Text>}</View>
     <Text style={s.postTitle}>{title}</Text>
     <Text style={s.groupLine}>{groups.length ? groups.slice(0, 4).join(' • ') : (names.slice(0, 3).join(' • ') || 'Training session')}</Text>
     {post.caption ? <Text style={s.caption}>{post.caption}</Text> : null}
@@ -407,8 +416,8 @@ function WorkoutPostCard({ post, mine, onDelete, comments, comment, setComment, 
       <PostStat label={volume > 0 ? 'Volume' : 'Distance'} value={volume > 0 ? `${Math.round(kgToDisplay(volume, weightUnit)).toLocaleString()} ${weightUnit}` : distance > 0 ? formatDistance(distance, distanceUnit, 1) : '—'} />
     </View>
     {names.length ? <View style={s.highlight}><Text style={s.highlightTitle}>🔥 Workout highlights</Text><Text style={s.highlightText}>{names.slice(0, 4).join(' • ')}{names.length > 4 ? ` • +${names.length - 4} more` : ''}</Text></View> : null}
-    <View style={s.actionRow}><Pressable onPress={() => quick('Great work! ❤️')} style={s.action}><Text style={s.heart}>♥</Text><Text style={s.actionText}>Cheer</Text></Pressable><View style={s.action}><Text style={s.commentIcon}>▢</Text><Text style={s.actionText}>{comments.length}</Text></View><View style={{ flex: 1 }} />{mine?<Pressable onPress={onDelete}><Text style={[s.actionText,{color:colors.danger}]}>Delete post</Text></Pressable>:<Text style={s.more}>•••</Text>}</View>
-    {comments.length ? <View style={s.commentsBox}>{comments.map((c) => <View key={c.id} style={s.commentRow}><AvatarSmall name={c.author?.username ?? '?'} url={c.author?.avatar_url} /><View style={{ flex: 1 }}><View style={s.commentHeader}><Text style={s.commentAuthor}>{c.author?.username}</Text><Text style={s.commentTime}>{relativeTime(c.created_at)}</Text></View><Text style={s.commentBody}>{c.body}</Text></View></View>)}</View> : null}
+    <View style={s.actionRow}><Pressable onPress={onLike} style={s.action}><Text style={[s.heart,liked&&{color:colors.primary}]}>{liked?'♥':'♡'}</Text><Text style={s.actionText}>{post.hide_like_count&&!mine?'Like':`${likeCount} like${likeCount===1?'':'s'}${post.hide_like_count&&mine?' · hidden':''}`}</Text></Pressable><View style={s.action}><Text style={s.commentIcon}>▢</Text><Text style={s.actionText}>{post.hide_comment_count&&!mine?'Comments':`${comments.filter(c=>!c.hidden_by_post_owner).length} comment${comments.filter(c=>!c.hidden_by_post_owner).length===1?'':'s'}${post.hide_comment_count&&mine?' · hidden':''}`}</Text></View></View>
+    {comments.length ? <View style={s.commentsBox}>{comments.filter(c=>mine||!c.hidden_by_post_owner).map((c) => <View key={c.id} style={[s.commentRow,c.hidden_by_post_owner&&{opacity:.55}]}><AvatarSmall name={c.author?.username ?? '?'} url={c.author?.avatar_url} /><View style={{ flex: 1 }}><View style={s.commentHeader}><Text style={s.commentAuthor}>{c.author?.username}</Text><Text style={s.commentTime}>{relativeTime(c.created_at)}{c.hidden_by_post_owner?' · hidden':''}</Text></View><Text style={s.commentBody}>{c.body}</Text></View>{mine||c.user_id===viewerId?<Pressable onPress={()=>Alert.alert('Comment controls',undefined,[...(mine?[{text:c.hidden_by_post_owner?'Unhide comment':'Hide comment',onPress:()=>onToggleCommentHidden(c)}]:[]),{text:'Delete comment',style:'destructive',onPress:()=>onDeleteComment(c)},{text:'Cancel',style:'cancel'}] as any)}><Text style={s.more}>•••</Text></Pressable>:null}</View>)}</View> : null}
     <View style={s.commentInput}><Input style={{ flex: 1, marginBottom: 0, minHeight: 42 }} value={comment} onChangeText={setComment} placeholder="Add a comment…" /><Pressable onPress={send} style={s.send}><Text style={s.sendText}>➤</Text></Pressable></View>
   </View>;
 }

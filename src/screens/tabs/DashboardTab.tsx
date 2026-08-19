@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { estimateActivityEnergyBySession } from '../../lib/calories';
 import { exerciseLibrary, figureImages } from '../../data/exerciseLibrary';
 import { kgToDisplay } from '../../lib/units';
+import { BellIcon, JourneyIcon, NutritionIcon, SettingsIcon, SupplementIcon } from '../../components/FitHubIcons';
 
 export type HomeProgressFocus = 'overview' | 'prs' | 'badges' | 'streaks';
 export type DailyActivityFocus = 'volume' | 'energy';
@@ -34,6 +35,7 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
   const [todayPlan, setTodayPlan] = useState<string | null>(null);
   const [weekPrs, setWeekPrs] = useState(0);
   const [monthPrs, setMonthPrs] = useState(0);
+  const [homeFriends,setHomeFriends]=useState<any[]>([]);
   const locked = (profile.age ?? 0) < 18;
 
   useEffect(() => {
@@ -85,6 +87,7 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
     };
     load();
   }, [profile.id, profile.tokens, profile.weight_kg, profile.age, dayKey, locked]);
+  useEffect(()=>{supabase.rpc('get_my_friends').then(({data})=>setHomeFriends((data??[]).slice(0,3)));},[profile.id]);
 
   const firstName = profile.username?.split(/[_\s]/)[0]?.toUpperCase() || profile.username?.toUpperCase();
   const recentFirstExercise = recent[0]?.summary?.split(',')?.[0]?.trim();
@@ -94,12 +97,7 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
   const workoutGroups = todayPlan ? 'Your planned split for today' : (recentLib ? `${recentLib.targetArea} • ${recentLib.subsection}` : 'Choose exercises that fit your session');
 
   return <ScrollView contentContainerStyle={styles.wrap}>
-    <View style={styles.header}>
-      <View><Text style={styles.greeting}>Good morning,</Text><Text style={styles.name}>{firstName}</Text></View>
-      <Pressable onPress={() => onViewProgress('streaks')} style={({ pressed }) => [styles.streak, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel="View streak progress">
-        <Text style={styles.streakValue}>🔥 {profile.workout_streak}</Text><Text style={styles.streakLabel}>WORKOUT STREAK  ›</Text>
-      </Pressable>
-    </View>
+    <View style={styles.topIdentity}><View style={styles.profileCircle}>{profile.avatar_url?<Image source={{uri:profile.avatar_url}} style={styles.profileImage}/>:<Text style={styles.profileInitial}>{firstName?.[0]??'F'}</Text>}<View style={styles.onlineDot}/></View><Text style={styles.greetingLarge}>Good morning, {firstName}</Text><View style={{flex:1}}/><Pressable onPress={()=>onViewProgress('streaks')}><BellIcon size={29} color={colors.text}/><View style={styles.alertDot}/></Pressable><SettingsIcon size={30} color={colors.text}/></View><Text style={styles.homeTitle}>HOME</Text>
 
     <Card style={styles.heroCard}>
       <View style={styles.heroLeft}><Text style={styles.smallLabel}>Today's Workout</Text><Text style={styles.heroTitle}>{workoutTitle}</Text><Text style={styles.heroMeta}>{workoutGroups}</Text><Pressable onPress={onStartWorkout} style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}><Text style={[styles.startText,{color:contrastText(colors.primary)}]}>START WORKOUT  ›</Text></Pressable></View>
@@ -111,11 +109,11 @@ export default function DashboardTab({ profile, onStartWorkout, onViewProgress, 
 
     <Text style={styles.homeSection}>QUICK ACCESS</Text>
     <View style={styles.quickGrid}>
-      {!hiddenFeatures.includes('journey')?<HomeQuick icon="⚑" label="Journey" onPress={()=>onOpenJourney('week')}/>:null}
-      {!hiddenFeatures.includes('food')?<HomeQuick icon="▤" label="Nutrition" onPress={onOpenFood}/>:null}
-      {!hiddenFeatures.includes('supplements')?<HomeQuick icon="▣" label="Supplements" onPress={onOpenSupplements}/>:null}
+      {!hiddenFeatures.includes('journey')?<HomeQuick icon={<JourneyIcon color={colors.text}/>} label="Journey" onPress={()=>onOpenJourney('week')}/>:null}
+      {!hiddenFeatures.includes('food')?<HomeQuick icon={<NutritionIcon color={colors.text}/>} label="Nutrition" onPress={onOpenFood}/>:null}
+      {!hiddenFeatures.includes('supplements')?<HomeQuick icon={<SupplementIcon color={colors.text}/>} label="Supplements" onPress={onOpenSupplements}/>:null}
     </View>
-    <Pressable onPress={onOpenFriends} style={({pressed})=>[styles.feedCard,pressed&&styles.pressed]}><Text style={styles.feedIcon}>◉ ◉</Text><View style={{flex:1}}><Text style={styles.feedTitle}>See what your friends are training</Text><Text style={styles.feedLink}>Open feed  ›</Text></View></Pressable>
+    <Pressable onPress={onOpenFriends} style={({pressed})=>[styles.feedCard,pressed&&styles.pressed]}><View style={styles.friendStack}>{homeFriends.length?homeFriends.map((f:any,i)=><View key={f.user_id} style={[styles.friendAvatarWrap,{marginLeft:i?-12:0,zIndex:4-i}]}>{f.avatar_url?<Image source={{uri:f.avatar_url}} style={styles.friendAvatar}/>:<Text style={styles.friendInitial}>{String(f.username??'?')[0].toUpperCase()}</Text>}</View>):<View style={styles.friendAvatarWrap}><Text style={styles.friendInitial}>+</Text></View>}</View><View style={{flex:1}}><Text style={styles.feedTitle}>See what your friends are training</Text><Text style={styles.feedLink}>Open feed  ›</Text></View></Pressable>
     <Pressable onPress={()=>onViewProgress('overview')}><Text style={styles.allProgress}>View all progress, PRs and reports  ›</Text></Pressable>
   </ScrollView>;
 }
@@ -139,15 +137,16 @@ function Stat({ label, value, sub, accent, icon, onPress }: { label: string; val
   const content = <View style={styles.stat}><View style={styles.statTop}><Text style={[styles.statIcon, { color: accent }]}>{icon}</Text>{onPress ? <Text style={styles.statArrow}>›</Text> : null}</View><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text><Text style={styles.statSub}>{sub}</Text></View>;
   return onPress ? <Pressable onPress={onPress} style={({ pressed }) => [styles.statPress, pressed && styles.pressed]}>{content}</Pressable> : <View style={styles.statPress}>{content}</View>;
 }
-function HomeQuick({icon,label,onPress}:{icon:string;label:string;onPress:()=>void}){const{colors}=useTheme();const s=createStyles(colors);return <Pressable onPress={onPress} style={({pressed})=>[s.homeQuick,pressed&&s.pressed]}><Text style={s.homeQuickIcon}>{icon}</Text><Text style={s.homeQuickLabel}>{label}</Text></Pressable>}
+function HomeQuick({icon,label,onPress}:{icon:React.ReactNode;label:string;onPress:()=>void}){const{colors}=useTheme();const s=createStyles(colors);return <Pressable onPress={onPress} style={({pressed})=>[s.homeQuick,pressed&&s.pressed]}>{icon}<Text style={s.homeQuickLabel}>{label}</Text></Pressable>}
 
 const createStyles = (colors: any) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 28 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }, greeting: { color: colors.muted, fontSize: 12 }, name: { color: colors.text, fontSize: 28, fontWeight: '900', marginTop: 1, letterSpacing: -0.4 }, streak: { alignItems: 'center', borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 }, streakValue: { color: colors.text, fontWeight: '900', fontSize: 22 }, streakLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', marginTop: 1 },
+  topIdentity:{flexDirection:'row',alignItems:'center',gap:11},profileCircle:{width:45,height:45,borderRadius:23,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center',position:'relative',overflow:'visible'},profileImage:{width:45,height:45,borderRadius:23},profileInitial:{color:colors.text,fontSize:17,fontWeight:'900'},onlineDot:{position:'absolute',right:-1,bottom:1,width:10,height:10,borderRadius:5,backgroundColor:colors.primary,borderWidth:2,borderColor:colors.bg},greetingLarge:{color:colors.text,fontSize:16},alertDot:{position:'absolute',right:1,top:1,width:8,height:8,borderRadius:4,backgroundColor:colors.primary},homeTitle:{color:colors.text,fontSize:34,fontWeight:'900',marginTop:18,marginBottom:14},
   heroCard: { minHeight: 190, flexDirection: 'row', overflow: 'hidden', padding: 0 }, heroLeft: { flex: 1, padding: 16, zIndex: 2 }, smallLabel: { color: colors.text, fontWeight: '700', fontSize: 13 }, heroTitle: { color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 20 }, heroMeta: { color: colors.muted, fontSize: 12, marginTop: 4 }, startButton: { alignSelf: 'flex-start', backgroundColor: colors.primary, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, marginTop: 17 }, startText: { color: '#fff', fontWeight: '900', fontSize: 12 }, heroFigure: { width: 155, height: 190, resizeMode: 'contain', alignSelf: 'flex-end', marginRight: -3 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5, marginBottom: 9 }, sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' }, viewAll: { color: colors.blue, fontSize: 11, fontWeight: '900' },
   statsRow: { flexDirection: 'row', gap: 7, marginBottom: 16 }, statPress: { flex: 1, minWidth: 0 }, stat: { flex: 1, minWidth: 0, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 10 }, statTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, statArrow: { color: colors.muted, fontSize: 15, fontWeight: '800' }, statIcon: { fontSize: 15, fontWeight: '900' }, statLabel: { color: colors.muted, fontSize: 9, marginTop: 6 }, statValue: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 2 }, statSub: { color: colors.muted, fontSize: 8, marginTop: 2 },
   recentCard: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 }, recentIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, recentIconImage: { width: 20, height: 20, resizeMode: 'contain' }, recentName: { color: colors.text, fontWeight: '900', fontSize: 14 }, recentMeta: { color: colors.muted, fontSize: 10, marginTop: 3, lineHeight: 14 }, done: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center' }, doneText: { color: '#fff', fontWeight: '900' },
   reportRow: { gap: 8, marginBottom: 14 }, reportCard: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 13 }, reportEyebrow: { color: colors.primary, fontWeight: '900', fontSize: 9 }, reportTitle: { color: colors.text, fontWeight: '900', fontSize: 15, marginTop: 5 }, reportSub: { color: colors.muted, fontSize: 10, marginTop: 4, lineHeight: 14 },
   cardTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, cardArrow: { color: colors.muted, fontSize: 24, fontWeight: '500' }, goalText: { color: colors.muted, marginTop: 4, fontSize: 12 }, track: { height: 8, borderRadius: 999, backgroundColor: colors.panel2, overflow: 'hidden', marginTop: 12 }, fill: { height: '100%', backgroundColor: colors.green }, pressed: { opacity: 0.68 },
-  homeSection:{color:colors.muted,fontSize:13,fontWeight:'900',marginTop:8,marginBottom:9},weekCalendar:{flexDirection:'row',justifyContent:'space-between'},weekCell:{alignItems:'center',gap:8},weekLetter:{color:colors.muted,fontSize:10,fontWeight:'900'},weekStatus:{width:28,height:28,borderRadius:14,borderWidth:1,borderColor:colors.border,alignItems:'center',justifyContent:'center'},weekStatusDone:{backgroundColor:colors.primary,borderColor:colors.primary},weekCheck:{color:colors.text,fontSize:11,fontWeight:'900'},weekSummary:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,marginTop:14,paddingTop:12},weekSummaryText:{color:colors.text,fontSize:11,fontWeight:'800'},quickGrid:{flexDirection:'row',gap:9,marginBottom:10},homeQuick:{flex:1,aspectRatio:1,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},homeQuickIcon:{color:colors.text,fontSize:29},homeQuickLabel:{color:colors.text,fontSize:11,fontWeight:'800',marginTop:9},feedCard:{flexDirection:'row',alignItems:'center',gap:14,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,padding:16},feedIcon:{color:colors.primary,fontSize:25},feedTitle:{color:colors.text,fontSize:14,fontWeight:'900'},feedLink:{color:colors.muted,fontSize:11,textDecorationLine:'underline',marginTop:5},allProgress:{color:colors.primary,fontSize:11,fontWeight:'900',textAlign:'center',paddingVertical:16},
+  homeSection:{color:colors.muted,fontSize:13,fontWeight:'900',marginTop:8,marginBottom:9},weekCalendar:{flexDirection:'row',justifyContent:'space-between'},weekCell:{alignItems:'center',gap:8},weekLetter:{color:colors.muted,fontSize:10,fontWeight:'900'},weekStatus:{width:28,height:28,borderRadius:14,borderWidth:1,borderColor:colors.border,alignItems:'center',justifyContent:'center'},weekStatusDone:{backgroundColor:colors.primary,borderColor:colors.primary},weekCheck:{color:colors.text,fontSize:11,fontWeight:'900'},weekSummary:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,marginTop:14,paddingTop:12},weekSummaryText:{color:colors.text,fontSize:11,fontWeight:'800'},quickGrid:{flexDirection:'row',gap:9,marginBottom:10},homeQuick:{flex:1,aspectRatio:1,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},homeQuickLabel:{color:colors.text,fontSize:11,fontWeight:'800',marginTop:9},feedCard:{flexDirection:'row',alignItems:'center',gap:14,borderRadius:14,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,padding:16},friendStack:{flexDirection:'row',alignItems:'center'},friendAvatarWrap:{width:48,height:48,borderRadius:24,borderWidth:2,borderColor:colors.text,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center',overflow:'hidden'},friendAvatar:{width:'100%',height:'100%'},friendInitial:{color:colors.text,fontWeight:'900'},feedTitle:{color:colors.text,fontSize:14,fontWeight:'900'},feedLink:{color:colors.muted,fontSize:11,textDecorationLine:'underline',marginTop:5},allProgress:{color:colors.primary,fontSize:11,fontWeight:'900',textAlign:'center',paddingVertical:16},
 });

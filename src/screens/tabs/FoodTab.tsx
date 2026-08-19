@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { searchUsda } from '../../lib/usda';
 import { barcodeFood, foodDetails, searchFoods } from '../../lib/nutritionApi';
 import NutritionLibraryScreen from '../NutritionLibraryScreen';
+import { BookmarkIcon, DiaryIcon, DinnerIcon, FoodBowlIcon, LunchIcon, RecentIcon, ScanIcon, SearchIcon, SnackIcon, SunMealIcon, WaterGlassIcon } from '../../components/FitHubIcons';
 
 const localKey = (value: string | Date) => {
   const d = value instanceof Date ? value : new Date(value);
@@ -89,6 +90,25 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     {text:'Cancel',style:'cancel'},
     {text:'Remove',style:'destructive',onPress:async()=>{const{error}=await supabase.from('food_logs').delete().eq('id',row.id).eq('user_id',profile.id);if(error)Alert.alert('Could not remove food',error.message);else load();}},
   ]);
+
+  const copyPreviousMeal=async(type:'breakfast'|'lunch'|'dinner'|'snacks')=>{
+    const previous=new Date();previous.setDate(previous.getDate()-1);
+    const rows=allLogs.filter(x=>localKey(x.logged_at)===localKey(previous)&&(x.meal_type??'breakfast')===type);
+    if(!rows.length)return Alert.alert('Copy meal',`No ${type} was logged yesterday.`);
+    const payload=rows.map(x=>({user_id:profile.id,food_id:x.food_id??null,food_name:x.food_name,serving:x.serving,servings:x.servings??1,calories:x.calories??0,protein_g:x.protein_g??0,carbs_g:x.carbs_g??0,fat_g:x.fat_g??0,fibre_g:x.fibre_g??0,meal_type:type,provider_food_id:x.provider_food_id??null,serving_id:x.serving_id??null}));
+    const{error}=await supabase.from('food_logs').insert(payload);
+    if(error)Alert.alert('Copy meal',error.message);else{await load();Alert.alert('Meal copied',`Yesterday’s ${type} was added to today.`);}
+  };
+
+  const saveCurrentMeal=async(type:'breakfast'|'lunch'|'dinner'|'snacks')=>{
+    const rows=todayLogs.filter(x=>(x.meal_type??'breakfast')===type);
+    if(!rows.length)return Alert.alert('Save meal',`Add something to ${type} first.`);
+    const{data:meal,error}=await supabase.from('saved_meals').insert({user_id:profile.id,name:`${type[0].toUpperCase()+type.slice(1)} · ${new Date().toLocaleDateString()}`,meal_type:type}).select('id').single();
+    if(error||!meal)return Alert.alert('Save meal',error?.message??'Could not create the saved meal.');
+    const items=rows.map(x=>({meal_id:meal.id,food_name:x.food_name,serving:x.serving,servings:x.servings??1,calories:x.calories??0,protein_g:x.protein_g??0,carbs_g:x.carbs_g??0,fat_g:x.fat_g??0,fibre_g:x.fibre_g??0,provider_food_id:x.provider_food_id??null,serving_id:x.serving_id??null}));
+    const{error:itemError}=await supabase.from('saved_meal_items').insert(items);
+    if(itemError)Alert.alert('Save meal',itemError.message);else Alert.alert('Meal saved','You can reuse it from Saved Meals.');
+  };
 
   const onlineSearch=async()=>{
     if(!query.trim()||locked) return;
@@ -198,15 +218,15 @@ export default function FoodTab({ profile }: { profile: Profile }) {
 
       <View style={styles.weekStrip}>{[-2,-1,0,1,2,3,4].map((offset)=>{const d=new Date();d.setDate(d.getDate()+offset);const active=offset===0;return <View key={offset} style={[styles.weekDay,active&&styles.weekDayOn]}><Text style={[styles.weekName,active&&styles.weekNameOn]}>{d.toLocaleDateString(undefined,{weekday:'short'}).toUpperCase()}</Text><Text style={[styles.weekNumber,active&&styles.weekNameOn]}>{d.getDate()}</Text></View>})}</View>
 
-      <Card style={styles.diaryHero}><View style={{flex:1}}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep your meals organised in one place</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View><Text style={styles.diaryIcon}>♨</Text></Card>
+      <Card style={styles.diaryHero}><DiaryIcon size={43} color={colors.primary}/><View style={{flex:1,marginLeft:12}}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep your meals organised in one place</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View><FoodBowlIcon size={50} color={colors.primary}/></Card>
 
       <View style={styles.quickActions}>{[
-        ['⌕','Search',()=>setFinderOpen(true)],['▦','Scan',()=>{setScanned(false);setScannerOpen(true)}],['↶','Recent',()=>setHistoryOpen(true)],['♡','Saved Meals',()=>setLibraryOpen(true)],
-      ].map(([icon,label,action]:any)=><Pressable key={label} onPress={action} style={styles.quickAction}><Text style={styles.quickIcon}>{icon}</Text><Text style={styles.quickLabel}>{label}</Text></Pressable>)}</View>
+        [<SearchIcon color={colors.text}/>, 'Search',()=>setFinderOpen(true)],[<ScanIcon color={colors.text}/>, 'Scan',()=>{setScanned(false);setScannerOpen(true)}],[<RecentIcon color={colors.text}/>, 'Recent',()=>setHistoryOpen(true)],[<BookmarkIcon color={colors.text}/>, 'Saved Meals',()=>setLibraryOpen(true)],
+      ].map(([icon,label,action]:any)=><Pressable key={label} onPress={action} style={styles.quickAction}>{icon}<Text style={styles.quickLabel}>{label}</Text></Pressable>)}</View>
 
-      {(['breakfast','lunch','dinner','snacks'] as const).map(type=><MealDiaryCard key={type} type={type} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog}/>)}
+      {(['breakfast','lunch','dinner','snacks'] as const).map(type=><MealDiaryCard key={type} type={type} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog} onCopy={()=>copyPreviousMeal(type)} onSave={()=>saveCurrentMeal(type)}/>)}
 
-      <Card style={styles.waterCard}><View style={styles.waterTop}><View><Text style={styles.waterTitle}>💧  WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View><Pressable onPress={()=>addWater(250)} style={styles.redPlus}><Text style={styles.redPlusText}>＋</Text></Pressable></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><View key={i} style={[styles.waterGlass,i<Math.min(6,Math.floor(waterTotal/250))&&styles.waterGlassFull]}/>)}</View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
+      <Card style={styles.waterCard}><View style={styles.waterTop}><View><Text style={styles.waterTitle}>💧  WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View><Pressable onPress={()=>addWater(250)} style={styles.redPlus}><Text style={styles.redPlusText}>＋</Text></Pressable></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><WaterGlassIcon key={i} size={31} color={colors.blue} filled={i<Math.min(6,Math.floor(waterTotal/250))}/>)}</View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
 
       {!locked?<Card><Pressable onPress={()=>setNutritionOpen(!nutritionOpen)} style={styles.nutritionHeader}><View><Text style={styles.nutritionTitle}>↗  Nutrition overview</Text><Text style={styles.foodMeta}>View nutrients and serving details</Text></View><Text style={styles.chevron}>{nutritionOpen?'⌃':'⌄'}</Text></Pressable>{nutritionOpen?<><View style={styles.ringRow}><RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/><RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/><RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/><RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/></View></>:null}</Card>:<Card><SectionTitle title="Meal journal" subtitle="You can record meals and review your routine. Nutrition targets are not shown for younger accounts."/></Card>}
 
@@ -231,9 +251,9 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   </KeyboardAvoidingView>;
 }
 
-function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void}){
-  const {colors}=useTheme();const s=createStyles(colors);const icons={breakfast:'☼',lunch:'◉',dinner:'◒',snacks:'♧'};
-  return <Card style={s.mealCard}><View style={s.mealHead}><Pressable onPress={onToggle} style={s.mealHeadText}><Text style={s.mealIcon}>{icons[type]}</Text><View><Text style={s.mealTitle}>{type[0].toUpperCase()+type.slice(1)}</Text>{!rows.length?<Text style={s.foodMeta}>Nothing logged yet</Text>:null}</View></Pressable><Text style={s.chevron}>{expanded?'⌃':'⌄'}</Text><Pressable onPress={onAdd} style={s.redPlus}><Text style={s.redPlusText}>＋</Text></Pressable></View>{expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><Text style={s.foodThumbText}>◌</Text></View><View style={{flex:1}}><Text style={s.foodName}>{row.food_name}</Text><Text style={s.foodMeta}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)}><Text style={s.mealMore}>⋮</Text></Pressable></View>):null}</Card>;
+function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove,onCopy,onSave}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void;onCopy:()=>void;onSave:()=>void}){
+  const {colors}=useTheme();const s=createStyles(colors);const Icon=type==='breakfast'?SunMealIcon:type==='lunch'?LunchIcon:type==='dinner'?DinnerIcon:SnackIcon;
+  return <Card style={s.mealCard}><View style={s.mealHead}><Pressable onPress={onToggle} style={s.mealHeadText}><Icon size={27} color={colors.primary}/><View><Text style={s.mealTitle}>{type[0].toUpperCase()+type.slice(1)}</Text>{!rows.length?<Text style={s.foodMeta}>Nothing logged yet</Text>:null}</View></Pressable><Text style={s.chevron}>{expanded?'⌃':'⌄'}</Text><Pressable onPress={onAdd} style={s.redPlus}><Text style={s.redPlusText}>＋</Text></Pressable></View>{expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><FoodBowlIcon size={32} color={colors.primary}/></View><View style={{flex:1}}><Text style={s.foodName}>{row.food_name}</Text><Text style={s.foodMeta}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)}><Text style={s.mealMore}>⋮</Text></Pressable></View>):null}{expanded&&rows.length?<View style={s.mealFooter}><Pressable onPress={onCopy} style={s.mealFooterAction}><Text style={s.copyIcon}>▣</Text><Text style={s.mealFooterText}>Copy yesterday</Text></Pressable><View style={s.mealFooterDivider}/><Pressable onPress={onSave} style={s.mealFooterAction}><BookmarkIcon size={17} color={colors.text}/><Text style={s.mealFooterText}>Save meal</Text></Pressable></View>:null}</Card>;
 }
 
 function sumLogs(rows:any[]){
@@ -353,6 +373,11 @@ const createStyles=(colors:any)=>StyleSheet.create({
   redPlus:{width:36,height:36,borderRadius:18,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center'},
   redPlusText:{color:'#FFFFFF',fontSize:23,fontWeight:'600',lineHeight:27},
   mealFood:{flexDirection:'row',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:colors.border,padding:11},
+  mealFooter:{flexDirection:'row',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,minHeight:45},
+  mealFooterAction:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8},
+  mealFooterDivider:{width:1,height:23,backgroundColor:colors.border},
+  mealFooterText:{color:colors.text,fontSize:11,fontWeight:'700'},
+  copyIcon:{color:colors.text,fontSize:17},
   foodThumb:{width:54,height:45,borderRadius:10,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center'},
   foodThumbText:{color:colors.primary,fontSize:22},
   mealMore:{color:colors.muted,fontSize:24,paddingHorizontal:5},

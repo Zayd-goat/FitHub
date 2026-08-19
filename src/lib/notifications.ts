@@ -239,6 +239,7 @@ if (!TaskManager.isTaskDefined(WORKOUT_NOTIFICATION_TASK)) {
     if (action === SUPPLEMENT_TAKEN_ACTION && content?.reminderId) {
       const now=new Date();const localDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       try { await supabase.from('supplement_checkins').upsert({user_id:userId,reminder_id:String(content.reminderId),local_date:localDate,taken_at:now.toISOString(),source:'notification'},{onConflict:'user_id,reminder_id,local_date'}); } catch {}
+      await cancelSameDaySupplementReschedule(String(content.reminderId),now);
     }
   });
 }
@@ -423,5 +424,8 @@ export async function cancelSupplementReminder(identifier?: string | null) {
 
 export async function scheduleOneTimeSupplementReminder({supplementName,userId,reminderId,date}:{supplementName:string;userId:string;reminderId:string;date:Date}){
  const allowed=await ensureNotificationSetup(true);if(!allowed||date.getTime()<=Date.now())return null;
- return Notifications.scheduleNotificationAsync({content:{title:'Supplement reminder',body:supplementName,data:{type:'supplement_reminder',supplementName,userId,reminderId},categoryIdentifier:SUPPLEMENT_CATEGORY,sound:'default'},trigger:{type:Notifications.SchedulableTriggerInputTypes.DATE,date,...(Platform.OS==='android'?{channelId:SUPPLEMENT_CHANNEL}:{})} as any});
+ const day=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;const identifier=`supplement-snooze-${reminderId}-${day}`;
+ await Notifications.cancelScheduledNotificationAsync(identifier).catch(()=>{});
+ await Notifications.scheduleNotificationAsync({identifier,content:{title:'Supplement reminder',body:supplementName,data:{type:'supplement_reminder',supplementName,userId,reminderId,rescheduled:true},categoryIdentifier:SUPPLEMENT_CATEGORY,sound:'default'},trigger:{type:Notifications.SchedulableTriggerInputTypes.DATE,date,...(Platform.OS==='android'?{channelId:SUPPLEMENT_CHANNEL}:{})} as any});return identifier;
 }
+export async function cancelSameDaySupplementReschedule(reminderId:string,date=new Date()){const day=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;await Notifications.cancelScheduledNotificationAsync(`supplement-snooze-${reminderId}-${day}`).catch(()=>{});}
