@@ -27,12 +27,12 @@ import { connectFirstFtms, FtmsMetrics, FtmsState } from '../../lib/ftms';
 import { BookmarkIcon, SearchIcon } from '../../components/FitHubIcons';
 import {
   exerciseLibrary,
-  figureImages,
   LibraryExercise,
   muscleCards,
   muscleGroupFilters,
   summarizeTargets,
 } from '../../data/exerciseLibrary';
+import { imageForExercise } from '../../data/exerciseVisuals';
 
 type StrengthSet = { id: string; weight: string; reps: string; done: boolean };
 type BuilderItem = {
@@ -89,45 +89,6 @@ const formatTime = (sec: number) => {
     : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-const exerciseImages = {
-  benchPress: require('../../../assets/train_v2/movements/bench_press.png'),
-  inclinePress: require('../../../assets/train_v2/movements/incline_press.png'),
-  pushUp: require('../../../assets/train_v2/movements/push_up.png'),
-  cableFly: require('../../../assets/train_v2/movements/cable_fly.png'),
-  shoulderPress: require('../../../assets/train_v2/movements/shoulder_press.png'),
-  lateralRaise: require('../../../assets/train_v2/movements/lateral_raise.png'),
-  bentRow: require('../../../assets/train_v2/movements/bent_row.png'),
-  latPulldown: require('../../../assets/train_v2/movements/lat_pulldown.png'),
-  pullUp: require('../../../assets/train_v2/movements/pull_up.png'),
-  bicepsCurl: require('../../../assets/train_v2/movements/biceps_curl.png'),
-  tricepsPushdown: require('../../../assets/train_v2/movements/triceps_pushdown.png'),
-  dip: require('../../../assets/train_v2/movements/dip.png'),
-  squat: require('../../../assets/train_v2/movements/squat.png'),
-  deadlift: require('../../../assets/train_v2/movements/deadlift.png'),
-  lunge: require('../../../assets/train_v2/movements/lunge.png'),
-  legPress: require('../../../assets/train_v2/movements/leg_press.png'),
-  hipThrust: require('../../../assets/train_v2/movements/hip_thrust.png'),
-  legCurl: require('../../../assets/train_v2/movements/leg_curl.png'),
-  calfRaise: require('../../../assets/train_v2/movements/calf_raise.png'),
-  plank: require('../../../assets/train_v2/movements/plank.png'),
-  crunch: require('../../../assets/train_v2/movements/crunch.png'),
-  hangingLegRaise: require('../../../assets/train_v2/movements/hanging_leg_raise.png'),
-  russianTwist: require('../../../assets/train_v2/movements/russian_twist.png'),
-  abWheel: require('../../../assets/train_v2/movements/ab_wheel.png'),
-  powerClean: require('../../../assets/train_v2/movements/power_clean.png'),
-  snatch: require('../../../assets/train_v2/movements/snatch.png'),
-  kettlebellSwing: require('../../../assets/train_v2/movements/kettlebell_swing.png'),
-  farmerCarry: require('../../../assets/train_v2/movements/farmer_carry.png'),
-  battleRopes: require('../../../assets/train_v2/movements/battle_ropes.png'),
-  boxJump: require('../../../assets/train_v2/movements/box_jump.png'),
-  outdoorRun: require('../../../assets/train_v2/movements/outdoor_run.png'),
-  treadmill: require('../../../assets/train_v2/movements/treadmill.png'),
-  cycling: require('../../../assets/train_v2/movements/cycling.png'),
-  rowing: require('../../../assets/train_v2/movements/rowing.png'),
-  stairClimber: require('../../../assets/train_v2/movements/stair_climber.png'),
-  jumpRope: require('../../../assets/train_v2/movements/jump_rope.png'),
-};
-
 const muscleGridImages = {
   chest: require('../../../assets/train_v2/groups/chest.png'),
   back: require('../../../assets/train_v2/groups/back.png'),
@@ -137,51 +98,6 @@ const muscleGridImages = {
   core: require('../../../assets/train_v2/groups/core.png'),
   fullBody: require('../../../assets/train_v2/groups/full_body.png'),
   cardio: require('../../../assets/train_v2/groups/cardio.png'),
-};
-
-const imageForExercise = (exercise: LibraryExercise) => {
-  const name = exercise.name.toLowerCase();
-  if (name.includes('incline') && (name.includes('press') || name.includes('bench'))) return exerciseImages.inclinePress;
-  if (name.includes('bench press') || name.includes('chest press') || name.includes('floor press')) return exerciseImages.benchPress;
-  if (name.includes('push-up') || name.includes('push up')) return exerciseImages.pushUp;
-  if (name.includes('fly') || name.includes('pec deck')) return exerciseImages.cableFly;
-  if (name.includes('dip')) return exerciseImages.dip;
-  if (name.includes('pulldown')) return exerciseImages.latPulldown;
-  if (name.includes('pull-up') || name.includes('pull up') || name.includes('chin-up')) return exerciseImages.pullUp;
-  if (name.includes('row') && exercise.targetArea !== 'Cardio') return exerciseImages.bentRow;
-  if (name.includes('curl') && !name.includes('leg')) return exerciseImages.bicepsCurl;
-  if (exercise.targetArea === 'Triceps' || name.includes('pushdown') || name.includes('skull crusher') || name.includes('tricep kickback')) return exerciseImages.tricepsPushdown;
-  if (exercise.targetArea === 'Shoulders' && (name.includes('press') || name.includes('jerk'))) return exerciseImages.shoulderPress;
-  if (exercise.targetArea === 'Shoulders') return exerciseImages.lateralRaise;
-  if (name.includes('hip thrust') || name.includes('glute bridge') || name.includes('frog pump')) return exerciseImages.hipThrust;
-  if (name.includes('leg curl') || name.includes('nordic curl') || name.includes('glute ham')) return exerciseImages.legCurl;
-  if (name.includes('calf') || name.includes('tibialis')) return exerciseImages.calfRaise;
-  if (name.includes('leg press') || name.includes('hack squat')) return exerciseImages.legPress;
-  if (name.includes('deadlift') || name.includes('good morning')) return exerciseImages.deadlift;
-  if (name.includes('lunge') || name.includes('split squat') || name.includes('step-up')) return exerciseImages.lunge;
-  if (name.includes('squat')) return exerciseImages.squat;
-  if (name.includes('ab wheel')) return exerciseImages.abWheel;
-  if (name.includes('leg raise') || name.includes('knee raise') || name.includes('toes-to-bar') || name.includes('v-ups')) return exerciseImages.hangingLegRaise;
-  if (name.includes('russian twist') || name.includes('windshield')) return exerciseImages.russianTwist;
-  if (name.includes('crunch') || name.includes('sit-up') || name.includes('wood chop')) return exerciseImages.crunch;
-  if (exercise.targetArea === 'Core') return exerciseImages.plank;
-  if (name.includes('snatch')) return exerciseImages.snatch;
-  if (name.includes('clean') || name.includes('jerk')) return exerciseImages.powerClean;
-  if (name.includes('kettlebell swing')) return exerciseImages.kettlebellSwing;
-  if (name.includes('carry') || name.includes("farmer's walk") || name.includes('yoke walk') || name.includes('sled')) return exerciseImages.farmerCarry;
-  if (name.includes('battle rope')) return exerciseImages.battleRopes;
-  if (name.includes('jump') || name.includes('bounding') || name.includes('agility ladder')) return exerciseImages.boxJump;
-  if (name.includes('jump rope')) return exerciseImages.jumpRope;
-  if (name.includes('stair') || name.includes('versaclimber') || name.includes('elliptical')) return exerciseImages.stairClimber;
-  if (name.includes('rowing') || name.includes('skierg')) return exerciseImages.rowing;
-  if (name.includes('bike') || name.includes('cycling')) return exerciseImages.cycling;
-  if (name.includes('treadmill')) return exerciseImages.treadmill;
-  if (exercise.targetArea === 'Cardio') return exerciseImages.outdoorRun;
-  if (exercise.targetArea === 'Chest') return muscleGridImages.chest;
-  if (exercise.targetArea === 'Back') return muscleGridImages.back;
-  if (exercise.targetArea === 'Biceps' || exercise.targetArea === 'Forearms') return muscleGridImages.arms;
-  if (exercise.targetArea === 'Legs') return muscleGridImages.legs;
-  return muscleGridImages.fullBody;
 };
 
 const matchesEquipment = (equipment:string, filter:string) => {
@@ -1011,7 +927,7 @@ export default function WorkoutTab({
 
   if (screen === 'detail' && detailExercise) {
     const item = getItem(detailExercise);
-    const img = imageForExercise(detailExercise);
+    const img = imageForExercise(detailExercise, profile.gender);
     return (
       <>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -1097,7 +1013,7 @@ export default function WorkoutTab({
 
   if (screen === 'active') {
     const current = builder[activeExerciseIndex];
-    const img = current ? imageForExercise(current.exercise) : undefined;
+    const img = current ? imageForExercise(current.exercise, profile.gender) : undefined;
     return (
       <>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -1235,7 +1151,7 @@ export default function WorkoutTab({
               <ScrollView keyboardShouldPersistTaps="handled">
                 {pickerExercises.map((ex) => {
                   const existing = builder.some((item) => item.exercise.slug === ex.slug);
-                  const icon = imageForExercise(ex);
+                  const icon = imageForExercise(ex, profile.gender);
                   return (
                     <Pressable key={ex.slug} onPress={() => addExerciseDuringWorkout(ex)} style={styles.pickerExerciseRow}>
                       {icon ? <Image source={icon} style={ex.targetArea === 'Cardio' ? styles.pickerCardioThumb : styles.pickerThumb} /> : <Text style={styles.pickerEmoji}>{ex.icon_emoji || '●'}</Text>}
@@ -1269,8 +1185,8 @@ export default function WorkoutTab({
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <Pressable onPress={()=>setMuscleFilter(muscleFilter==='All'?'Chest':muscleFilter)} style={styles.iconButton}><SearchIcon size={22} color="#FFFFFF"/></Pressable>
-            <Pressable onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color="#FFFFFF"/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:'#fff'}]}>Saved Workouts</Text></Pressable>
+            <Pressable onPress={()=>setMuscleFilter(muscleFilter==='All'?'Chest':muscleFilter)} style={styles.iconButton}><SearchIcon size={22} color={colors.text}/></Pressable>
+            <Pressable onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color={showSavedWorkouts ? contrastText(colors.primary) : colors.text}/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:contrastText(colors.primary)}]}>Saved Workouts</Text></Pressable>
           </View>
         </View>
 
@@ -1340,7 +1256,7 @@ export default function WorkoutTab({
 
         {muscleFilter !== 'All' || query ? <View style={styles.exerciseList}>
           {filtered.map((ex) => {
-            const img = imageForExercise(ex);
+            const img = imageForExercise(ex, profile.gender);
             const selected = builder.some((item) => item.exercise.slug === ex.slug);
             return (
               <Pressable key={ex.slug} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
@@ -1357,7 +1273,7 @@ export default function WorkoutTab({
                   </Text>
                 </View>
                 <View style={[styles.plus, selected && styles.plusSelected]}>
-                  <Text style={[styles.plusText, { color: selected ? '#fff' : '#FF313A' }]}>{selected ? '✓' : '+'}</Text>
+                  <Text style={[styles.plusText, { color: selected ? contrastText(colors.primary) : colors.primary }]}>{selected ? '✓' : '+'}</Text>
                 </View>
               </Pressable>
             );
@@ -1453,16 +1369,16 @@ function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch:
 }
 
 const createStyles = (colors: any) => StyleSheet.create({
-  wrap: { padding: 16, paddingTop: 10, paddingBottom: 34, backgroundColor: '#090D11', flexGrow: 1 },
+  wrap: { padding: 16, paddingTop: 10, paddingBottom: 34, backgroundColor: colors.bg, flexGrow: 1 },
   browseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  browseTitle: { color: '#FFFFFF', fontSize: 28, fontWeight: '900', letterSpacing: .3 },
-  browseSub: { color: '#A6ABB3', fontSize: 12, marginTop: 2 },
+  browseTitle: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: .3 },
+  browseSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   newWorkoutText: { color: colors.blue, fontSize: 11, fontWeight: '900', borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 7 },
   headerActions:{flexDirection:'row',alignItems:'center',gap:8},
   iconButton:{width:38,height:38,borderRadius:12,alignItems:'center',justifyContent:'center'},
-  savedHeaderButton:{height:40,paddingHorizontal:12,borderWidth:1,borderColor:'#363C44',borderRadius:11,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#12171D'},
-  savedHeaderButtonOn:{backgroundColor:'#FF313A',borderColor:'#FF313A'},
-  savedHeaderText:{color:'#FFFFFF',fontSize:10,fontWeight:'900'},
+  savedHeaderButton:{height:40,paddingHorizontal:12,borderWidth:1,borderColor:colors.border,borderRadius:11,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:colors.panel},
+  savedHeaderButtonOn:{backgroundColor:colors.primary,borderColor:colors.primary},
+  savedHeaderText:{color:colors.text,fontSize:10,fontWeight:'900'},
   activeResumeCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderColor: colors.primary, backgroundColor: colors.primarySoft },
   activeResumeTitle: { color: colors.primary, fontWeight: '900', fontSize: 9 },
   activeResumeName: { color: colors.text, fontWeight: '900', fontSize: 17, marginTop: 3 },
@@ -1486,20 +1402,20 @@ const createStyles = (colors: any) => StyleSheet.create({
   savedDelete: { color: colors.muted, fontWeight: '800', fontSize: 11 },
   muscleScroller: { gap: 10, paddingBottom: 14 },
   muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  muscleGridCard: { width: '48.5%', aspectRatio: 1.18, borderRadius: 15, overflow: 'hidden', backgroundColor: '#11161C', borderWidth: 1, borderColor: '#363C44', position: 'relative' },
+  muscleGridCard: { width: '48.5%', aspectRatio: 1.18, borderRadius: 15, overflow: 'hidden', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, position: 'relative' },
   muscleGridImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   muscleGridCardio: { width: '100%', height: '100%', resizeMode: 'cover' },
   muscleShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 48, backgroundColor: 'rgba(5,7,10,.74)' },
   muscleGridLabel: { position: 'absolute', left: 12, bottom: 10, color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   exerciseBrowseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  exerciseBack: { color: '#FF313A', fontSize: 12, fontWeight: '900' },
-  exerciseCount: { color: '#A6ABB3', fontSize: 10, fontWeight: '800' },
-  exerciseSearch: { backgroundColor: '#151A20', borderColor: '#353B43', color: '#FFFFFF' },
+  exerciseBack: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  exerciseCount: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  exerciseSearch: { backgroundColor: colors.input, borderColor: colors.border, color: colors.text },
   equipmentFilters: { gap: 7, paddingBottom: 12 },
-  equipmentChip: { borderRadius: 999, borderWidth: 1, borderColor: '#363C44', paddingHorizontal: 13, paddingVertical: 7, backgroundColor: '#12171D' },
-  equipmentChipOn: { borderColor: '#FF313A', backgroundColor: '#C72A31' },
-  equipmentChipText: { color: '#C0C4CA', fontSize: 10, fontWeight: '800' },
-  equipmentChipTextOn: { color: '#FFFFFF' },
+  equipmentChip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 13, paddingVertical: 7, backgroundColor: colors.panel },
+  equipmentChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  equipmentChipText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
+  equipmentChipTextOn: { color: colors.primary },
   muscleChoice: { alignItems: 'center', width: 58 },
   circle: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   circleActive: { borderColor: colors.primary },
@@ -1522,16 +1438,16 @@ const createStyles = (colors: any) => StyleSheet.create({
   repeat: { alignSelf: 'flex-start', paddingVertical: 8 },
   repeatText: { color: colors.blue, fontWeight: '800', fontSize: 11 },
   exerciseList: { gap: 10 },
-  exerciseRow: { minHeight: 94, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: '#12171D', borderWidth: 1, borderColor: '#363C44', borderRadius: 13, padding: 9, overflow: 'hidden' },
-  thumb: { width: 102, height: 72, resizeMode: 'cover', borderRadius: 9, backgroundColor: '#0B0F13' },
-  cardioThumb: { width: 102, height: 72, resizeMode: 'cover', borderRadius: 9, backgroundColor: '#0B0F13' },
+  exerciseRow: { minHeight: 94, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 9, overflow: 'hidden' },
+  thumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: '#0B0F13' },
+  cardioThumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: '#0B0F13' },
   blankThumb: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel2, borderRadius: 10 },
   listEmoji: { fontSize: 26 },
-  target: { color: '#FF3B43', fontWeight: '900', fontSize: 10 },
-  exName: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, marginTop: 1 },
-  exMeta: { color: '#A6ABB3', fontSize: 10, marginTop: 3 },
-  plus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: '#FF313A', alignItems: 'center', justifyContent: 'center' },
-  plusSelected: { backgroundColor: '#FF313A', borderColor: '#FF313A' },
+  target: { color: colors.primary, fontWeight: '900', fontSize: 10 },
+  exName: { color: colors.text, fontWeight: '900', fontSize: 14, marginTop: 1 },
+  exMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
+  plus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  plusSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   plusText: { fontWeight: '900', fontSize: 20, lineHeight: 22 },
   detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 },
   back: { color: colors.text, fontSize: 36, fontWeight: '300' },
