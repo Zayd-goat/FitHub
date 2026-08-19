@@ -17,6 +17,7 @@
 - TypeScript type-check passes.
 - Expo Android release export passes.
 - All 256 generated PNG files decode successfully and have no zero-byte files.
+- Rebuilt 16 initially truncated PNG streams discovered by the Android AAPT2 compiler and added a focused replacement hotfix.
 
 ## Database
 

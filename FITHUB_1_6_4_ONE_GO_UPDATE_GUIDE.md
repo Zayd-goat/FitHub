@@ -8,35 +8,142 @@ This package is the full FitHub source update, not only a backup. It keeps Andro
 2. In Supabase, open Database > Backups and confirm a recent backup exists.
 3. Do not rerun old migrations that your project already has.
 
-## 2. Upload this source to GitHub
+## 2. Upload everything manually through the GitHub website
 
-The safest method is Git from Command Prompt because GitHub's browser uploader can hide dot-folders.
+No Command Prompt or Git commands are needed for this method.
 
-1. Extract the FitHub 1.6.4 ZIP.
+### 2A. Prepare the update folder
+
+1. Extract `FitHub_1.6.4_COMPLETE_UPDATE.zip`.
 2. Open the extracted `FitHub` folder.
-3. Click the File Explorer address bar, type `cmd`, and press Enter.
-4. Run these commands one at a time, replacing the repository URL:
+3. Do not upload the ZIP itself.
+4. Do not upload `node_modules`, `.expo`, `android`, `ios`, a real `.env`, an APK, an AAB, or any secret/token.
 
-```bat
-git init
-git branch -M main
-git remote remove origin
-git remote add origin https://github.com/YOUR-NAME/YOUR-FITHUB-REPOSITORY.git
-git add -A
-git status
-git commit -m "FitHub 1.6.4 complete update"
-git push -u origin main --force-with-lease
+The update package deliberately excludes generated dependency and Android build folders. GitHub Actions recreates them.
+
+### 2B. Open the correct repository and branch
+
+1. Sign in to GitHub.
+2. Open the repository currently used to build FitHub.
+3. Above the file list, confirm the branch selector says `main`.
+4. If the repository contains old FitHub source, keep it open: uploading a file with the same path replaces that file after you commit.
+
+Manual upload does not automatically remove an obsolete file that exists only in the old repository. This update is designed to overwrite the current source paths. If GitHub still contains an old step-counter file after the upload, delete that specific obsolete file using its `…` menu > Delete file.
+
+### 2C. Upload the normal root files
+
+1. Click **Add file**.
+2. Click **Upload files**.
+3. From the extracted FitHub folder, select the normal visible root files, including:
+   - `App.tsx`
+   - `app.json`
+   - `eas.json`
+   - `package.json`
+   - `package-lock.json`
+   - `tsconfig.json`
+   - `README.md`
+   - all supplied changelog and guide `.md` files
+4. Drag the selected files onto the GitHub upload area.
+5. At the bottom, enter `Upload FitHub 1.6.4 root files`.
+6. Select **Commit directly to the main branch**.
+7. Click **Commit changes**.
+
+GitHub's browser upload accepts no more than 100 files in one batch and limits each browser-uploaded file to 25 MiB. This FitHub package can therefore be uploaded safely in the separate batches below.
+
+### 2D. Upload the `assets` folder
+
+1. Return to the repository's main page.
+2. Click **Add file > Upload files**.
+3. Drag the entire `assets` folder from File Explorer into the GitHub upload box.
+4. Wait until all asset paths appear. The paths must start with `assets/`.
+5. Commit with the message `Update FitHub 1.6.4 assets`.
+
+Do not open `assets` and upload its contents at the repository root. Drag the folder itself so its subfolders and paths are preserved.
+
+### 2E. Upload the `src` folder
+
+1. Click **Add file > Upload files** again.
+2. Drag the complete `src` folder into the upload box.
+3. Confirm the displayed paths start with `src/`.
+4. Commit with the message `Update FitHub 1.6.4 application source`.
+
+### 2F. Upload the `supabase` folder
+
+1. Click **Add file > Upload files** again.
+2. Drag the complete `supabase` folder into the upload box.
+3. Confirm the paths start with `supabase/` and include:
+   - `supabase/UPDATE_2026_08_19_FITHUB_1_6_4_ADDITIVE.sql`
+   - `supabase/functions/nutrition-proxy/index.ts`
+   - `supabase/functions/food-search/index.ts`
+   - `supabase/functions/friend-notifications/index.ts`
+4. Commit with the message `Update FitHub 1.6.4 Supabase files`.
+
+### 2G. Create the hidden GitHub Actions workflow manually
+
+Windows may hide `.github`, so create the workflow directly on GitHub:
+
+1. From the repository main page, click **Add file > Create new file**.
+2. In **Name your file**, enter exactly:
+
+```text
+.github/workflows/build-apk.yml
 ```
 
-If `git remote remove origin` says no such remote, continue. `git add -A` includes `.github`, `.gitignore`, and `.env.example`. Never upload a real `.env` or any FatSecret secret.
+3. On your computer, open `.github`, then `workflows`, then `build-apk.yml` using Notepad.
+4. Press `Ctrl+A`, then `Ctrl+C`.
+5. Paste the contents into the GitHub editor.
+6. Click **Commit changes**.
+7. Use the message `Create FitHub APK workflow` and commit directly to `main`.
 
-If you prefer the GitHub website, upload every visible file and folder, including `assets`, `src`, `supabase`, and the root files. Then create these hidden files using Add file > Create new file:
+The spelling must be `.github/workflows/build-apk.yml`—including the leading dot and the plural `workflows`.
 
-- `.github/workflows/build-apk.yml`
-- `.gitignore`
+### 2H. Create `.gitignore` manually
+
+1. Click **Add file > Create new file**.
+2. Enter `.gitignore` as the filename.
+3. Paste this content:
+
+```text
+node_modules/
+.expo/
+android/
+ios/
+.env
+*.jks
+*.keystore
+build.json
+*.apk
+*.aab
+```
+
+4. Commit it directly to `main` with the message `Create gitignore`.
+
+### 2I. Create `.env.example` manually
+
+1. Click **Add file > Create new file**.
+2. Enter `.env.example` as the filename.
+3. Open the package's `.env.example` in Notepad and paste its example placeholders into GitHub.
+4. Confirm it contains placeholders only—not your real Supabase values or FatSecret secret.
+5. Commit with the message `Create environment example`.
+
+### 2J. Final upload check
+
+The repository root should now show at least:
+
+- `.github`
+- `assets`
+- `src`
+- `supabase`
 - `.env.example`
+- `.gitignore`
+- `App.tsx`
+- `app.json`
+- `eas.json`
+- `package.json`
+- `package-lock.json`
+- `tsconfig.json`
 
-Do not upload `node_modules`, `.expo`, `android`, a real `.env`, APK files, or personal secret values.
+Open `.github/workflows/build-apk.yml` on GitHub and verify it is not empty. Do not build the APK until all four upload batches and the three hidden-file steps are complete.
 
 ## 3. Apply only the new additive database migration
 
