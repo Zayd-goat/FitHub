@@ -299,11 +299,38 @@ export function visualKeyForExercise(exercise: LibraryExercise): ExerciseVisualK
   return 'medicine_ball_slam';
 }
 
-export function imageForExercise(exercise: LibraryExercise, gender: string | null | undefined): ImageSourcePropType {
+const normalizedVisualName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+// Only these aliases are allowed to use a visual whose filename is not the
+// exercise slug. Everything else fails closed instead of showing equipment or
+// an angle that belongs to another movement.
+const exactVisualAliases: Partial<Record<string, ExerciseVisualKey>> = {
+  'barbell-bench-press': 'bench_press',
+  'bench-press': 'bench_press',
+  'machine-chest-press': 'chest_press_machine',
+  'chest-press-machine': 'chest_press_machine',
+  'cable-fly': 'cable_chest_fly',
+  'trx-push-ups': 'trx_push_up',
+  'ez-bar-skull-crushers': 'ez_bar_skull_crusher',
+  'tricep-kickback': 'triceps_kickback',
+  'romanian-deadlift-rdl': 'romanian_deadlift',
+  'barbell-back-squat': 'back_squat',
+  'farmers-carry': 'farmer_carry',
+  'farmers-walk': 'farmer_carry',
+};
+
+export function isExerciseVisualExact(exercise: LibraryExercise): boolean {
+  const key = visualKeyForExercise(exercise);
+  const slugKey = normalizedVisualName(exercise.slug);
+  return slugKey === key || exactVisualAliases[exercise.slug] === key;
+}
+
+export function imageForExercise(exercise: LibraryExercise, gender: string | null | undefined): ImageSourcePropType | undefined {
+  if (!isExerciseVisualExact(exercise)) return undefined;
   const visualGender: ExerciseVisualGender = gender === 'female' ? 'female' : 'male';
   return visualAssets[visualKeyForExercise(exercise)][visualGender];
 }
 
 export function exerciseVisualCoverage(exercises: LibraryExercise[]) {
-  return exercises.map((exercise) => ({ slug: exercise.slug, key: visualKeyForExercise(exercise) }));
+  return exercises.map((exercise) => ({ slug: exercise.slug, key: visualKeyForExercise(exercise), exact: isExerciseVisualExact(exercise) }));
 }

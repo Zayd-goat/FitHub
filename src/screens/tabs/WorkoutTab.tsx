@@ -938,11 +938,7 @@ export default function WorkoutTab({
             <Text style={styles.more}>•••</Text>
           </View>
           <View style={styles.detailHero}>
-            {img ? (
-              <Image source={img} style={detailExercise.targetArea === 'Cardio' ? styles.detailCardioFigure : styles.detailFigure} />
-            ) : (
-              <View style={styles.cardioVisual}><Text style={styles.cardioEmoji}>{detailExercise.icon_emoji || '●'}</Text></View>
-            )}
+            {img ? <Image source={img} style={detailExercise.targetArea === 'Cardio' ? styles.detailCardioFigure : styles.detailFigure} /> : <View style={styles.visualPending}><Text style={styles.visualPendingTitle}>{detailExercise.targetArea}</Text><Text style={styles.visualPendingText}>Exact movement visual pending review</Text></View>}
             <View style={styles.muscleBox}>
               <Text style={styles.muscleBoxTitle}>Primary Muscles</Text>
               <Text style={styles.muscleLine}>• {detailExercise.targetArea}</Text>
@@ -1067,11 +1063,7 @@ export default function WorkoutTab({
           {current ? (
             <Card style={[styles.liveCard, itemDone(current) && { opacity: 0.72 }]}>
               <View style={styles.liveHero}>
-                {img ? (
-                  <Image source={img} style={current.exercise.targetArea === 'Cardio' ? styles.liveCardioFigure : styles.liveFigure} />
-                ) : (
-                  <View style={styles.liveIconBox}><Text style={styles.liveEmoji}>{current.exercise.icon_emoji || '●'}</Text></View>
-                )}
+                {img ? <Image source={img} style={current.exercise.targetArea === 'Cardio' ? styles.liveCardioFigure : styles.liveFigure} /> : <View style={styles.visualPending}><Text style={styles.visualPendingTitle}>{current.exercise.targetArea}</Text><Text style={styles.visualPendingText}>Exercise details below</Text></View>}
                 <View style={styles.liveMuscles}>
                   <Text style={styles.liveName}>{current.exercise.name}</Text>
                   <Text style={styles.primaryLabel}>PRIMARY MUSCLES</Text>
@@ -1260,11 +1252,7 @@ export default function WorkoutTab({
             const selected = builder.some((item) => item.exercise.slug === ex.slug);
             return (
               <Pressable key={ex.slug} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
-                {img ? (
-                  <Image source={img} style={ex.targetArea === 'Cardio' ? styles.cardioThumb : styles.thumb} />
-                ) : (
-                  <View style={styles.blankThumb}><Text style={styles.listEmoji}>{ex.icon_emoji || '●'}</Text></View>
-                )}
+                {img ? <Image source={img} style={ex.targetArea === 'Cardio' ? styles.cardioThumb : styles.thumb} /> : <View style={styles.auditThumb}><Text style={styles.auditThumbText}>{ex.targetArea.slice(0, 1)}</Text></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.target}>{ex.targetArea}</Text>
                   <Text style={styles.exName}>{ex.name}</Text>
@@ -1439,8 +1427,10 @@ const createStyles = (colors: any) => StyleSheet.create({
   repeatText: { color: colors.blue, fontWeight: '800', fontSize: 11 },
   exerciseList: { gap: 10 },
   exerciseRow: { minHeight: 94, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 9, overflow: 'hidden' },
-  thumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: '#0B0F13' },
-  cardioThumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: '#0B0F13' },
+  thumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel2 },
+  cardioThumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel2 },
+  auditThumb: { width: 112, height: 78, borderRadius: 9, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  auditThumbText: { color: colors.primary, fontSize: 26, fontWeight: '900' },
   blankThumb: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel2, borderRadius: 10 },
   listEmoji: { fontSize: 26 },
   target: { color: colors.primary, fontWeight: '900', fontSize: 10 },
@@ -1456,6 +1446,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   detailHero: { flexDirection: 'row', minHeight: 250, alignItems: 'center' },
   detailFigure: { flex: 1, height: 250, resizeMode: 'contain' },
   detailCardioFigure: { flex: 1, height: 220, resizeMode: 'cover', borderRadius: 16, marginRight: 10 },
+  visualPending: { flex: 1, minHeight: 120, borderRadius: 14, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', padding: 14 },
+  visualPendingTitle: { color: colors.primary, fontSize: 18, fontWeight: '900' },
+  visualPendingText: { color: colors.muted, fontSize: 10, textAlign: 'center', marginTop: 5 },
   cardioVisual: { flex: 1, height: 220, alignItems: 'center', justifyContent: 'center' },
   cardioEmoji: { fontSize: 92 },
   muscleBox: { width: 145, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 11 },
