@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Card, Input, OutlineButton, SectionTitle, useTheme } from '../../components/UI';
@@ -15,7 +15,10 @@ const localKey = (value: string | Date) => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
 
-export default function FoodTab({ profile }: { profile: Profile }) {
+export type FoodTabHandle = { goBack: () => boolean };
+type MealType = 'breakfast'|'lunch'|'dinner'|'snacks';
+
+const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab({ profile }, ref) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const locked = (profile.age ?? 0) < 18;
@@ -29,7 +32,7 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const [manual, setManual] = useState({ name:'', serving:'1 serving', calories:'', protein:'', carbs:'', fat:'' });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [mealType,setMealType]=useState<'breakfast'|'lunch'|'dinner'|'snacks'>('breakfast');
+  const [mealType,setMealType]=useState<MealType>('breakfast');
   const [scannerOpen,setScannerOpen]=useState(false);
   const [cameraPermission,requestCameraPermission]=useCameraPermissions();
   const [scanned,setScanned]=useState(false);
@@ -37,6 +40,17 @@ export default function FoodTab({ profile }: { profile: Profile }) {
   const [finderOpen,setFinderOpen]=useState(false);
   const [nutritionOpen,setNutritionOpen]=useState(false);
   const [expandedMeals,setExpandedMeals]=useState<Record<string,boolean>>({breakfast:true,lunch:true,dinner:false,snacks:false});
+
+  const closeFinder=()=>{setFinderOpen(false);setManualOpen(false);setQuery('');setUsdaFoods([]);};
+  useImperativeHandle(ref,()=>({goBack:()=>{
+    if(scannerOpen){setScannerOpen(false);return true;}
+    if(manualOpen){setManualOpen(false);return true;}
+    if(selectedDate){setSelectedDate(null);return true;}
+    if(historyOpen){setHistoryOpen(false);return true;}
+    if(libraryOpen){setLibraryOpen(false);return true;}
+    if(finderOpen){closeFinder();return true;}
+    return false;
+  }}),[scannerOpen,manualOpen,finderOpen,selectedDate,historyOpen,libraryOpen]);
 
   const load = async () => {
     const since = new Date();
@@ -203,6 +217,38 @@ export default function FoodTab({ profile }: { profile: Profile }) {
     </ScrollView>;
   }
 
+  if(finderOpen)return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>
+    <Modal visible={scannerOpen} animationType="slide" onRequestClose={()=>setScannerOpen(false)}>
+      <View style={{flex:1,backgroundColor:'#000'}}>
+        {cameraPermission?.granted?<CameraView style={{flex:1}} barcodeScannerSettings={{barcodeTypes:['ean13','ean8','upc_a','upc_e']}} onBarcodeScanned={scanBarcode}/>:<View style={{flex:1,justifyContent:'center',padding:24}}><Text style={{color:'#fff',textAlign:'center',marginBottom:16}}>Camera access is required only while scanning a food barcode.</Text><OutlineButton title="Allow camera" onPress={requestCameraPermission}/></View>}
+        <View style={{padding:16}}><OutlineButton title="Cancel scanner" onPress={()=>setScannerOpen(false)}/></View>
+      </View>
+    </Modal>
+    <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+      <TopBack title={`Add to ${mealType}`} onBack={closeFinder}/>
+      <Text style={styles.finderSubtitle}>{locked?'Search your foods or add a simple meal description.':`Search verified foods, recent items and saved foods for ${mealType}.`}</Text>
+      <View style={styles.mealTabs}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.mealTab,mealType===x&&styles.mealTabActive]}><Text style={[styles.mealTabText,mealType===x&&styles.mealTabTextActive]}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
+      <Card style={styles.searchPanel}>
+        <View style={styles.searchField}><SearchIcon size={21} color={colors.muted}/><Input style={styles.searchInput} value={query} onChangeText={setQuery} placeholder={locked?'Search saved and common foods…':'Search foods or brands…'}/></View>
+        {!locked?<View style={styles.finderActions}><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={onlineSearch} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></View>:null}
+      </Card>
+      <View style={styles.finderShortcutRow}>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><RecentIcon color={colors.text}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><BookmarkIcon color={colors.text}/><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
+        <Pressable onPress={()=>setManualOpen(!manualOpen)} style={styles.finderShortcut}><Text style={styles.finderShortcutIcon}>＋</Text><Text style={styles.finderShortcutText}>Custom food</Text></Pressable>
+      </View>
+      {manualOpen?<Card style={styles.customFoodCard}>
+        <SectionTitle title="Create a custom food" subtitle="Add a name and household serving to your private meal journal."/>
+        <Input value={manual.name} onChangeText={v=>setManual({...manual,name:v})} placeholder="Food or meal name"/>
+        <Input value={manual.serving} onChangeText={v=>setManual({...manual,serving:v})} placeholder="Serving, e.g. 1 bowl"/>
+        <OutlineButton title="Save and add to meal" onPress={saveManual}/>
+      </Card>:null}
+      <SectionTitle title={query?'Search results':'Suggested foods'} subtitle={query?`Matches for “${query}”`:'Common foods and foods you created'}/>
+      {[...usdaFoods,...filtered].slice(0,35).map((food,i)=><FoodRow key={`${food.source}-${food.id??food.name}-${i}`} food={food} onAdd={()=>addLog(food)} hideNutrition={locked}/>)}
+      {!locked?<Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>:null}
+    </ScrollView>
+  </KeyboardAvoidingView>;
+
   return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>
     <Modal visible={scannerOpen} animationType="slide" onRequestClose={()=>setScannerOpen(false)}>
       <View style={{flex:1,backgroundColor:'#000'}}>
@@ -246,10 +292,12 @@ export default function FoodTab({ profile }: { profile: Profile }) {
         </View>:null}
         <SectionTitle title="Foods" subtitle={query?`Matches for “${query}”`:'Common foods and your saved foods'}/>{[...usdaFoods,...filtered].slice(0,35).map((food,i)=><FoodRow key={`${food.source}-${food.id??food.name}-${i}`} food={food} onAdd={()=>addLog(food)} hideNutrition={locked}/>)}
       </Card>:null}
-      <Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>
+      {!locked?<Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>:null}
     </ScrollView>
   </KeyboardAvoidingView>;
-}
+});
+
+export default FoodTab;
 
 function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove,onCopy,onSave}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void;onCopy:()=>void;onSave:()=>void}){
   const {colors}=useTheme();const s=createStyles(colors);const Icon=type==='breakfast'?SunMealIcon:type==='lunch'?LunchIcon:type==='dinner'?DinnerIcon:SnackIcon;
@@ -404,6 +452,21 @@ const createStyles=(colors:any)=>StyleSheet.create({
   legendValue:{color:colors.muted,fontSize:10,fontWeight:'700'},
   sectionHeader:{flexDirection:'row',alignItems:'flex-start',justifyContent:'space-between',gap:8},
   manualBox:{marginTop:10,borderTopWidth:1,borderTopColor:colors.border,paddingTop:12},
+  finderSubtitle:{color:colors.muted,fontSize:12,lineHeight:18,marginBottom:12},
+  mealTabs:{flexDirection:'row',gap:7,marginBottom:12},
+  mealTab:{flex:1,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,borderRadius:10,paddingVertical:9,alignItems:'center'},
+  mealTabActive:{borderColor:colors.primary,backgroundColor:colors.primarySoft},
+  mealTabText:{color:colors.muted,fontSize:9,fontWeight:'800'},
+  mealTabTextActive:{color:colors.primary},
+  searchPanel:{padding:12},
+  searchField:{flexDirection:'row',alignItems:'center',gap:8},
+  searchInput:{flex:1,marginBottom:0},
+  finderActions:{gap:8,marginTop:8},
+  finderShortcutRow:{flexDirection:'row',gap:8,marginBottom:14},
+  finderShortcut:{flex:1,minHeight:72,borderWidth:1,borderColor:colors.border,borderRadius:13,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},
+  finderShortcutText:{color:colors.text,fontWeight:'800',fontSize:10,marginTop:5},
+  finderShortcutIcon:{color:colors.text,fontSize:25,lineHeight:25},
+  customFoodCard:{marginBottom:14},
   two:{flexDirection:'row',gap:8},
   foodRow:{flexDirection:'row',alignItems:'center',backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border,borderRadius:14,padding:13,marginBottom:8},
   foodName:{color:colors.text,fontWeight:'900'},

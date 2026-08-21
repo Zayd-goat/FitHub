@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Button, Card, Chip, Input, SectionTitle, useTheme } from '../../components/UI';
@@ -17,7 +17,9 @@ type Props = {
   onOpenSharedGym: () => void;
 };
 
-export default function ProfileTab({ profile, onProfileChanged, onOpenCustomization, onOpenSupplements, onOpenSplit, onOpenClubs, onOpenJourney, onOpenSharedGym }: Props) {
+export type ProfileTabHandle = { goBack: () => boolean };
+
+const ProfileTab = forwardRef<ProfileTabHandle, Props>(function ProfileTab({ profile, onProfileChanged, onOpenCustomization, onOpenSupplements, onOpenSplit, onOpenClubs, onOpenJourney, onOpenSharedGym }, ref) {
   const { colors, themeKey, hiddenFeatures } = useTheme();
   const styles = createStyles(colors);
   const [busy, setBusy] = useState(false);
@@ -32,6 +34,14 @@ export default function ProfileTab({ profile, onProfileChanged, onOpenCustomizat
   const [weightUnit,setWeightUnit]=useState<'kg'|'lb'>('kg');
   const [height,setHeight]=useState('');
   const [weight,setWeight]=useState('');
+
+  useImperativeHandle(ref, () => ({
+    goBack: () => {
+      if (!editing) return false;
+      setEditing(false);
+      return true;
+    },
+  }), [editing]);
 
   useEffect(()=>{
     const hu=(profile.height_unit==='in'?'in':'cm') as 'cm'|'in';
@@ -99,7 +109,9 @@ export default function ProfileTab({ profile, onProfileChanged, onOpenCustomizat
 
     <Button title="Sign out" onPress={()=>supabase.auth.signOut()} secondary />
   </ScrollView>;
-}
+});
+
+export default ProfileTab;
 
 function SettingsRow({title,sub,onPress}:{title:string;sub:string;onPress:()=>void}) { const {colors}=useTheme(); const s=createStyles(colors); return <Pressable onPress={onPress} style={s.settingsRow}><View style={{flex:1}}><Text style={s.settingsTitle}>{title}</Text><Text style={s.settingsSub}>{sub}</Text></View><Text style={s.chev}>›</Text></Pressable>; }
 function Info({label,value}:{label:string;value:string}) { const {colors}=useTheme(); const s=createStyles(colors); return <View style={s.info}><Text style={s.meta}>{label}</Text><Text style={s.infoValue}>{value}</Text></View>; }

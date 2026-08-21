@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import Storage from 'expo-sqlite/kv-store';
 import {
@@ -46,6 +46,7 @@ type BuilderItem = {
   suggestion?: string;
 };
 type ScreenMode = 'browse' | 'detail' | 'active';
+export type WorkoutTabHandle = { goBack: () => boolean };
 type DetailTab = 'sets' | 'about';
 type SavedPlanItem = {
   exercise_slug: string;
@@ -90,14 +91,26 @@ const formatTime = (sec: number) => {
 };
 
 const muscleGridImages = {
-  chest: require('../../../assets/train_v2/groups/chest.png'),
-  back: require('../../../assets/train_v2/groups/back.png'),
-  shoulders: require('../../../assets/train_v2/groups/shoulders.png'),
-  arms: require('../../../assets/train_v2/groups/arms.png'),
-  legs: require('../../../assets/train_v2/groups/legs.png'),
-  core: require('../../../assets/train_v2/groups/core.png'),
-  fullBody: require('../../../assets/train_v2/groups/full_body.png'),
-  cardio: require('../../../assets/train_v2/groups/cardio.png'),
+  male: {
+    chest: require('../../../assets/train_v3/male/bench_press.png'),
+    back: require('../../../assets/train_v3/male/lat_pulldown.png'),
+    shoulders: require('../../../assets/train_v3/male/dumbbell_shoulder_press.png'),
+    arms: require('../../../assets/train_v3/male/dumbbell_curl.png'),
+    legs: require('../../../assets/train_v3/male/back_squat.png'),
+    core: require('../../../assets/train_v3/male/plank.png'),
+    fullBody: require('../../../assets/train_v3/male/medicine_ball_slam.png'),
+    cardio: require('../../../assets/train_v3/male/outdoor_running.png'),
+  },
+  female: {
+    chest: require('../../../assets/train_v3/female/bench_press.png'),
+    back: require('../../../assets/train_v3/female/lat_pulldown.png'),
+    shoulders: require('../../../assets/train_v3/female/dumbbell_shoulder_press.png'),
+    arms: require('../../../assets/train_v3/female/dumbbell_curl.png'),
+    legs: require('../../../assets/train_v3/female/back_squat.png'),
+    core: require('../../../assets/train_v3/female/plank.png'),
+    fullBody: require('../../../assets/train_v3/female/medicine_ball_slam.png'),
+    cardio: require('../../../assets/train_v3/female/outdoor_running.png'),
+  },
 };
 
 const matchesEquipment = (equipment:string, filter:string) => {
@@ -108,6 +121,15 @@ const matchesEquipment = (equipment:string, filter:string) => {
   if (filter==='Bodyweight') return value.includes('bodyweight') || value.includes('gym floor');
   return value.includes(filter.toLowerCase());
 };
+
+// These movements are kept in the adult catalogue, but younger profiles do
+// not receive unsupervised discovery or progression prompts for them.
+const coachSupervisedSlugs = new Set([
+  'atlas-stone-lift', 'bounding', 'broad-jump', 'clean', 'clean-and-jerk',
+  'depth-jump', 'hang-clean', 'log-press', 'muscle-up', 'power-clean',
+  'power-snatch', 'push-jerk', 'snatch', 'split-jerk', 'tire-flip',
+  'tire-flips', 'yoke-walk',
+]);
 
 const serializeBuilder = (items: BuilderItem[], weightUnit: 'kg'|'lb', distanceUnit: 'km'|'mi'): SavedPlanItem[] =>
   items.map((item) => ({
@@ -202,13 +224,13 @@ const hydrateActive = (items: ActiveSavedItem[], weightUnit: 'kg'|'lb', distance
   return hydrated;
 };
 
-export default function WorkoutTab({
-  profile,
-  onProfileChanged,
-}: {
+const WorkoutTab = forwardRef<WorkoutTabHandle, {
   profile: Profile;
   onProfileChanged: () => void;
-}) {
+}>(function WorkoutTab({
+  profile,
+  onProfileChanged,
+}, ref) {
   const { colors, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [screen, setScreen] = useState<ScreenMode>('browse');
@@ -238,22 +260,45 @@ export default function WorkoutTab({
   const activeStorageKey = `fithub_active_workout_${profile.id}`;
   const activeRevisionKey = `fithub_active_revision_${profile.id}`;
 
+  useImperativeHandle(ref,()=>({goBack:()=>{
+    if(showExercisePicker){setShowExercisePicker(false);return true;}
+    if(showSaveForm){setShowSaveForm(false);return true;}
+    if(showSavedWorkouts){setShowSavedWorkouts(false);return true;}
+    if(screen==='active'){
+      setScreen('browse');
+      return true;
+    }
+    if(screen==='detail'){
+      setScreen('browse');
+      setDetailExercise(null);
+      return true;
+    }
+    if(muscleFilter!=='All'){
+      setMuscleFilter('All');
+      setEquipmentFilter('All');
+      setQuery('');
+      return true;
+    }
+    return false;
+  }}),[showExercisePicker,showSaveForm,showSavedWorkouts,screen,muscleFilter]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return exerciseLibrary.filter(
       (ex) =>
+        ((profile.age ?? 0) >= 18 || !coachSupervisedSlugs.has(ex.slug)) &&
         (muscleFilter === 'All' || (muscleFilter === 'Arms' ? ['Biceps','Triceps','Forearms'].includes(ex.targetArea) : ex.targetArea === muscleFilter)) &&
         matchesEquipment(ex.equipment,equipmentFilter) &&
         (!q || `${ex.name} ${ex.targetArea} ${ex.subsection} ${ex.equipment}`.toLowerCase().includes(q)),
     );
-  }, [query, muscleFilter,equipmentFilter]);
+  }, [query, muscleFilter,equipmentFilter,profile.age]);
 
   const pickerExercises = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
     return exerciseLibrary.filter(
-      (ex) => !q || `${ex.name} ${ex.targetArea} ${ex.subsection} ${ex.equipment}`.toLowerCase().includes(q),
+      (ex) => ((profile.age ?? 0) >= 18 || !coachSupervisedSlugs.has(ex.slug)) && (!q || `${ex.name} ${ex.targetArea} ${ex.subsection} ${ex.equipment}`.toLowerCase().includes(q)),
     );
-  }, [pickerQuery]);
+  }, [pickerQuery,profile.age]);
 
   const itemDone = (item: BuilderItem) =>
     item.exercise.metric_type === 'strength'
@@ -1213,7 +1258,7 @@ export default function WorkoutTab({
         ) : null}
 
         {muscleFilter === 'All' && !query ? <View style={styles.muscleGrid}>{[
-          {label:'Chest',image:muscleGridImages.chest},{label:'Back',image:muscleGridImages.back},{label:'Shoulders',image:muscleGridImages.shoulders},{label:'Arms',image:muscleGridImages.arms},{label:'Legs',image:muscleGridImages.legs},{label:'Core',image:muscleGridImages.core},{label:'Full Body',image:muscleGridImages.fullBody},{label:'Cardio',image:muscleGridImages.cardio},
+          {label:'Chest',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].chest},{label:'Back',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].back},{label:'Shoulders',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].shoulders},{label:'Arms',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].arms},{label:'Legs',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].legs},{label:'Core',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].core},{label:'Full Body',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].fullBody},{label:'Cardio',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].cardio},
         ].map(muscle=><Pressable key={muscle.label} onPress={()=>setMuscleFilter(muscle.label)} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage}/><View style={styles.muscleShade}/><Text style={styles.muscleGridLabel}>{muscle.label}</Text></Pressable>)}</View> : <>
           <View style={styles.exerciseBrowseTop}><Pressable onPress={()=>{setMuscleFilter('All');setQuery('')}}><Text style={styles.exerciseBack}>‹ Muscle groups</Text></Pressable><Text style={styles.exerciseCount}>{filtered.length} exercises</Text></View>
           <Input value={query} onChangeText={setQuery} placeholder={`Search ${muscleFilter.toLowerCase()} exercises…`} style={styles.exerciseSearch} />
@@ -1272,7 +1317,9 @@ export default function WorkoutTab({
     {celebrationModal}
     </>
   );
-}
+});
+
+export default WorkoutTab;
 
 function SetTable({
   item,
@@ -1393,7 +1440,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   muscleGridCard: { width: '48.5%', aspectRatio: 1.18, borderRadius: 15, overflow: 'hidden', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, position: 'relative' },
   muscleGridImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   muscleGridCardio: { width: '100%', height: '100%', resizeMode: 'cover' },
-  muscleShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 48, backgroundColor: 'rgba(5,7,10,.74)' },
+  muscleShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 48, backgroundColor: colors.panel, borderTopWidth: 1, borderTopColor: colors.border },
   muscleGridLabel: { position: 'absolute', left: 12, bottom: 10, color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   exerciseBrowseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   exerciseBack: { color: colors.primary, fontSize: 12, fontWeight: '900' },

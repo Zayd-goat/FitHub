@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Chip, Input, OutlineButton, SectionTitle, useTheme } from '../../components/UI';
 import { exerciseLibrary } from '../../data/exerciseLibrary';
@@ -28,7 +28,9 @@ const tomorrowKey = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export default function FriendsTab({ profile }: { profile: Profile }) {
+export type FriendsTabHandle = { goBack: () => boolean };
+
+const FriendsTab = forwardRef<FriendsTabHandle, { profile: Profile }>(function FriendsTab({ profile }, ref) {
   const { colors, hiddenFeatures, weightUnit, distanceUnit } = useTheme();
   const styles = createStyles(colors);
   const [view, setView] = useState<FriendsView>('feed');
@@ -55,6 +57,20 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
   const [inviteWorkout, setInviteWorkout] = useState('');
   const [inviteNote, setInviteNote] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    goBack: () => {
+      if (customOpen) {
+        setCustomOpen(false);
+        return true;
+      }
+      if (view !== 'feed') {
+        setView('feed');
+        return true;
+      }
+      return false;
+    },
+  }), [customOpen, view]);
 
 
   async function calculateCommunityProgress(challenge: any) {
@@ -382,7 +398,9 @@ export default function FriendsTab({ profile }: { profile: Profile }) {
       </Card>)}</> : null}
     </View> : null}
   </ScrollView>;
-}
+});
+
+export default FriendsTab;
 
 function Tab({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) { const { colors } = useTheme(); const s = createStyles(colors); return <Pressable onPress={onPress} style={[s.tab, active && s.tabActive]}><Text style={[s.tabText, active && s.tabTextActive]}>{label}</Text></Pressable>; }
 

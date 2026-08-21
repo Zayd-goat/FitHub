@@ -317,17 +317,400 @@ const exactVisualAliases: Partial<Record<string, ExerciseVisualKey>> = {
   'barbell-back-squat': 'back_squat',
   'farmers-carry': 'farmer_carry',
   'farmers-walk': 'farmer_carry',
+  // Catalogue spelling/plural aliases where the movement, equipment and angle
+  // are genuinely the same approved visual (not merely the same muscle group).
+  'australian-row': 'inverted_row',
+  'lat-pulldown-machine': 'lat_pulldown',
+  'ab-wheel-rollout': 'ab_wheel',
+  'bicycle-crunches': 'bicycle_crunch',
+  'atlas-stone-lift': 'atlas_stone',
+  'farmer-s-carry': 'farmer_carry',
+  'farmer-s-walk': 'farmer_carry',
+  'halo': 'kettlebell_halo',
+  'sandbag-carries': 'sandbag_carry',
+  'tire-flips': 'tire_flip',
+  'deadlift': 'conventional_deadlift',
+  'cable-kickback': 'cable_glute_kickback',
+  'hack-squat-machine': 'hack_squat',
+  'hip-abduction-machine': 'hip_abductor_machine',
+  'military-press': 'barbell_overhead_press',
+  'overhead-press': 'barbell_overhead_press',
+  'parallel-bar-dips': 'dips',
+  'skull-crushers': 'ez_bar_skull_crusher',
+  'windmill': 'kettlebell_windmill',
+  'front-raise': 'dumbbell_front_raise',
+};
+
+// Exercise-specific assets produced after the original visual-family registry.
+// Keeping these keyed by catalogue slug prevents angle or equipment variants
+// from being collapsed into a similar-looking family image.
+const dedicatedExerciseAssets: Partial<Record<string, Record<ExerciseVisualGender, ImageSourcePropType>>> = {
+  'decline-bench-press': {
+    male: require('../../assets/train_v3/male/decline_bench_press.png'),
+    female: require('../../assets/train_v3/female/decline_bench_press.png'),
+  },
+  'decline-dumbbell-press': {
+    male: require('../../assets/train_v3/male/decline_dumbbell_press.png'),
+    female: require('../../assets/train_v3/female/decline_dumbbell_press.png'),
+  },
+  'decline-push-up': {
+    male: require('../../assets/train_v3/male/decline_push_up.png'),
+    female: require('../../assets/train_v3/female/decline_push_up.png'),
+  },
+  'dumbbell-bench-press': {
+    male: require('../../assets/train_v3/male/dumbbell_bench_press.png'),
+    female: require('../../assets/train_v3/female/dumbbell_bench_press.png'),
+  },
+  'dumbbell-fly': {
+    male: require('../../assets/train_v3/male/dumbbell_fly_v2.png'),
+    female: require('../../assets/train_v3/female/dumbbell_fly_v2.png'),
+  },
+  'incline-barbell-bench-press': {
+    male: require('../../assets/train_v3/male/incline_barbell_bench_press_v2.png'),
+    female: require('../../assets/train_v3/female/incline_barbell_bench_press_v2.png'),
+  },
+  'incline-bench-press': {
+    male: require('../../assets/train_v3/male/incline_barbell_bench_press_v2.png'),
+    female: require('../../assets/train_v3/female/incline_barbell_bench_press_v2.png'),
+  },
+  'high-to-low-cable-fly': {
+    male: require('../../assets/train_v3/male/high_to_low_cable_fly_v2.png'),
+    female: require('../../assets/train_v3/female/high_to_low_cable_fly_v2.png'),
+  },
+  'low-to-high-cable-fly': {
+    male: require('../../assets/train_v3/male/low_to_high_cable_fly_v2.png'),
+    female: require('../../assets/train_v3/female/low_to_high_cable_fly_v2.png'),
+  },
+  'pec-deck': {
+    male: require('../../assets/train_v3/male/pec_deck_fly_v2.png'),
+    female: require('../../assets/train_v3/female/pec_deck_fly_v2.png'),
+  },
+  'pec-deck-fly': {
+    male: require('../../assets/train_v3/male/pec_deck_fly_v2.png'),
+    female: require('../../assets/train_v3/female/pec_deck_fly_v2.png'),
+  },
+  'weighted-push-up': {
+    male: require('../../assets/train_v3/male/weighted_push_up_v2.png'),
+    female: require('../../assets/train_v3/female/weighted_push_up_v2.png'),
+  },
+  'machine-row': {
+    male: require('../../assets/train_v3/male/machine_row_v2.png'),
+    female: require('../../assets/train_v3/female/machine_row_v2.png'),
+  },
+  'seated-row-machine': {
+    male: require('../../assets/train_v3/male/machine_row_v2.png'),
+    female: require('../../assets/train_v3/female/machine_row_v2.png'),
+  },
+  'one-arm-dumbbell-row': {
+    male: require('../../assets/train_v3/male/one_arm_dumbbell_row_v2.png'),
+    female: require('../../assets/train_v3/female/one_arm_dumbbell_row_v2.png'),
+  },
+  'pendlay-row': {
+    male: require('../../assets/train_v3/male/pendlay_row_v2.png'),
+    female: require('../../assets/train_v3/female/pendlay_row_v2.png'),
+  },
+  'straight-arm-pulldown': {
+    male: require('../../assets/train_v3/male/straight_arm_pulldown_v2.png'),
+    female: require('../../assets/train_v3/female/straight_arm_pulldown_v2.png'),
+  },
+  'assisted-pull-up-machine': {
+    male: require('../../assets/train_v3/male/assisted_pull_up_machine_v2.png'),
+    female: require('../../assets/train_v3/female/assisted_pull_up_machine_v2.png'),
+  },
+  'assisted-pull-up': {
+    male: require('../../assets/train_v3/male/assisted_pull_up_band_v2.png'),
+    female: require('../../assets/train_v3/female/assisted_pull_up_band_v2.png'),
+  },
+  'barbell-shrug': {
+    male: require('../../assets/train_v3/male/barbell_shrug_v2.png'),
+    female: require('../../assets/train_v3/female/barbell_shrug_v2.png'),
+  },
+  'chest-supported-row': {
+    male: require('../../assets/train_v3/male/chest_supported_row_v2.png'),
+    female: require('../../assets/train_v3/female/chest_supported_row_v2.png'),
+  },
+  'chin-up': {
+    male: require('../../assets/train_v3/male/chin_up_v2.png'),
+    female: require('../../assets/train_v3/female/chin_up_v2.png'),
+  },
+  'dumbbell-shrug': {
+    male: require('../../assets/train_v3/male/dumbbell_shrug_v2.png'),
+    female: require('../../assets/train_v3/female/dumbbell_shrug_v2.png'),
+  },
+  'medicine-ball-throws': {
+    male: require('../../assets/train_v3/male/medicine_ball_throw_v2.png'),
+    female: require('../../assets/train_v3/female/medicine_ball_throw_v2.png'),
+  },
+  'neutral-grip-pull-up': {
+    male: require('../../assets/train_v3/male/neutral_grip_pull_up_v2.png'),
+    female: require('../../assets/train_v3/female/neutral_grip_pull_up_v2.png'),
+  },
+  't-bar-row': {
+    male: require('../../assets/train_v3/male/t_bar_row_v2.png'),
+    female: require('../../assets/train_v3/female/t_bar_row_v2.png'),
+  },
+  'trx-rows': {
+    male: require('../../assets/train_v3/male/trx_rows_v2.png'),
+    female: require('../../assets/train_v3/female/trx_rows_v2.png'),
+  },
+  'trap-bar-shrug': {
+    male: require('../../assets/train_v3/male/trap_bar_shrug_v2.png'),
+    female: require('../../assets/train_v3/female/trap_bar_shrug_v2.png'),
+  },
+  'clap-push-up': {
+    male: require('../../assets/train_v3/male/clap_push_up_v2.png'),
+    female: require('../../assets/train_v3/female/clap_push_up_v2.png'),
+  },
+  'dumbbell-floor-press': {
+    male: require('../../assets/train_v3/male/dumbbell_floor_press_v2.png'),
+    female: require('../../assets/train_v3/female/dumbbell_floor_press_v2.png'),
+  },
+  'dumbbell-pullover': {
+    male: require('../../assets/train_v3/male/dumbbell_pullover_v2.png'),
+    female: require('../../assets/train_v3/female/dumbbell_pullover_v2.png'),
+  },
+  'crunch': {
+    male: require('../../assets/train_v3/male/crunch_v2.png'),
+    female: require('../../assets/train_v3/female/crunch_v2.png'),
+  },
+  'dead-bug': {
+    male: require('../../assets/train_v3/male/dead_bug_v2.png'),
+    female: require('../../assets/train_v3/female/dead_bug_v2.png'),
+  },
+  'decline-sit-up': {
+    male: require('../../assets/train_v3/male/decline_sit_up_v2.png'),
+    female: require('../../assets/train_v3/female/decline_sit_up_v2.png'),
+  },
+  'hanging-knee-raise': {
+    male: require('../../assets/train_v3/male/hanging_knee_raise_v2.png'),
+    female: require('../../assets/train_v3/female/hanging_knee_raise_v2.png'),
+  },
+  'hollow-hold': {
+    male: require('../../assets/train_v3/male/hollow_hold_v2.png'),
+    female: require('../../assets/train_v3/female/hollow_hold_v2.png'),
+  },
+  'lying-leg-raise': {
+    male: require('../../assets/train_v3/male/lying_leg_raise_v2.png'),
+    female: require('../../assets/train_v3/female/lying_leg_raise_v2.png'),
+  },
+  'pallof-press': {
+    male: require('../../assets/train_v3/male/pallof_press_v2.png'),
+    female: require('../../assets/train_v3/female/pallof_press_v2.png'),
+  },
+  'reverse-crunch': {
+    male: require('../../assets/train_v3/male/reverse_crunch_v2.png'),
+    female: require('../../assets/train_v3/female/reverse_crunch_v2.png'),
+  },
+  'toes-to-bar': {
+    male: require('../../assets/train_v3/male/toes_to_bar_v2.png'),
+    female: require('../../assets/train_v3/female/toes_to_bar_v2.png'),
+  },
+  'sit-up': {
+    male: require('../../assets/train_v3/male/sit_up_v2.png'),
+    female: require('../../assets/train_v3/female/sit_up_v2.png'),
+  },
+  'v-ups': {
+    male: require('../../assets/train_v3/male/v_ups_v2.png'),
+    female: require('../../assets/train_v3/female/v_ups_v2.png'),
+  },
+  'windshield-wipers': {
+    male: require('../../assets/train_v3/male/windshield_wipers_v2.png'),
+    female: require('../../assets/train_v3/female/windshield_wipers_v2.png'),
+  },
+  'dead-hang': {
+    male: require('../../assets/train_v3/male/dead_hang_v2.png'),
+    female: require('../../assets/train_v3/female/dead_hang_v2.png'),
+  },
+  'barbell-glute-bridge': {
+    male: require('../../assets/train_v3/male/barbell_glute_bridge_v2.png'),
+    female: require('../../assets/train_v3/female/barbell_glute_bridge_v2.png'),
+  },
+  'frog-pumps': {
+    male: require('../../assets/train_v3/male/frog_pumps_v2.png'),
+    female: require('../../assets/train_v3/female/frog_pumps_v2.png'),
+  },
+  'glute-ham-raise': {
+    male: require('../../assets/train_v3/male/glute_ham_raise_v2.png'),
+    female: require('../../assets/train_v3/female/glute_ham_raise_v2.png'),
+  },
+  'leg-press-calf-raise': {
+    male: require('../../assets/train_v3/male/leg_press_calf_raise_v2.png'),
+    female: require('../../assets/train_v3/female/leg_press_calf_raise_v2.png'),
+  },
+  'nordic-curl': {
+    male: require('../../assets/train_v3/male/nordic_curl_v2.png'),
+    female: require('../../assets/train_v3/female/nordic_curl_v2.png'),
+  },
+  'seated-calf-raise-machine': {
+    male: require('../../assets/train_v3/male/seated_calf_raise_machine_v2.png'),
+    female: require('../../assets/train_v3/female/seated_calf_raise_machine_v2.png'),
+  },
+  'single-leg-hip-thrust': {
+    male: require('../../assets/train_v3/male/single_leg_hip_thrust_v2.png'),
+    female: require('../../assets/train_v3/female/single_leg_hip_thrust_v2.png'),
+  },
+  'standing-calf-raise-machine': {
+    male: require('../../assets/train_v3/male/standing_calf_raise_machine_v2.png'),
+    female: require('../../assets/train_v3/female/standing_calf_raise_machine_v2.png'),
+  },
+  'tibialis-raise': {
+    male: require('../../assets/train_v3/male/tibialis_raise_v2.png'),
+    female: require('../../assets/train_v3/female/tibialis_raise_v2.png'),
+  },
+  'jump-squat': {
+    male: require('../../assets/train_v3/male/jump_squat_v2.png'),
+    female: require('../../assets/train_v3/female/jump_squat_v2.png'),
+  },
+  'pistol-squat': {
+    male: require('../../assets/train_v3/male/pistol_squat_v2.png'),
+    female: require('../../assets/train_v3/female/pistol_squat_v2.png'),
+  },
+  'sissy-squat': {
+    male: require('../../assets/train_v3/male/sissy_squat_v2.png'),
+    female: require('../../assets/train_v3/female/sissy_squat_v2.png'),
+  },
+  'split-squat': {
+    male: require('../../assets/train_v3/male/split_squat_v2.png'),
+    female: require('../../assets/train_v3/female/split_squat_v2.png'),
+  },
+  'step-up': {
+    male: require('../../assets/train_v3/male/step_up_v2.png'),
+    female: require('../../assets/train_v3/female/step_up_v2.png'),
+  },
+  'stiff-leg-deadlift': {
+    male: require('../../assets/train_v3/male/stiff_leg_deadlift_v2.png'),
+    female: require('../../assets/train_v3/female/stiff_leg_deadlift_v2.png'),
+  },
+  'sumo-squat': {
+    male: require('../../assets/train_v3/male/sumo_squat_v2.png'),
+    female: require('../../assets/train_v3/female/sumo_squat_v2.png'),
+  },
+  'zercher-squat': {
+    male: require('../../assets/train_v3/male/zercher_squat_v2.png'),
+    female: require('../../assets/train_v3/female/zercher_squat_v2.png'),
+  },
+  'smith-machine': {
+    male: require('../../assets/train_v3/male/smith_machine_v2.png'),
+    female: require('../../assets/train_v3/female/smith_machine_v2.png'),
+  },
+  'arnold-press': {
+    male: require('../../assets/train_v3/male/arnold_press_v2.png'),
+    female: require('../../assets/train_v3/female/arnold_press_v2.png'),
+  },
+  'cable-front-raise': {
+    male: require('../../assets/train_v3/male/cable_front_raise_v2.png'),
+    female: require('../../assets/train_v3/female/cable_front_raise_v2.png'),
+  },
+  'chest-supported-rear-delt-raise': {
+    male: require('../../assets/train_v3/male/chest_supported_rear_delt_raise_v2.png'),
+    female: require('../../assets/train_v3/female/chest_supported_rear_delt_raise_v2.png'),
+  },
+  'dumbbell-lateral-raise': {
+    male: require('../../assets/train_v3/male/dumbbell_lateral_raise_v2.png'),
+    female: require('../../assets/train_v3/female/dumbbell_lateral_raise_v2.png'),
+  },
+  'leaning-lateral-raise': {
+    male: require('../../assets/train_v3/male/leaning_lateral_raise_v2.png'),
+    female: require('../../assets/train_v3/female/leaning_lateral_raise_v2.png'),
+  },
+  'machine-lateral-raise': {
+    male: require('../../assets/train_v3/male/machine_lateral_raise_v2.png'),
+    female: require('../../assets/train_v3/female/machine_lateral_raise_v2.png'),
+  },
+  'pike-push-up': {
+    male: require('../../assets/train_v3/male/pike_push_up_v2.png'),
+    female: require('../../assets/train_v3/female/pike_push_up_v2.png'),
+  },
+  'plate-raise': {
+    male: require('../../assets/train_v3/male/plate_raise_v2.png'),
+    female: require('../../assets/train_v3/female/plate_raise_v2.png'),
+  },
+  'push-press': {
+    male: require('../../assets/train_v3/male/push_press_v2.png'),
+    female: require('../../assets/train_v3/female/push_press_v2.png'),
+  },
+  'bounding': {
+    male: require('../../assets/train_v3/male/bounding_v2.png'),
+    female: require('../../assets/train_v3/female/bounding_v2.png'),
+  },
+  'broad-jump': {
+    male: require('../../assets/train_v3/male/broad_jump_v2.png'),
+    female: require('../../assets/train_v3/female/broad_jump_v2.png'),
+  },
+  'burpees': {
+    male: require('../../assets/train_v3/male/burpees_v2.png'),
+    female: require('../../assets/train_v3/female/burpees_v2.png'),
+  },
+  'crab-walk': {
+    male: require('../../assets/train_v3/male/crab_walk_v2.png'),
+    female: require('../../assets/train_v3/female/crab_walk_v2.png'),
+  },
+  'depth-jump': {
+    male: require('../../assets/train_v3/male/depth_jump_v2.png'),
+    female: require('../../assets/train_v3/female/depth_jump_v2.png'),
+  },
+  'mountain-climbers': {
+    male: require('../../assets/train_v3/male/mountain_climbers_v2.png'),
+    female: require('../../assets/train_v3/female/mountain_climbers_v2.png'),
+  },
+  'skater-jumps': {
+    male: require('../../assets/train_v3/male/skater_jumps_v2.png'),
+    female: require('../../assets/train_v3/female/skater_jumps_v2.png'),
+  },
+  'rear-delt-fly': {
+    male: require('../../assets/train_v3/male/rear_delt_fly_v2.png'),
+    female: require('../../assets/train_v3/female/rear_delt_fly_v2.png'),
+  },
+  'bench-dips': {
+    male: require('../../assets/train_v3/male/bench_dips_v2.png'),
+    female: require('../../assets/train_v3/female/bench_dips_v2.png'),
+  },
+  'clean': {
+    male: require('../../assets/train_v3/male/clean_v2.png'),
+    female: require('../../assets/train_v3/female/clean_v2.png'),
+  },
+  'hang-clean': {
+    male: require('../../assets/train_v3/male/hang_clean_v2.png'),
+    female: require('../../assets/train_v3/female/hang_clean_v2.png'),
+  },
+  'power-snatch': {
+    male: require('../../assets/train_v3/male/power_snatch_v2.png'),
+    female: require('../../assets/train_v3/female/power_snatch_v2.png'),
+  },
+  'push-jerk': {
+    male: require('../../assets/train_v3/male/push_jerk_v2.png'),
+    female: require('../../assets/train_v3/female/push_jerk_v2.png'),
+  },
+  'split-jerk': {
+    male: require('../../assets/train_v3/male/split_jerk_v2.png'),
+    female: require('../../assets/train_v3/female/split_jerk_v2.png'),
+  },
+  'close-grip-bench-press': {
+    male: require('../../assets/train_v3/male/close_grip_bench_press_v2.png'),
+    female: require('../../assets/train_v3/female/close_grip_bench_press_v2.png'),
+  },
+  'straight-bar-pushdown': {
+    male: require('../../assets/train_v3/male/straight_bar_pushdown_v2.png'),
+    female: require('../../assets/train_v3/female/straight_bar_pushdown_v2.png'),
+  },
+  'v-bar-pushdown': {
+    male: require('../../assets/train_v3/male/v_bar_pushdown_v2.png'),
+    female: require('../../assets/train_v3/female/v_bar_pushdown_v2.png'),
+  },
 };
 
 export function isExerciseVisualExact(exercise: LibraryExercise): boolean {
+  if (dedicatedExerciseAssets[exercise.slug]) return true;
   const key = visualKeyForExercise(exercise);
   const slugKey = normalizedVisualName(exercise.slug);
   return slugKey === key || exactVisualAliases[exercise.slug] === key;
 }
 
 export function imageForExercise(exercise: LibraryExercise, gender: string | null | undefined): ImageSourcePropType | undefined {
-  if (!isExerciseVisualExact(exercise)) return undefined;
   const visualGender: ExerciseVisualGender = gender === 'female' ? 'female' : 'male';
+  const dedicated = dedicatedExerciseAssets[exercise.slug];
+  if (dedicated) return dedicated[visualGender];
+  if (!isExerciseVisualExact(exercise)) return undefined;
   return visualAssets[visualKeyForExercise(exercise)][visualGender];
 }
 

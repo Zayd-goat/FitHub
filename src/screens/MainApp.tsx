@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
+import Storage from 'expo-sqlite/kv-store';
 import { Alert, BackHandler, Image, Linking, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Profile } from '../lib/types';
 import { useTheme } from '../components/UI';
 import { supabase } from '../lib/supabase';
 import DashboardTab, { DailyActivityFocus, HomeProgressFocus } from './tabs/DashboardTab';
-import FoodTab from './tabs/FoodTab';
-import WorkoutTab from './tabs/WorkoutTab';
-import FriendsTab from './tabs/FriendsTab';
-import ProfileTab from './tabs/ProfileTab';
+import FoodTab, { FoodTabHandle } from './tabs/FoodTab';
+import WorkoutTab, { WorkoutTabHandle } from './tabs/WorkoutTab';
+import FriendsTab, { FriendsTabHandle } from './tabs/FriendsTab';
+import ProfileTab, { ProfileTabHandle } from './tabs/ProfileTab';
 import ProgressScreen, { ProgressFocus } from './ProgressScreen';
 import WorkoutHistoryScreen from './WorkoutHistoryScreen';
 import DailyActivityScreen from './DailyActivityScreen';
@@ -30,6 +31,7 @@ const allTabs = [
 
 type Tab = typeof allTabs[number][0];
 type Page = 'main' | 'progress' | 'history' | 'daily' | 'journey' | 'clubs' | 'supplements' | 'split' | 'customize' | 'sharedGym';
+type ActiveWorkoutBar = { startedAt:number; name:string; exercise:string };
 const localDateKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 export default function MainApp({ profile, onProfileChanged }: { profile: Profile; onProfileChanged: () => void }) {
@@ -41,13 +43,47 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
   const [historySessionId, setHistorySessionId] = useState<string | undefined>();
   const [journeyPeriod, setJourneyPeriod] = useState<'week'|'month'>('week');
   const [friendsBadge, setFriendsBadge] = useState(0);
+  const [activeWorkoutBar,setActiveWorkoutBar]=useState<ActiveWorkoutBar|null>(null);
+  const [activeWorkoutElapsed,setActiveWorkoutElapsed]=useState(0);
+  const foodRef = useRef<FoodTabHandle>(null);
+  const workoutRef = useRef<WorkoutTabHandle>(null);
+  const friendsRef = useRef<FriendsTabHandle>(null);
+  const profileRef = useRef<ProfileTabHandle>(null);
+  const tabHistory = useRef<Tab[]>([]);
   const styles = createStyles(colors);
 
   const tabs = useMemo(() => allTabs.filter(([key]) => key !== 'food' || !hiddenFeatures.includes('food')).filter(([key]) => key !== 'friends' || !hiddenFeatures.includes('friends')), [hiddenFeatures]);
 
+  useEffect(()=>{
+    let alive=true;
+    const readActive=async()=>{
+      const raw=await Storage.getItem(`fithub_active_workout_${profile.id}`).catch(()=>null);
+      if(!alive)return;
+      if(!raw){setActiveWorkoutBar(null);return;}
+      try{
+        const saved=JSON.parse(raw);
+        const items=Array.isArray(saved?.items)?saved.items:[];
+        const current=items[Math.min(Number(saved?.active_index??0),Math.max(0,items.length-1))];
+        const startedAt=Number(saved?.started_at??0);
+        if(!startedAt||!items.length){setActiveWorkoutBar(null);return;}
+        setActiveWorkoutBar({startedAt,name:String(saved?.template_name||'Workout'),exercise:String(current?.exercise_name||'In progress')});
+        setActiveWorkoutElapsed(Math.max(0,Math.floor((Date.now()-startedAt)/1000)));
+      }catch{setActiveWorkoutBar(null);}
+    };
+    readActive();
+    const id=setInterval(readActive,1000);
+    return()=>{alive=false;clearInterval(id);};
+  },[profile.id]);
+
   useEffect(() => {
     const sub=BackHandler.addEventListener('hardwareBackPress',()=>{
+      if(page==='main'&&tab==='food'&&foodRef.current?.goBack())return true;
+      if(page==='main'&&tab==='workout'&&workoutRef.current?.goBack())return true;
+      if(page==='main'&&tab==='friends'&&friendsRef.current?.goBack())return true;
+      if(page==='main'&&tab==='profile'&&profileRef.current?.goBack())return true;
       if(page!=='main'){setPage('main');return true;}
+      const previous=tabHistory.current.pop();
+      if(previous){setTab(previous);return true;}
       if(tab!=='home'){setTab('home');return true;}
       return false;
     });
@@ -107,7 +143,11 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
     return () => { alive = false; supabase.removeChannel(channel); };
   }, [profile.id]);
 
-  const chooseTab = (next: Tab) => { setTab(next); setPage('main'); };
+  const chooseTab = (next: Tab) => {
+    if (page !== 'main' || next !== tab) tabHistory.current.push(tab);
+    setTab(next);
+    setPage('main');
+  };
   const openProgress = (focus: HomeProgressFocus = 'overview') => { setProgressFocus(focus); setPage('progress'); };
   const openHistory = (sessionId?: string) => { setHistorySessionId(sessionId); setPage('history'); };
   const openDaily = (focus: DailyActivityFocus) => { setDailyFocus(focus); setPage('daily'); };
@@ -126,12 +166,17 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
        page === 'customize' ? <CustomizationScreen onBack={() => setPage('main')} /> :
        page === 'sharedGym' ? <SharedGymScreen profile={profile} onBack={()=>setPage('main')} /> : <>
         {tab === 'home' && <DashboardTab profile={profile} onStartWorkout={() => chooseTab('workout')} onViewProgress={openProgress} onViewWorkouts={openHistory} onViewDailyActivity={openDaily} onOpenJourney={openJourney} onOpenSupplements={()=>setPage('supplements')} onOpenFood={()=>chooseTab('food')} onOpenFriends={()=>chooseTab('friends')} />}
-        {tab === 'food' && <FoodTab profile={profile} />}
-        {tab === 'workout' && <WorkoutTab profile={profile} onProfileChanged={onProfileChanged} />}
-        {tab === 'friends' && <FriendsTab profile={profile} />}
-        {tab === 'profile' && <ProfileTab profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => setPage('clubs')} onOpenJourney={openJourney} onOpenSharedGym={()=>setPage('sharedGym')} />}
+        {tab === 'food' && <FoodTab ref={foodRef} profile={profile} />}
+        {tab === 'workout' && <WorkoutTab ref={workoutRef} profile={profile} onProfileChanged={onProfileChanged} />}
+        {tab === 'friends' && <FriendsTab ref={friendsRef} profile={profile} />}
+        {tab === 'profile' && <ProfileTab ref={profileRef} profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => setPage('clubs')} onOpenJourney={openJourney} onOpenSharedGym={()=>setPage('sharedGym')} />}
       </>}
     </View>
+    {activeWorkoutBar&&(page!=='main'||tab!=='workout')?<Pressable onPress={()=>chooseTab('workout')} style={styles.floatingWorkout} accessibilityRole="button" accessibilityLabel="Resume active workout">
+      <View style={styles.floatingWorkoutPulse}/>
+      <View style={{flex:1}}><Text style={styles.floatingWorkoutLabel}>WORKOUT IN PROGRESS</Text><Text style={styles.floatingWorkoutName} numberOfLines={1}>{activeWorkoutBar.name} · {activeWorkoutBar.exercise}</Text></View>
+      <View style={styles.floatingWorkoutRight}><Text style={styles.floatingWorkoutTime}>{formatElapsed(activeWorkoutElapsed)}</Text><Text style={styles.floatingWorkoutResume}>RESUME ›</Text></View>
+    </Pressable>:null}
     <View style={styles.nav}>{tabs.map(([key, icon, label]) => {
       const active = page === 'main' && tab === key;
       const primary = key === 'workout';
@@ -150,6 +195,13 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
 const createStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1 },
+  floatingWorkout:{marginHorizontal:10,marginBottom:7,minHeight:58,borderRadius:15,borderWidth:1,borderColor:colors.primary,backgroundColor:colors.panel,flexDirection:'row',alignItems:'center',gap:10,paddingHorizontal:12,paddingVertical:9,shadowColor:'#000',shadowOpacity:.2,shadowRadius:8,shadowOffset:{width:0,height:3},elevation:7},
+  floatingWorkoutPulse:{width:10,height:10,borderRadius:5,backgroundColor:colors.primary},
+  floatingWorkoutLabel:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.6},
+  floatingWorkoutName:{color:colors.text,fontSize:12,fontWeight:'900',marginTop:3},
+  floatingWorkoutRight:{alignItems:'flex-end'},
+  floatingWorkoutTime:{color:colors.text,fontSize:13,fontWeight:'900'},
+  floatingWorkoutResume:{color:colors.primary,fontSize:8,fontWeight:'900',marginTop:3},
   nav: { minHeight: 76, flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.nav, paddingBottom: 7, paddingTop: 5, overflow: 'visible' },
   navItem: { flex: 1, minHeight: 60, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   navPressed: { opacity: 0.68 },
@@ -164,3 +216,10 @@ const createStyles = (colors: any) => StyleSheet.create({
   badge: { position: 'absolute', right: 0, top: -3, minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.nav, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#FFFFFF', fontSize: 8, fontWeight: '900' },
 });
+
+const formatElapsed=(seconds:number)=>{
+  const hours=Math.floor(seconds/3600);
+  const minutes=Math.floor((seconds%3600)/60);
+  const secs=seconds%60;
+  return hours?`${hours}:${String(minutes).padStart(2,'0')}:${String(secs).padStart(2,'0')}`:`${minutes}:${String(secs).padStart(2,'0')}`;
+};
