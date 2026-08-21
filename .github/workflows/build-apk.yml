@@ -51,6 +51,9 @@ jobs:
       - name: Type-check application
         run: npm run typecheck
 
+      - name: Audit exercise visuals
+        run: npm run audit:exercise-visuals
+
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
