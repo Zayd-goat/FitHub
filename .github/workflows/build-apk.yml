@@ -67,10 +67,7 @@ jobs:
 
       - name: Configure stable resource compilation
         run: |
-          cat >> android/gradle.properties <<'EOF'
-          org.gradle.workers.max=1
-          android.enablePngCrunchInReleaseBuilds=false
-          EOF
+          printf '\norg.gradle.workers.max=1\nandroid.enablePngCrunchInReleaseBuilds=false\n' >> android/gradle.properties
 
       - name: Verify Android autolinking
         run: npx expo-modules-autolinking resolve --platform android > /dev/null
