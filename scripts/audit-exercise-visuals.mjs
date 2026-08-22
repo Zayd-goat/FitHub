@@ -9,6 +9,7 @@ const exercises = [...libraryText.matchAll(/\{ name: "([^"]+)",[\s\S]*?equipment
   .map(([, name, equipment, slug, targetArea]) => ({ name, equipment, slug, targetArea }));
 const required = [...visualText.matchAll(/require\('\.\.\/\.\.\/assets\/train_v3\/(male|female)\/([^']+\.png)'\)/g)]
   .map(([, gender, file]) => ({ gender, file }));
+const uniqueRequired = [...new Map(required.map((row) => [`${row.gender}:${row.file}`, row])).values()];
 
 const normalize = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 const aliasBlock = visualText.match(/const exactVisualAliases:[\s\S]*?= \{([\s\S]*?)\n\};/)?.[1] ?? '';
@@ -23,10 +24,11 @@ function pngInfo(file) {
   const width = data.readUInt32BE(16);
   const height = data.readUInt32BE(20);
   if (width < 256 || height < 256) throw new Error(`Exercise visual is too small: ${file} (${width}x${height})`);
-  return { width, height, sha256: crypto.createHash('sha256').update(data).digest('hex') };
+  if (data.length < 12_000) throw new Error(`Exercise visual may be blank or truncated: ${file} (${data.length} bytes)`);
+  return { width, height, bytes: data.length, sha256: crypto.createHash('sha256').update(data).digest('hex') };
 }
 
-const assetRows = required.map(({ gender, file }) => {
+const assetRows = uniqueRequired.map(({ gender, file }) => {
   const fullPath = path.join(root, 'assets/train_v3', gender, file);
   if (!fs.existsSync(fullPath)) throw new Error(`Missing ${gender} asset: ${file}`);
   return { gender, file, ...pngInfo(fullPath) };
@@ -46,14 +48,15 @@ const exactCandidates = exercises.filter((exercise) => dedicatedSlugs.has(exerci
 const pendingDedicated = exercises.filter((exercise) => !exactCandidates.some((candidate) => candidate.slug === exercise.slug));
 
 const report = {
-  version: '1.6.8',
+  version: '1.6.10',
   generated_at: new Date().toISOString(),
   catalogue_exercises: exercises.length,
   male_visuals: male.size,
   female_visuals: female.size,
   gender_parity_issues: parityIssues,
   byte_identical_duplicate_groups: duplicateGroups,
-  pngs_checked: assetRows.length,
+  png_references: required.length,
+  unique_pngs_checked: assetRows.length,
   exact_or_dedicated_candidates: exactCandidates.length,
   pending_dedicated_count: pendingDedicated.length,
   pending_dedicated_exercises: pendingDedicated,
@@ -67,4 +70,6 @@ fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'exercise-visual-audit.json'), `${JSON.stringify(report, null, 2)}\n`);
 if (exercises.length !== 230) throw new Error(`Expected 230 exercises, found ${exercises.length}`);
 if (parityIssues.length) throw new Error(`Male/female asset parity failed for: ${parityIssues.join(', ')}`);
-console.log(`FitHub exercise visual audit passed: ${exercises.length} exercises, ${assetRows.length} PNG references, ${male.size} male/${female.size} female visual families, ${pendingDedicated.length} exercises still pending dedicated review.`);
+if (duplicateGroups.length) throw new Error(`Unexpected byte-identical visual files: ${JSON.stringify(duplicateGroups)}`);
+if (pendingDedicated.length) throw new Error(`${pendingDedicated.length} catalogue exercises do not have an exact reviewed visual mapping.`);
+console.log(`FitHub exercise visual audit passed: ${exercises.length} exercises, ${required.length} references, ${assetRows.length} unique PNGs, ${male.size} male/${female.size} female visual families, ${pendingDedicated.length} pending.`);
