@@ -253,6 +253,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   const [restSeconds, setRestSeconds] = useState(0);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [showWorkoutPreview, setShowWorkoutPreview] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
   const [prEvents, setPrEvents] = useState<NewPrEvent[]>([]);
   const [prSessionId, setPrSessionId] = useState<string | null>(null);
@@ -261,6 +262,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   const activeRevisionKey = `fithub_active_revision_${profile.id}`;
 
   useImperativeHandle(ref,()=>({goBack:()=>{
+    if(showWorkoutPreview){setShowWorkoutPreview(false);return true;}
     if(showExercisePicker){setShowExercisePicker(false);return true;}
     if(showSaveForm){setShowSaveForm(false);return true;}
     if(showSavedWorkouts){setShowSavedWorkouts(false);return true;}
@@ -280,7 +282,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
       return true;
     }
     return false;
-  }}),[showExercisePicker,showSaveForm,showSavedWorkouts,screen,muscleFilter]);
+  }}),[showWorkoutPreview,showExercisePicker,showSaveForm,showSavedWorkouts,screen,muscleFilter]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1272,9 +1274,12 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
                 <Text style={styles.selectedTitle}>{builder.length} exercise{builder.length === 1 ? '' : 's'} configured</Text>
                 <Text style={styles.selectedMeta}>Save it for later, add another exercise, or start now.</Text>
               </View>
-              <Pressable onPress={startWorkout} style={styles.startSmall}><Text style={[styles.startSmallText,{color:contrastText(colors.primary)}]}>START</Text></Pressable>
+              <Pressable onPress={startWorkout} style={styles.startSmall}><Text style={[styles.startSmallText,{color:contrastText(colors.primary)}]}>START NOW</Text></Pressable>
             </View>
             <View style={styles.builderButtons}>
+              <Pressable onPress={()=>setShowWorkoutPreview(true)} style={styles.previewButton}>
+                <Text style={styles.previewButtonText}>PREVIEW WORKOUT</Text>
+              </Pressable>
               <Pressable onPress={openSaveForm} style={styles.saveOutline}>
                 <Text style={styles.saveOutlineText}>{editingTemplateId ? 'UPDATE SAVED WORKOUT' : 'SAVE WORKOUT'}</Text>
               </Pressable>
@@ -1314,6 +1319,28 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
         </View> : null}
       </ScrollView>
     </KeyboardAvoidingView>
+    <Modal visible={showWorkoutPreview} animationType="slide" transparent onRequestClose={()=>setShowWorkoutPreview(false)}>
+      <View style={styles.modalShade}>
+        <View style={styles.previewSheet}>
+          <View style={styles.pickerHeader}>
+            <View style={{flex:1}}><Text style={styles.pickerTitle}>Workout preview</Text><Text style={styles.pickerSubtitle}>{builder.length} exercise{builder.length===1?'':'s'} · review the order before you begin</Text></View>
+            <Pressable onPress={()=>setShowWorkoutPreview(false)} accessibilityLabel="Close workout preview"><Text style={styles.pickerClose}>×</Text></Pressable>
+          </View>
+          <ScrollView contentContainerStyle={styles.previewList}>
+            {builder.map((item,index)=>{
+              const visual=imageForExercise(item.exercise,profile.gender);
+              return <View key={item.id} style={styles.previewRow}>
+                <Text style={styles.previewIndex}>{index+1}</Text>
+                {visual?<Image source={visual} style={styles.previewThumb}/>:<View style={styles.previewThumb}/>} 
+                <View style={{flex:1}}><Text style={styles.previewName}>{item.exercise.name}</Text><Text style={styles.previewMeta}>{item.exercise.equipment} · {item.exercise.metric_type==='strength'?`${item.strengthSets.length} sets`:item.exercise.metric_type==='distance'?'distance / duration':'duration'}</Text></View>
+                <View style={styles.previewMove}><Pressable disabled={index===0} onPress={()=>moveExercise(index,index-1)}><Text style={[styles.previewMoveText,index===0&&styles.previewMoveDisabled]}>↑</Text></Pressable><Pressable disabled={index===builder.length-1} onPress={()=>moveExercise(index,index+1)}><Text style={[styles.previewMoveText,index===builder.length-1&&styles.previewMoveDisabled]}>↓</Text></Pressable></View>
+              </View>;
+            })}
+          </ScrollView>
+          <View style={styles.previewActions}><OutlineButton title="KEEP EDITING" onPress={()=>setShowWorkoutPreview(false)}/><Button title="START WORKOUT" onPress={()=>{setShowWorkoutPreview(false);startWorkout();}}/></View>
+        </View>
+      </View>
+    </Modal>
     {celebrationModal}
     </>
   );
@@ -1438,10 +1465,10 @@ const createStyles = (colors: any) => StyleSheet.create({
   muscleScroller: { gap: 10, paddingBottom: 14 },
   muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
   muscleGridCard: { width: '48.5%', aspectRatio: 1.18, borderRadius: 15, overflow: 'hidden', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, position: 'relative' },
-  muscleGridImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  muscleGridCardio: { width: '100%', height: '100%', resizeMode: 'cover' },
-  muscleShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 48, backgroundColor: colors.panel, borderTopWidth: 1, borderTopColor: colors.border },
-  muscleGridLabel: { position: 'absolute', left: 12, bottom: 10, color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
+  muscleGridImage: { width: '100%', height: '78%', resizeMode: 'contain', marginTop: 2 },
+  muscleGridCardio: { width: '100%', height: '78%', resizeMode: 'contain', marginTop: 2 },
+  muscleShade: { position: 'absolute', left: 8, right: 8, bottom: 7, height: 34, backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
+  muscleGridLabel: { position: 'absolute', left: 18, bottom: 15, color: colors.text, fontSize: 16, fontWeight: '900' },
   exerciseBrowseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   exerciseBack: { color: colors.primary, fontSize: 12, fontWeight: '900' },
   exerciseCount: { color: colors.muted, fontSize: 10, fontWeight: '800' },
@@ -1465,7 +1492,9 @@ const createStyles = (colors: any) => StyleSheet.create({
   selectedMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
   startSmall: { backgroundColor: colors.primary, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10 },
   startSmallText: { color: '#fff', fontWeight: '900', fontSize: 11 },
-  builderButtons: { marginTop: 9 },
+  builderButtons: { marginTop: 9, gap: 8 },
+  previewButton: { borderWidth: 1.5, borderColor: colors.primary, borderRadius: 9, minHeight: 41, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft },
+  previewButtonText: { color: colors.primary, fontWeight: '900', fontSize: 11 },
   saveOutline: { borderWidth: 1.5, borderColor: colors.blue, borderRadius: 9, minHeight: 39, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
   saveOutlineText: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   saveForm: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 },
@@ -1474,13 +1503,13 @@ const createStyles = (colors: any) => StyleSheet.create({
   repeatText: { color: colors.blue, fontWeight: '800', fontSize: 11 },
   exerciseList: { gap: 10 },
   exerciseRow: { minHeight: 94, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 9, overflow: 'hidden' },
-  thumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel2 },
-  cardioThumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel2 },
+  thumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel },
+  cardioThumb: { width: 112, height: 78, resizeMode: 'contain', borderRadius: 9, backgroundColor: colors.panel },
   auditThumb: { width: 112, height: 78, borderRadius: 9, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   auditThumbText: { color: colors.primary, fontSize: 26, fontWeight: '900' },
   blankThumb: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel2, borderRadius: 10 },
   listEmoji: { fontSize: 26 },
-  target: { color: colors.primary, fontWeight: '900', fontSize: 10 },
+  target: { color: '#EF3B45', fontWeight: '900', fontSize: 10 },
   exName: { color: colors.text, fontWeight: '900', fontSize: 14, marginTop: 1 },
   exMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
   plus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
@@ -1576,4 +1605,15 @@ const createStyles = (colors: any) => StyleSheet.create({
   pickerExerciseName: { color: colors.text, fontWeight: '900', fontSize: 13 },
   pickerExerciseMeta: { color: colors.muted, fontSize: 9, marginTop: 3 },
   pickerPlus: { color: colors.blue, fontSize: 24, width: 30, textAlign: 'center' },
+  previewSheet: { maxHeight:'86%', backgroundColor:colors.bg, borderTopLeftRadius:24, borderTopRightRadius:24, borderWidth:1, borderColor:colors.border, padding:16 },
+  previewList: { gap:8, paddingBottom:8 },
+  previewRow: { minHeight:76, flexDirection:'row', alignItems:'center', gap:9, backgroundColor:colors.panel, borderWidth:1, borderColor:colors.border, borderRadius:14, padding:8 },
+  previewIndex: { width:22, color:colors.primary, fontSize:14, fontWeight:'900', textAlign:'center' },
+  previewThumb: { width:64, height:58, resizeMode:'contain', borderRadius:10, backgroundColor:colors.panel },
+  previewName: { color:colors.text, fontSize:13, fontWeight:'900' },
+  previewMeta: { color:colors.muted, fontSize:9, marginTop:4 },
+  previewMove: { width:28, gap:3, alignItems:'center' },
+  previewMoveText: { color:colors.primary, fontSize:19, fontWeight:'900', paddingHorizontal:5 },
+  previewMoveDisabled: { color:colors.border },
+  previewActions: { paddingTop:8 },
 });
