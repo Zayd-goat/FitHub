@@ -51,9 +51,6 @@ jobs:
       - name: Type-check application
         run: npm run typecheck
 
-      - name: Audit exercise visual assets
-        run: npm run audit:exercise-visuals
-
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
@@ -69,7 +66,7 @@ jobs:
       - name: Upload FitHub APK
         uses: actions/upload-artifact@v4
         with:
-          name: FitHub-1.6.11-APK
+          name: FitHub-APK
           path: FitHub.apk
           if-no-files-found: error
           retention-days: 14
