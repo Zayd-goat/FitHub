@@ -141,6 +141,10 @@ export function visualKeyForExercise(exercise: LibraryExercise): ExerciseVisualK
   const n = exercise.name.toLowerCase();
   const e = exercise.equipment.toLowerCase();
 
+  // Exact names containing broad family words must resolve before those families.
+  if (n === 'reverse pec deck') return 'reverse_pec_deck';
+  if (n === 'upright row') return 'upright_row';
+
   // Cardio: exact activity and machine always wins before generic movement words.
   if (n === 'swimming') return 'swimming';
   if (n === 'skierg') return 'skierg';

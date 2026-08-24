@@ -222,8 +222,8 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   profile,
   onProfileChanged,
 }, ref) {
-  const { colors, weightUnit, distanceUnit } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, weightUnit, distanceUnit, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
   const [screen, setScreen] = useState<ScreenMode>('browse');
   const [detailTab, setDetailTab] = useState<DetailTab>('sets');
   const [detailExercise, setDetailExercise] = useState<LibraryExercise | null>(null);
@@ -246,6 +246,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   const [restSeconds, setRestSeconds] = useState(0);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
+  const [showExerciseGuide, setShowExerciseGuide] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
   const [prEvents, setPrEvents] = useState<NewPrEvent[]>([]);
   const [prSessionId, setPrSessionId] = useState<string | null>(null);
@@ -254,6 +255,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   const activeRevisionKey = `fithub_active_revision_${profile.id}`;
 
   useImperativeHandle(ref,()=>({goBack:()=>{
+    if(showExerciseGuide){setShowExerciseGuide(false);return true;}
     if(showExercisePicker){setShowExercisePicker(false);return true;}
     if(showSaveForm){setShowSaveForm(false);return true;}
     if(showSavedWorkouts){setShowSavedWorkouts(false);return true;}
@@ -273,7 +275,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
       return true;
     }
     return false;
-  }}),[showExercisePicker,showSaveForm,showSavedWorkouts,screen,muscleFilter]);
+  }}),[showExerciseGuide,showExercisePicker,showSaveForm,showSavedWorkouts,screen,muscleFilter]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1047,12 +1049,23 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
   if (screen === 'active') {
     const current = builder[activeExerciseIndex];
     const img = current ? imageForExercise(current.exercise, profile.gender) : undefined;
+    const completedExercises = builder.filter(itemDone).length;
+    const completedSets = current?.exercise.metric_type === 'strength' ? current.strengthSets.filter((set) => set.done).length : 0;
+    const totalSets = current?.exercise.metric_type === 'strength' ? current.strengthSets.length : 0;
+    const incompleteSetIndex = current?.exercise.metric_type === 'strength'
+      ? current.strengthSets.findIndex((set) => !set.done)
+      : -1;
+    const nextSetIndex = incompleteSetIndex >= 0 ? incompleteSetIndex : Math.max(0, totalSets - 1);
+    const guideCues = current ? movementGuide(current.exercise) : [];
     return (
       <>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.activeWrap} keyboardShouldPersistTaps="handled">
           <View style={styles.activeHeader}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Exit active workout"
+              style={styles.activeHeaderButton}
               onPress={() =>
                 Alert.alert('Keep workout running?', 'You can minimize FitHub and the workout timer will keep its start time. The active-workout notification stays until you finish or delete the session.', [
                   { text: 'Keep training', style: 'cancel' },
@@ -1064,14 +1077,22 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
               <Text style={styles.exit}>‹ Exit</Text>
             </Pressable>
             <Text style={styles.activeTitle}>{templateName || 'Workout'}</Text>
-            <Pressable onPress={() => setShowExercisePicker(true)}><Text style={styles.activeAdd}>＋</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Add exercise" onPress={() => setShowExercisePicker(true)} style={styles.activeHeaderButton}><Text style={styles.activeAdd}>＋</Text></Pressable>
           </View>
-          <Text style={styles.timer}>{formatTime(elapsed)}</Text>
-          <Text style={styles.timerLabel}>Workout Time</Text>
-
-          <View style={styles.activeEditRow}>
-            <OutlineButton title="+ ADD EXERCISE" onPress={() => setShowExercisePicker(true)} compact />
-            <Text style={styles.editHint}>You can change sets, reps and weights while training.</Text>
+          <View style={styles.sessionOverview}>
+            <View style={styles.sessionMetricPrimary}>
+              <Text style={styles.sessionMetricLabel}>SESSION TIME</Text>
+              <Text style={styles.sessionTimer}>{formatTime(elapsed)}</Text>
+            </View>
+            <View style={styles.sessionMetric}>
+              <Text style={styles.sessionMetricLabel}>PROGRESS</Text>
+              <Text style={styles.sessionMetricValue}>{completedExercises}/{builder.length}</Text>
+              <Text style={styles.sessionMetricSub}>exercises</Text>
+            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Add exercise" onPress={() => setShowExercisePicker(true)} style={styles.sessionAddButton}>
+              <Text style={styles.sessionAddIcon}>＋</Text>
+              <Text style={styles.sessionAddText}>Add</Text>
+            </Pressable>
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.activeExercises}>
@@ -1080,6 +1101,8 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
               return (
                 <Pressable
                   key={item.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.exercise.name}, ${done ? 'complete' : index === activeExerciseIndex ? 'current exercise' : 'pending'}`}
                   onPress={() => setActiveExerciseIndex(index)}
                   style={[
                     styles.activeExerciseChip,
@@ -1089,9 +1112,8 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
                 >
                   <Text style={[styles.activeExerciseName, done && { opacity: 0.45 }]} numberOfLines={1}>{item.exercise.name}</Text>
                   <Text style={[styles.activeExerciseState, done && { color: colors.green }]}> 
-                    {done ? '✓ Complete' : index === activeExerciseIndex ? 'Current' : 'Pending'}
+                    {done ? '✓ Complete' : index === activeExerciseIndex ? '● Current' : index === activeExerciseIndex + 1 ? 'Up next' : 'Pending'}
                   </Text>
-                  {!done?<View style={{flexDirection:'row',gap:8,marginTop:5}}>{index>0?<Pressable onPress={()=>moveExercise(index,index-1)}><Text style={styles.activeExerciseState}>↑</Text></Pressable>:null}{index<builder.length-1?<Pressable onPress={()=>moveExercise(index,index+1)}><Text style={styles.activeExerciseState}>↓</Text></Pressable>:null}{index!==activeExerciseIndex?<Pressable onPress={()=>moveExercise(index,Math.min(builder.length-1,activeExerciseIndex+1))}><Text style={styles.activeExerciseState}>NEXT</Text></Pressable>:null}<Pressable onPress={()=>moveExercise(index,builder.length-1)}><Text style={styles.activeExerciseState}>LAST</Text></Pressable></View>:null}
                 </Pressable>
               );
             })}
@@ -1099,15 +1121,26 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
 
           {current ? (
             <Card style={[styles.liveCard, itemDone(current) && { opacity: 0.72 }]}>
-              <View style={styles.liveHero}>
-                {img ? <Image source={img} style={current.exercise.targetArea === 'Cardio' ? styles.liveCardioFigure : styles.liveFigure} /> : <View style={styles.visualPending}><Text style={styles.visualPendingTitle}>{current.exercise.targetArea}</Text><Text style={styles.visualPendingText}>Exercise details below</Text></View>}
+              <View style={styles.liveProgressRow}>
+                <Text style={styles.liveProgressText}>EXERCISE {activeExerciseIndex + 1} OF {builder.length}</Text>
+                <Text style={styles.liveProgressText}>
+                  {current.exercise.metric_type === 'strength'
+                    ? `SET ${Math.min(nextSetIndex + 1, Math.max(totalSets, 1))} OF ${totalSets}`
+                    : current.done ? 'COMPLETE' : 'READY TO RECORD'}
+                </Text>
+              </View>
+              <Pressable accessibilityRole="button" onPress={() => setShowExerciseGuide(true)} style={styles.liveFigureStage} accessibilityLabel={`Open ${current.exercise.name} guide`}>
+                {img ? <Image source={img} style={current.exercise.targetArea === 'Cardio' ? styles.liveCardioFigure : styles.liveFigure} accessibilityIgnoresInvertColors/> : <View style={styles.visualPending}><Text style={styles.visualPendingTitle}>{current.exercise.targetArea}</Text><Text style={styles.visualPendingText}>Exercise details below</Text></View>}
+                <View style={styles.guideHint}><Text style={styles.guideHintText}>Tap image for full guide</Text></View>
+              </Pressable>
+              <View style={styles.liveTitleRow}>
                 <View style={styles.liveMuscles}>
                   <Text style={styles.liveName}>{current.exercise.name}</Text>
-                  <Text style={styles.primaryLabel}>PRIMARY MUSCLES</Text>
-                  <Text style={styles.liveMeta}>{current.exercise.targetArea}</Text>
-                  <Text style={styles.liveMeta}>{current.exercise.subsection}</Text>
+                  <Text style={styles.liveMeta}>{current.exercise.targetArea} • {current.exercise.subsection}</Text>
                 </View>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Open ${current.exercise.name} guide`} onPress={() => setShowExerciseGuide(true)} style={styles.guideButton}><Text style={styles.guideButtonText}>GUIDE  ›</Text></Pressable>
               </View>
+              {current.exercise.metric_type === 'strength' ? <Text style={styles.setProgressNote}>{completedSets} of {totalSets} sets complete</Text> : null}
               {current.exercise.metric_type === 'strength' ? (
                 <>
                   <SetTable
@@ -1132,8 +1165,8 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
                   />
                 </>
               )}
-              <Pressable onPress={() => removeActiveExercise(current)} style={styles.activeRemoveExercise}>
-                <Text style={styles.activeRemoveExerciseText}>Remove exercise from this workout</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${current.exercise.name} from workout`} onPress={() => removeActiveExercise(current)} style={styles.activeRemoveExercise}>
+                <Text style={styles.activeRemoveExerciseText}>Remove exercise</Text>
               </Pressable>
             </Card>
           ) : null}
@@ -1144,7 +1177,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
                 <Text style={styles.restLabel}>REST TIMER</Text>
                 <Text style={styles.restTime}>{formatTime(restSeconds)}</Text>
               </View>
-              <Pressable onPress={() => setRestSeconds(0)} style={styles.skip}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Skip rest timer" onPress={() => setRestSeconds(0)} style={styles.skip}>
                 <Text style={styles.skipText}>Skip rest</Text>
               </Pressable>
             </View>
@@ -1162,7 +1195,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
             ])}
             style={styles.deleteActiveButton}
           >
-            <Text style={styles.deleteActiveText}>DELETE WORKOUT</Text>
+            <Text style={styles.deleteActiveText}>Delete workout without saving</Text>
           </Pressable>
         </ScrollView>
 
@@ -1196,6 +1229,35 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
             </View>
           </View>
         </Modal>
+
+        <Modal visible={showExerciseGuide} animationType="slide" transparent onRequestClose={() => setShowExerciseGuide(false)}>
+          <View style={styles.modalShade}>
+            <View style={styles.guideSheet}>
+              <View style={styles.pickerHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.guideKicker}>MOVEMENT GUIDE</Text>
+                  <Text style={styles.guideTitle}>{current?.exercise.name ?? 'Exercise'}</Text>
+                </View>
+                <Pressable onPress={() => setShowExerciseGuide(false)} accessibilityLabel="Close movement guide"><Text style={styles.pickerClose}>×</Text></Pressable>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.guideImageStage}>
+                  {img ? <Image source={img} style={styles.guideImage}/> : null}
+                </View>
+                {current ? <>
+                  <View style={styles.guideFacts}>
+                    <View style={styles.guideFact}><Text style={styles.guideFactLabel}>TARGET</Text><Text style={styles.guideFactValue}>{current.exercise.targetArea}</Text></View>
+                    <View style={styles.guideFact}><Text style={styles.guideFactLabel}>EQUIPMENT</Text><Text style={styles.guideFactValue}>{current.exercise.equipment}</Text></View>
+                  </View>
+                  <Text style={styles.guideSectionTitle}>QUICK CUES</Text>
+                  {guideCues.map((cue, index) => <View key={`${cue}-${index}`} style={styles.guideCueRow}><Text style={styles.guideCueNumber}>{index + 1}</Text><Text style={styles.guideCueText}>{cue}</Text></View>)}
+                  <Text style={styles.guideSafetyNote}>Use a controlled range that feels stable. Stop the set if you cannot maintain the position shown.</Text>
+                </> : null}
+              </ScrollView>
+              <Button title="BACK TO WORKOUT" onPress={() => setShowExerciseGuide(false)}/>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
       {celebrationModal}
       </>
@@ -1215,7 +1277,7 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
           </View>
           <View style={styles.headerActions}>
             <Pressable onPress={()=>{setMuscleFilter('All');setSearchMode(true);}} style={styles.iconButton} accessibilityLabel="Search all exercises"><SearchIcon size={22} color={colors.text}/></Pressable>
-            <Pressable onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color={showSavedWorkouts ? contrastText(colors.primary) : colors.text}/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:contrastText(colors.primary)}]}>Saved Workouts</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Saved workouts" onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color={showSavedWorkouts ? contrastText(colors.primary) : colors.text}/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:contrastText(colors.primary)}]}>Saved Workouts</Text></Pressable>
           </View>
         </View>
 
@@ -1251,10 +1313,10 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
 
         {muscleFilter === 'All' && !searchMode && !query ? <View style={styles.muscleGrid}>{[
           {label:'Chest',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].chest},{label:'Back',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].back},{label:'Shoulders',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].shoulders},{label:'Arms',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].arms},{label:'Legs',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].legs},{label:'Core',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].core},{label:'Full Body',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].fullBody},{label:'Cardio',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].cardio},
-        ].map(muscle=>{const count=exerciseLibrary.filter(ex=>muscle.label==='Arms'?['Biceps','Triceps','Forearms','Arms'].includes(ex.targetArea):ex.targetArea===muscle.label).length;return <Pressable key={muscle.label} onPress={()=>{setSearchMode(false);setMuscleFilter(muscle.label);}} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage}/><View style={styles.muscleGridCopy}><Text style={styles.muscleGridLabel}>{muscle.label}</Text><Text style={styles.muscleGridCount}>{count} exercises</Text><Text style={styles.muscleGridArrow}>›</Text></View></Pressable>})}</View> : <>
+        ].map(muscle=>{const count=exerciseLibrary.filter(ex=>muscle.label==='Arms'?['Biceps','Triceps','Forearms','Arms'].includes(ex.targetArea):ex.targetArea===muscle.label).length;return <Pressable key={muscle.label} accessibilityRole="button" accessibilityLabel={`${muscle.label}, ${count} exercises`} onPress={()=>{setSearchMode(false);setMuscleFilter(muscle.label);}} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage} accessibilityIgnoresInvertColors/><View style={styles.muscleGridCopy}><Text style={styles.muscleGridLabel}>{muscle.label}</Text><Text style={styles.muscleGridCount}>{count} exercises</Text><Text style={styles.muscleGridArrow}>›</Text></View></Pressable>})}</View> : <>
           <View style={styles.exerciseBrowseTop}><Pressable onPress={()=>{setMuscleFilter('All');setSearchMode(false);setQuery('')}}><Text style={styles.exerciseBack}>‹ Muscle groups</Text></Pressable><Text style={styles.exerciseCount}>{filtered.length} exercises</Text></View>
           <Input value={query} onChangeText={setQuery} placeholder={muscleFilter === 'All' ? 'Search all exercises…' : `Search ${muscleFilter.toLowerCase()} exercises…`} style={styles.exerciseSearch} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><Pressable key={x} onPress={()=>setEquipmentFilter(x)} style={[styles.equipmentChip,x===equipmentFilter&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x===equipmentFilter&&styles.equipmentChipTextOn]}>{x}</Text></Pressable>)}</ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><Pressable key={x} accessibilityRole="button" accessibilityLabel={`Filter by ${x}`} onPress={()=>setEquipmentFilter(x)} style={[styles.equipmentChip,x===equipmentFilter&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x===equipmentFilter&&styles.equipmentChipTextOn]}>{x}</Text></Pressable>)}</ScrollView>
         </>}
 
         {builder.length && !activeStartedAt ? (
@@ -1291,8 +1353,8 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
             const img = imageForExercise(ex, profile.gender);
             const selected = builder.some((item) => item.exercise.slug === ex.slug);
             return (
-              <Pressable key={ex.slug} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
-                {img ? <View style={styles.thumbFrame}><Image source={img} style={ex.targetArea === 'Cardio' ? styles.cardioThumb : styles.thumb} /></View> : <View style={styles.auditThumb}><Text style={styles.auditThumbText}>{ex.targetArea.slice(0, 1)}</Text></View>}
+              <Pressable key={ex.slug} accessibilityRole="button" accessibilityLabel={`${selected ? 'Remove' : 'Add'} ${ex.name}, ${ex.targetArea}`} onPress={() => addExercise(ex)} style={styles.exerciseRow}>
+                {img ? <View style={styles.thumbFrame}><Image source={img} style={ex.targetArea === 'Cardio' ? styles.cardioThumb : styles.thumb} accessibilityIgnoresInvertColors/></View> : <View style={styles.auditThumb}><Text style={styles.auditThumbText}>{ex.targetArea.slice(0, 1)}</Text></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.target}>{ex.targetArea}</Text>
                   <Text style={styles.exName}>{ex.name}</Text>
@@ -1344,6 +1406,45 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
 
 export default WorkoutTab;
 
+function movementGuide(exercise: LibraryExercise) {
+  const name = exercise.name.toLowerCase();
+  if (exercise.targetArea === 'Cardio') return [
+    'Begin at an easy pace and settle into a smooth, repeatable rhythm.',
+    'Keep your posture tall and use the machine or route controls gradually.',
+    'Record the distance or time shown when the interval is complete.',
+  ];
+  if (/deadlift|good morning|row/.test(name)) return [
+    'Set your feet and brace before the weight leaves its start position.',
+    'Keep a long, neutral spine while the hips and shoulders move together.',
+    'Control the return and reset your position before the next repetition.',
+  ];
+  if (/squat|lunge|step-up|split squat/.test(name)) return [
+    'Use a balanced stance with the whole foot supported.',
+    'Track the knees in the same direction as the toes.',
+    'Move through a controlled range and finish each repetition standing stable.',
+  ];
+  if (/press|push-up|dip|fly/.test(name)) return [
+    'Set the shoulders securely before beginning the repetition.',
+    'Keep the wrists stacked and move the load with control.',
+    'Finish without forcing the joint past a comfortable range.',
+  ];
+  if (/pull-up|pulldown|curl|pull|raise/.test(name)) return [
+    'Start from a stable torso and a controlled shoulder position.',
+    'Move without swinging or using momentum to rush the repetition.',
+    'Pause briefly at the working position, then return smoothly.',
+  ];
+  if (/plank|crunch|sit-up|twist|wheel|wiper|core/.test(name) || exercise.targetArea === 'Core') return [
+    'Set a stable trunk position before moving the arms or legs.',
+    'Keep the motion slow enough to avoid using momentum.',
+    'End the repetition when you can no longer keep the position controlled.',
+  ];
+  return [
+    'Match the setup and body position shown in the exercise image.',
+    'Use smooth repetitions and keep the movement under control.',
+    'Choose a resistance that lets your technique stay consistent.',
+  ];
+}
+
 function SetTable({
   item,
   active,
@@ -1357,43 +1458,27 @@ function SetTable({
   onToggle: (setId: string) => void;
   onRemove: (setId: string) => void;
 }) {
-  const { colors, weightUnit } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, weightUnit, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
   return (
-    <View>
-      <View style={styles.tableHead}>
-        <Text style={styles.setCol}>SET</Text>
-        <Text style={styles.flexCol}>WEIGHT ({weightUnit})</Text>
-        <Text style={styles.flexCol}>REPS</Text>
-        <Text style={styles.actionCol}>{active ? '✓ / −' : '−'}</Text>
-      </View>
+    <View style={styles.setList}>
       {item.strengthSets.map((set, index) => (
-        <View key={set.id} style={[styles.tableRow, set.done && { opacity: 0.56 }]}>
-          <Text style={styles.setCol}>{index + 1}</Text>
-          <Input
-            style={styles.tableInput}
-            value={set.weight}
-            onChangeText={(value) => onSet(set.id, { weight: value })}
-            keyboardType="decimal-pad"
-            placeholder="0"
-          />
-          <Input
-            style={[styles.tableInput, set.done && { color: colors.green }]}
-            value={set.reps}
-            onChangeText={(value) => onSet(set.id, { reps: value })}
-            keyboardType="number-pad"
-            placeholder="10"
-          />
-          <View style={styles.setActions}>
-            {active ? (
-              <Pressable onPress={() => onToggle(set.id)} style={styles.smallSetAction}>
-                <Text style={[styles.checkText, set.done && { color: colors.green }]}>{set.done ? '✓' : '○'}</Text>
-              </Pressable>
-            ) : null}
-            <Pressable onPress={() => onRemove(set.id)} style={styles.smallSetAction}>
-              <Text style={styles.remove}>−</Text>
+        <View key={set.id} style={[styles.setCard, set.done && styles.setCardDone]}>
+          <View style={styles.setCardHeader}>
+            <View style={[styles.setNumber, set.done && styles.setNumberDone]}><Text style={[styles.setNumberText, set.done && { color: colors.green }]}>{set.done ? '✓' : index + 1}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.setCardTitle}>Set {index + 1}</Text>
+              <Text style={[styles.setCardState, set.done && { color: colors.green }]}>{set.done ? 'Completed' : active ? 'Ready to record' : 'Planned set'}</Text>
+            </View>
+            <Pressable onPress={() => onRemove(set.id)} style={styles.setRemoveButton} accessibilityLabel={`Remove set ${index + 1}`}>
+              <Text style={styles.setRemoveText}>−</Text>
             </Pressable>
           </View>
+          <View style={styles.setFields}>
+            <SetStepper label={`Weight (${weightUnit})`} value={set.weight} onChange={(value) => onSet(set.id, { weight: value })} step={weightUnit === 'kg' ? 2.5 : 5}/>
+            <SetStepper label="Reps" value={set.reps} onChange={(value) => onSet(set.id, { reps: value })} step={1} whole/>
+          </View>
+          {active ? <Pressable onPress={() => onToggle(set.id)} style={[styles.completeSetButton, set.done && styles.completeSetButtonDone]}><Text style={[styles.completeSetText, set.done && { color: colors.green }]}>{set.done ? '✓  SET COMPLETE' : 'MARK SET COMPLETE'}</Text></Pressable> : null}
         </View>
       ))}
       {item.strengthSets.length === 1 ? <Text style={styles.minimumSetHint}>Keep at least one set, or remove the exercise instead.</Text> : null}
@@ -1401,9 +1486,27 @@ function SetTable({
   );
 }
 
+function SetStepper({ label, value, onChange, step, whole = false }: { label: string; value: string; onChange: (value: string) => void; step: number; whole?: boolean }) {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
+  const adjust = (direction: -1 | 1) => {
+    const current = Number(value) || 0;
+    const next = Math.max(0, current + step * direction);
+    onChange(whole ? String(Math.round(next)) : String(Math.round(next * 10) / 10));
+  };
+  return <View style={styles.stepperField}>
+    <Text style={styles.stepperLabel}>{label}</Text>
+    <View style={styles.stepperControl}>
+      <Pressable onPress={() => adjust(-1)} style={styles.stepperButton}><Text style={styles.stepperButtonText}>−</Text></Pressable>
+      <Input value={value} onChangeText={onChange} keyboardType={whole ? 'number-pad' : 'decimal-pad'} placeholder="0" style={styles.stepperInput}/>
+      <Pressable onPress={() => adjust(1)} style={styles.stepperButton}><Text style={styles.stepperButtonText}>＋</Text></Pressable>
+    </View>
+  </View>;
+}
+
 function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch: Partial<BuilderItem>) => void }) {
-  const { colors, weightUnit, distanceUnit } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, weightUnit, distanceUnit, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
   const [ftms,setFtms]=useState<FtmsState|null>(null);
   const [machine,setMachine]=useState<FtmsMetrics|null>(null);
   const connect=async()=>{try{await connectFirstFtms((state,name)=>{setFtms(state);if(state==='connected')Alert.alert('Equipment connected',name??'Compatible FTMS machine');if(state==='lost')Alert.alert('Equipment disconnected','Captured fields remain available. Reconnect or continue manually.');},metrics=>{setMachine(previous=>({...previous,...metrics}));const patch:Partial<BuilderItem>={};if(metrics.distanceKm!=null)patch.distance=String(kmToDisplay(metrics.distanceKm,distanceUnit).toFixed(2));if(metrics.elapsedSeconds!=null)patch.duration=String((metrics.elapsedSeconds/60).toFixed(1));onChange(patch);});}catch(e:any){setFtms('unsupported');Alert.alert('Equipment connection',e?.message??"This machine doesn't support FitHub connectivity.",[{text:'Track manually'}]);}};
@@ -1426,15 +1529,15 @@ function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch:
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 128, backgroundColor: colors.bg, flexGrow: 1 },
   browseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   browseTitle: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: .3 },
   browseSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   newWorkoutText: { color: colors.blue, fontSize: 11, fontWeight: '900', borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 7 },
   headerActions:{flexDirection:'row',alignItems:'center',gap:8},
-  iconButton:{width:38,height:38,borderRadius:12,alignItems:'center',justifyContent:'center'},
-  savedHeaderButton:{height:40,paddingHorizontal:12,borderWidth:1,borderColor:colors.border,borderRadius:11,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:colors.panel},
+  iconButton:{width:48,height:48,borderRadius:12,alignItems:'center',justifyContent:'center'},
+  savedHeaderButton:{minHeight:48,paddingHorizontal:12,borderWidth:1,borderColor:colors.border,borderRadius:11,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:colors.panel},
   savedHeaderButtonOn:{backgroundColor:colors.primary,borderColor:colors.primary},
   savedHeaderText:{color:colors.text,fontSize:10,fontWeight:'900'},
   activeResumeCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderColor: colors.primary, backgroundColor: colors.primarySoft },
@@ -1442,7 +1545,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   activeResumeName: { color: colors.text, fontWeight: '900', fontSize: 17, marginTop: 3 },
   activeResumeMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
   activeResumeActions: { alignItems: 'center', gap: 7 },
-  activeResumeButton: { backgroundColor: colors.primary, borderRadius: 9, paddingHorizontal: 13, paddingVertical: 9 },
+  activeResumeButton: { minHeight: 48, backgroundColor: colors.primary, borderRadius: 9, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' },
   activeResumeButtonText: { color: '#fff', fontWeight: '900', fontSize: 10 },
   activeResumeDelete: { color: colors.danger, fontWeight: '800', fontSize: 10 },
   savedSection: { marginBottom: 10 },
@@ -1459,20 +1562,20 @@ const createStyles = (colors: any) => StyleSheet.create({
   savedEdit: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   savedDelete: { color: colors.muted, fontWeight: '800', fontSize: 11 },
   muscleScroller: { gap: 10, paddingBottom: 14 },
-  muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14 },
-  muscleGridCard: { width: '48.5%', aspectRatio: .88, borderRadius: 18, overflow: 'hidden', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, position: 'relative', shadowColor: colors.shadow, shadowOpacity: .08, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  muscleGridImage: { width: '100%', height: '76%', resizeMode: 'contain', backgroundColor: colors.panel },
-  muscleGridCardio: { width: '100%', height: '76%', resizeMode: 'contain', backgroundColor: colors.panel },
-  muscleGridCopy:{height:'24%',justifyContent:'center',paddingHorizontal:12,backgroundColor:colors.panel},
-  muscleGridLabel: { color: colors.text, fontSize: 17, fontWeight: '900' },
-  muscleGridCount:{color:colors.muted,fontSize:10,marginTop:1},
-  muscleGridArrow:{position:'absolute',right:12,top:15,color:colors.text,fontSize:27,fontWeight:'400'},
+  muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10, rowGap: 18, marginBottom: 14 },
+  muscleGridCard: { width: '48.5%', aspectRatio: .82, backgroundColor: 'transparent', borderWidth: 0, position: 'relative' },
+  muscleGridImage: { width: '100%', height: '78%', resizeMode: 'contain', backgroundColor: 'transparent' },
+  muscleGridCardio: { width: '100%', height: '78%', resizeMode: 'contain', backgroundColor: 'transparent' },
+  muscleGridCopy:{height:'22%',justifyContent:'center',alignItems:'center',paddingHorizontal:4,backgroundColor:'transparent'},
+  muscleGridLabel: { color: colors.text, fontSize: 17, fontWeight: '900', textAlign: 'center' },
+  muscleGridCount:{color:colors.muted,fontSize:10,marginTop:1,textAlign:'center'},
+  muscleGridArrow:{position:'absolute',right:6,top:8,color:colors.text,fontSize:27,fontWeight:'400'},
   exerciseBrowseTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   exerciseBack: { color: colors.primary, fontSize: 12, fontWeight: '900' },
   exerciseCount: { color: colors.muted, fontSize: 10, fontWeight: '800' },
   exerciseSearch: { backgroundColor: colors.input, borderColor: colors.border, color: colors.text },
   equipmentFilters: { gap: 7, paddingBottom: 12 },
-  equipmentChip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 13, paddingVertical: 7, backgroundColor: colors.panel },
+  equipmentChip: { minHeight: 48, borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
   equipmentChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   equipmentChipText: { color: colors.muted, fontSize: 10, fontWeight: '800' },
   equipmentChipTextOn: { color: colors.primary },
@@ -1489,20 +1592,20 @@ const createStyles = (colors: any) => StyleSheet.create({
   selectedTitle: { color: colors.text, fontWeight: '900' },
   selectedMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
   previewStartRow: { flexDirection: 'row', gap: 8, marginTop: 11 },
-  previewButton: { flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
+  previewButton: { flex: 1, minHeight: 48, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
   previewButtonText: { color: colors.primary, fontWeight: '900', fontSize: 10 },
-  startSmall: { flex: 1, backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 14, minHeight: 42, alignItems: 'center', justifyContent: 'center' },
+  startSmall: { flex: 1, backgroundColor: colors.primary, borderRadius: 10, paddingHorizontal: 14, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   startSmallText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   builderButtons: { marginTop: 9 },
-  saveOutline: { borderWidth: 1.5, borderColor: colors.blue, borderRadius: 9, minHeight: 39, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
+  saveOutline: { borderWidth: 1.5, borderColor: colors.blue, borderRadius: 9, minHeight: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
   saveOutlineText: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   saveForm: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 },
   cancelSave: { color: colors.muted, textAlign: 'center', fontWeight: '800', fontSize: 11, paddingVertical: 7 },
   repeat: { alignSelf: 'flex-start', paddingVertical: 8 },
   repeatText: { color: colors.blue, fontWeight: '800', fontSize: 11 },
-  exerciseList: { gap: 10 },
-  exerciseRow: { minHeight: 112, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 17, padding: 10, overflow: 'hidden' },
-  thumbFrame: { width: 126, height: 92, borderRadius: 12, backgroundColor: '#F7FCFD', borderWidth: 1, borderColor: colors.border, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  exerciseList: { gap: isDark ? 10 : 0 },
+  exerciseRow: { minHeight: 128, flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: isDark ? colors.panel : 'transparent', borderWidth: isDark ? 1 : 0, borderBottomWidth: 1, borderColor: colors.border, borderRadius: isDark ? 17 : 0, paddingHorizontal: isDark ? 10 : 0, paddingVertical: 10, overflow: 'hidden' },
+  thumbFrame: { width: 136, height: 100, borderRadius: 0, backgroundColor: 'transparent', borderWidth: 0, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   thumb: { width: '100%', height: '100%', resizeMode: 'contain' },
   cardioThumb: { width: '100%', height: '100%', resizeMode: 'contain' },
   auditThumb: { width: 126, height: 92, borderRadius: 12, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
@@ -1512,7 +1615,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   target: { color: colors.primary, fontWeight: '900', fontSize: 10 },
   exName: { color: colors.text, fontWeight: '900', fontSize: 14, marginTop: 1 },
   exMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
-  plus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  plus: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   plusSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   plusText: { fontWeight: '900', fontSize: 20, lineHeight: 22 },
   detailHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 },
@@ -1520,8 +1623,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   detailTitle: { color: colors.text, fontSize: 19, fontWeight: '900', maxWidth: '75%', textAlign: 'center' },
   more: { color: colors.text, fontSize: 16, fontWeight: '900' },
   detailHero: { flexDirection: 'row', minHeight: 250, alignItems: 'center' },
-  detailFigure: { flex: 1, height: 250, resizeMode: 'contain', backgroundColor: '#F7FCFD', borderRadius: 16, marginRight: 10 },
-  detailCardioFigure: { flex: 1, height: 220, resizeMode: 'contain', backgroundColor: '#F7FCFD', borderRadius: 16, marginRight: 10 },
+  detailFigure: { flex: 1, height: 250, resizeMode: 'contain', backgroundColor: 'transparent', marginRight: 10 },
+  detailCardioFigure: { flex: 1, height: 220, resizeMode: 'contain', backgroundColor: 'transparent', marginRight: 10 },
   visualPending: { flex: 1, minHeight: 120, borderRadius: 14, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', padding: 14 },
   visualPendingTitle: { color: colors.primary, fontSize: 18, fontWeight: '900' },
   visualPendingText: { color: colors.muted, fontSize: 10, textAlign: 'center', marginTop: 5 },
@@ -1543,63 +1646,103 @@ const createStyles = (colors: any) => StyleSheet.create({
   detailActions: { marginTop: 12 },
   removeExercise: { alignItems: 'center', padding: 10 },
   removeExerciseText: { color: colors.muted, fontSize: 11, fontWeight: '800' },
-  tableHead: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: colors.border },
-  tableRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: colors.border },
-  setCol: { width: 30, color: colors.text, fontWeight: '800', fontSize: 11, textAlign: 'center' },
-  flexCol: { flex: 1, color: colors.muted, fontWeight: '900', fontSize: 9, textAlign: 'center' },
-  actionCol: { width: 61, color: colors.muted, textAlign: 'center', fontWeight: '900', fontSize: 9 },
-  tableInput: { flex: 1, marginBottom: 0, minHeight: 38, textAlign: 'center', paddingHorizontal: 4 },
-  setActions: { width: 61, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  smallSetAction: { width: 30, height: 34, alignItems: 'center', justifyContent: 'center' },
-  checkText: { color: colors.muted, fontSize: 21, fontWeight: '900' },
-  remove: { color: colors.muted, fontSize: 22, lineHeight: 24 },
+  setList: { gap: 10, marginTop: 4 },
+  setCard: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 11 },
+  setCardDone: { backgroundColor: colors.greenSoft, borderColor: colors.green, opacity: .68 },
+  setCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 9 },
+  setNumber: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  setNumberDone: { backgroundColor: colors.greenSoft },
+  setNumberText: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  setCardTitle: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  setCardState: { color: colors.muted, fontSize: 9, fontWeight: '700', marginTop: 1 },
+  setRemoveButton: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.input, alignItems: 'center', justifyContent: 'center' },
+  setRemoveText: { color: colors.muted, fontSize: 24, lineHeight: 26 },
+  setFields: { flexDirection: 'row', gap: 9 },
+  stepperField: { flex: 1 },
+  stepperLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', marginBottom: 5, textAlign: 'center' },
+  stepperControl: { minHeight: 48, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.input, overflow: 'hidden' },
+  stepperButton: { width: 40, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel },
+  stepperButtonText: { color: colors.primary, fontSize: 20, fontWeight: '900' },
+  stepperInput: { flex: 1, minHeight: 46, marginBottom: 0, borderWidth: 0, borderRadius: 0, backgroundColor: 'transparent', paddingHorizontal: 2, textAlign: 'center', fontSize: 17, fontWeight: '800' },
+  completeSetButton: { minHeight: 48, borderRadius: 10, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  completeSetButtonDone: { backgroundColor: colors.greenSoft, borderWidth: 1, borderColor: colors.green },
+  completeSetText: { color: contrastText(colors.primary), fontSize: 10, fontWeight: '900', letterSpacing: .2 },
   minimumSetHint: { color: colors.muted, fontSize: 9, marginTop: 6, textAlign: 'center' },
   two: { flexDirection: 'row', gap: 8 },
   cardioHint: { color: colors.muted, fontSize: 11, marginBottom: 9 },
   machineMetrics: { backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.green, borderRadius: 10, padding: 10, marginBottom: 9 },
   machineTitle: { color: colors.green, fontSize: 9, fontWeight: '900', marginBottom: 4 },
-  activeWrap: { padding: 16, paddingTop: 10, paddingBottom: 128 },
+  activeWrap: { padding: 16, paddingTop: 10, paddingBottom: 128, backgroundColor: colors.bg },
   activeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  activeHeaderButton: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   exit: { color: colors.text, fontSize: 14 },
   activeTitle: { color: colors.text, fontWeight: '900', fontSize: 18, maxWidth: '62%' },
   activeAdd: { color: colors.blue, fontSize: 27, lineHeight: 28, fontWeight: '500' },
-  timer: { color: colors.text, fontSize: 43, fontWeight: '800', textAlign: 'center', marginTop: 14 },
-  timerLabel: { color: colors.muted, textAlign: 'center', fontSize: 11, marginBottom: 10 },
-  activeEditRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  editHint: { flex: 1, color: colors.muted, fontSize: 9, lineHeight: 13 },
+  sessionOverview: { flexDirection: 'row', alignItems: 'stretch', gap: 8, marginTop: 12, marginBottom: 11 },
+  sessionMetricPrimary: { flex: 1.45, minHeight: 68, borderRadius: 14, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, padding: 11, justifyContent: 'center' },
+  sessionMetric: { flex: .85, minHeight: 68, borderRadius: 14, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, padding: 9, justifyContent: 'center' },
+  sessionMetricLabel: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: .25 },
+  sessionTimer: { color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 3 },
+  sessionMetricValue: { color: colors.text, fontSize: 19, fontWeight: '900', marginTop: 2 },
+  sessionMetricSub: { color: colors.muted, fontSize: 8, marginTop: 1 },
+  sessionAddButton: { width: 58, minHeight: 68, borderRadius: 14, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  sessionAddIcon: { color: colors.primary, fontSize: 23, lineHeight: 24, fontWeight: '800' },
+  sessionAddText: { color: colors.primary, fontSize: 9, fontWeight: '900', marginTop: 2 },
   activeExercises: { gap: 7, paddingBottom: 12 },
-  activeExerciseChip: { width: 128, borderWidth: 1, borderColor: colors.border, borderRadius: 11, backgroundColor: colors.panel, padding: 9 },
-  activeExerciseSelected: { borderColor: colors.primary },
-  activeExerciseDone: { backgroundColor: colors.panel2 },
+  activeExerciseChip: { width: 142, minHeight: 58, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.panel, padding: 10, justifyContent: 'center' },
+  activeExerciseSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  activeExerciseDone: { backgroundColor: colors.panel2, opacity: .76 },
   activeExerciseName: { color: colors.text, fontWeight: '900', fontSize: 11 },
-  activeExerciseState: { color: colors.muted, fontSize: 8, marginTop: 4, fontWeight: '800' },
-  liveCard: { padding: 13 },
-  liveHero: { flexDirection: 'row', alignItems: 'center', minHeight: 150, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: 8 },
-  liveFigure: { width: 135, height: 155, resizeMode: 'contain', backgroundColor: '#F7FCFD', borderRadius: 14 },
-  liveCardioFigure: { width: 135, height: 135, resizeMode: 'contain', backgroundColor: '#F7FCFD', borderRadius: 14 },
+  activeExerciseState: { color: colors.muted, fontSize: 8, marginTop: 4, fontWeight: '900' },
+  liveCard: { padding: isDark ? 13 : 0, borderRadius: 19, backgroundColor: isDark ? colors.panel : 'transparent', borderWidth: isDark ? 1 : 0, borderColor: colors.border },
+  liveProgressRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  liveProgressText: { color: colors.primary, fontSize: 8, fontWeight: '900', letterSpacing: .25 },
+  liveFigureStage: { width: '100%', minHeight: 276, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', position: 'relative', marginBottom: 6 },
+  liveFigure: { width: '100%', height: 286, resizeMode: 'contain', backgroundColor: 'transparent' },
+  liveCardioFigure: { width: '100%', height: 270, resizeMode: 'contain', backgroundColor: 'transparent' },
+  guideHint: { position: 'absolute', right: 4, bottom: 5, borderRadius: 999, backgroundColor: isDark ? 'rgba(0,0,0,.58)' : 'rgba(255,255,255,.88)', borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 6 },
+  guideHintText: { color: colors.text, fontSize: 8, fontWeight: '900' },
   liveIconBox: { width: 135, height: 150, alignItems: 'center', justifyContent: 'center' },
   liveEmoji: { fontSize: 66 },
-  liveMuscles: { flex: 1, paddingLeft: 9 },
-  liveName: { color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 10 },
+  liveTitleRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 11, marginBottom: 7 },
+  liveMuscles: { flex: 1 },
+  liveName: { color: colors.text, fontSize: 21, fontWeight: '900' },
   primaryLabel: { color: colors.primary, fontSize: 9, fontWeight: '900' },
-  liveMeta: { color: colors.muted, fontSize: 11, marginTop: 4 },
-  activeRemoveExercise: { alignItems: 'center', paddingTop: 11, paddingBottom: 3 },
+  liveMeta: { color: colors.muted, fontSize: 10, marginTop: 3 },
+  guideButton: { minHeight: 48, borderRadius: 10, borderWidth: 1, borderColor: colors.primary, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center' },
+  guideButtonText: { color: colors.primary, fontSize: 9, fontWeight: '900' },
+  setProgressNote: { color: colors.muted, fontSize: 9, fontWeight: '800', marginBottom: 4 },
+  activeRemoveExercise: { minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingTop: 11, paddingBottom: 3 },
   activeRemoveExerciseText: { color: colors.danger, fontWeight: '800', fontSize: 10 },
-  deleteActiveButton: { borderWidth: 1, borderColor: colors.danger, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
+  deleteActiveButton: { minHeight: 48, borderWidth: 1, borderColor: colors.danger, borderRadius: 10, paddingVertical: 12, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   deleteActiveText: { color: colors.danger, fontWeight: '900', fontSize: 11 },
   restBanner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.blueSoft, borderRadius: 13, padding: 12, marginBottom: 8 },
   restLabel: { color: colors.blue, fontSize: 9, fontWeight: '900' },
   restTime: { color: colors.text, fontSize: 25, fontWeight: '900', marginTop: 2 },
-  skip: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  skip: { minHeight: 48, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.blue, borderRadius: 10, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
   skipText: { color: colors.blue, fontWeight: '900', fontSize: 11 },
   modalShade: { flex: 1, backgroundColor: 'rgba(0,0,0,.48)', justifyContent: 'flex-end' },
   pickerSheet: { height: '78%', backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 16 },
+  guideSheet: { height: '92%', backgroundColor: colors.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, borderColor: colors.border, padding: 16 },
+  guideKicker: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: .35 },
+  guideTitle: { color: colors.text, fontSize: 22, fontWeight: '900', marginTop: 3 },
+  guideImageStage: { height: 268, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
+  guideImage: { width: '100%', height: '100%', resizeMode: 'contain' },
+  guideFacts: { flexDirection: 'row', gap: 9, marginTop: 5, marginBottom: 14 },
+  guideFact: { flex: 1, minHeight: 68, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 10 },
+  guideFactLabel: { color: colors.primary, fontSize: 8, fontWeight: '900', letterSpacing: .2 },
+  guideFactValue: { color: colors.text, fontSize: 12, lineHeight: 16, fontWeight: '800', marginTop: 5 },
+  guideSectionTitle: { color: colors.text, fontSize: 13, fontWeight: '900', marginBottom: 8 },
+  guideCueRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginBottom: 9 },
+  guideCueNumber: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primarySoft, color: colors.primary, fontSize: 10, fontWeight: '900', textAlign: 'center', lineHeight: 24 },
+  guideCueText: { flex: 1, color: colors.text, fontSize: 12, lineHeight: 18 },
+  guideSafetyNote: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 4, marginBottom: 12 },
   previewSheet: { maxHeight: '86%', minHeight: '62%', backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 16 },
   previewList: { gap: 9, paddingBottom: 12 },
   previewExerciseRow: { minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border, borderRadius: 13, padding: 8 },
   previewNumber: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   previewNumberText: { color: colors.primary, fontSize: 10, fontWeight: '900' },
-  previewThumbFrame: { width: 76, height: 56, borderRadius: 9, backgroundColor: '#F7FCFD', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  previewThumbFrame: { width: 76, height: 56, backgroundColor: 'transparent', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   previewThumb: { width: '100%', height: '100%', resizeMode: 'contain' },
   previewCopy: { flex: 1 },
   previewName: { color: colors.text, fontSize: 12, fontWeight: '900' },
@@ -1619,7 +1762,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   pickerClose: { color: colors.text, fontSize: 31, fontWeight: '300' },
   pickerExerciseRow: { minHeight: 66, flexDirection: 'row', gap: 9, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 7 },
   pickerThumb: { width: 49, height: 49, resizeMode: 'contain' },
-  pickerCardioThumb: { width: 49, height: 49, resizeMode: 'contain', borderRadius: 9, backgroundColor: '#F7FCFD' },
+  pickerCardioThumb: { width: 49, height: 49, resizeMode: 'contain', backgroundColor: 'transparent' },
   pickerEmoji: { width: 49, textAlign: 'center', fontSize: 27 },
   pickerExerciseName: { color: colors.text, fontWeight: '900', fontSize: 13 },
   pickerExerciseMeta: { color: colors.muted, fontSize: 9, marginTop: 3 },

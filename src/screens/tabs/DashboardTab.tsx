@@ -41,7 +41,7 @@ const groupArt = {
     core: require('../../../assets/train_v4/groups/male/core.png'),
     full_body: require('../../../assets/train_v4/groups/male/full_body.png'),
     cardio: require('../../../assets/train_v4/groups/male/cardio.png'),
-    rest: require('../../../assets/home/rest_day_male.png'),
+    rest: require('../../../assets/home/rest_day_male_v2.png'),
   },
   female: {
     chest: require('../../../assets/train_v4/groups/female/chest.png'),
@@ -52,7 +52,7 @@ const groupArt = {
     core: require('../../../assets/train_v4/groups/female/core.png'),
     full_body: require('../../../assets/train_v4/groups/female/full_body.png'),
     cardio: require('../../../assets/train_v4/groups/female/cardio.png'),
-    rest: require('../../../assets/home/rest_day_female.png'),
+    rest: require('../../../assets/home/rest_day_female_v2.png'),
   },
 } as const;
 
@@ -62,7 +62,6 @@ export default function DashboardTab({
   profile,
   onStartWorkout,
   onViewProgress,
-  onViewWorkouts,
   onOpenJourney,
   onOpenSupplements,
   onOpenFood,
@@ -76,7 +75,6 @@ export default function DashboardTab({
   const [weekWorkouts, setWeekWorkouts] = useState(0);
   const [weekMinutes, setWeekMinutes] = useState(0);
   const [weekDays, setWeekDays] = useState<WeekDay[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
   const [todayPlan, setTodayPlan] = useState<string | null>(null);
   const [todayPlanDetails, setTodayPlanDetails] = useState<any>(null);
   const [homeFriends, setHomeFriends] = useState<any[]>([]);
@@ -107,7 +105,6 @@ export default function DashboardTab({
       setHomeFriends((friendRes.data ?? []).slice(0, 3));
       setWeekWorkouts(sessions.length);
       setWeekMinutes(sessions.reduce((total: number, session: any) => total + sessionMinutes(session), 0));
-      setRecent(sessions.slice(0, 3));
       const completedKeys = new Set(sessions.map((session: any) => localDateKey(new Date(session.ended_at ?? session.started_at))));
       setWeekDays(Array.from({ length: 7 }, (_, index) => {
         const date = new Date(weekStart);
@@ -165,7 +162,7 @@ export default function DashboardTab({
               {!restDay ? <Pressable onPress={onOpenSplit} style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}><Text style={styles.secondaryActionText}>⌁  Skip to Rest</Text></Pressable> : null}
             </View>
           </View>
-          <Image source={heroImage} style={[styles.heroImage, restDay && styles.restHeroImage]}/>
+          <Image source={heroImage} style={[styles.heroImage, restDay && styles.restHeroImage]} accessibilityIgnoresInvertColors/>
           <Pressable onPress={onOpenSplit} style={({ pressed }) => [styles.detailsAction, pressed && styles.pressed]} accessibilityLabel="Workout details">
             <DumbbellIcon size={23} color={colors.text}/><Text style={styles.detailsText}>{restDay ? 'Rest Day\nDetails' : 'Workout\nDetails'}</Text>
           </Pressable>
@@ -199,7 +196,7 @@ export default function DashboardTab({
           {!hiddenFeatures.includes('supplements') ? <QuickCard icon={<SupplementIcon color={colors.primary}/>} label="Supplements" onPress={onOpenSupplements}/> : null}
         </View>
         <View style={styles.quickBottomRow}>
-          {!hiddenFeatures.includes('challenges') ? <WideQuickCard icon={<TrophyIcon color={colors.primary}/>} label={'Community\nChallenges'} onPress={onOpenChallenges}/> : null}
+          <WideQuickCard icon={<TrophyIcon color={colors.primary}/>} label={'Community\nChallenges'} onPress={onOpenChallenges}/>
           <WideQuickCard icon={<RunIcon color={colors.primary}/>} label="Run Metrics" onPress={() => onViewProgress('overview')}/>
         </View>
 
@@ -209,8 +206,6 @@ export default function DashboardTab({
           <View style={styles.feedCopy}><Text style={styles.feedTitle}>See what your friends are training</Text><Text style={styles.feedLink}>Open friend feed  ›</Text></View>
         </Pressable>
 
-        {recent[0] ? <Pressable onPress={() => onViewWorkouts(recent[0].id)} style={({ pressed }) => [styles.recentWorkout, pressed && styles.pressed]}><DumbbellIcon size={22} color={colors.primary}/><View style={styles.recentCopy}><Text style={styles.recentLabel}>RECENT WORKOUT</Text><Text style={styles.recentName} numberOfLines={1}>{sessionTitle(recent[0].summary)}</Text></View><Text style={styles.recentArrow}>›</Text></Pressable> : null}
-        <Pressable onPress={() => onViewProgress('overview')}><Text style={styles.allProgress}>View all progress, PRs and reports  ›</Text></Pressable>
       </ScrollView>
     </View>
   );
@@ -218,12 +213,12 @@ export default function DashboardTab({
 
 function QuickCard({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
   const { colors, isDark } = useTheme(); const styles = createStyles(colors, isDark);
-  return <Pressable onPress={onPress} style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}>{icon}<Text style={styles.quickLabel}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}>{icon}<Text style={styles.quickLabel}>{label}</Text></Pressable>;
 }
 
 function WideQuickCard({ icon, label, onPress }: { icon: React.ReactNode; label: string; onPress: () => void }) {
   const { colors, isDark } = useTheme(); const styles = createStyles(colors, isDark);
-  return <Pressable onPress={onPress} style={({ pressed }) => [styles.wideQuickCard, pressed && styles.pressed]}>{icon}<Text style={styles.wideQuickLabel}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label.replace('\n', ' ')} onPress={onPress} style={({ pressed }) => [styles.wideQuickCard, pressed && styles.pressed]}>{icon}<Text style={styles.wideQuickLabel}>{label}</Text></Pressable>;
 }
 
 function startOfWeek(date: Date) { const value = new Date(date); value.setHours(0, 0, 0, 0); const day = value.getDay(); value.setDate(value.getDate() - (day === 0 ? 6 : day - 1)); return value; }
@@ -239,6 +234,7 @@ function artKeyForPlan(label: string): Exclude<keyof typeof groupArt.male, 'rest
   if (/leg|lower|glute|quad|hamstring/.test(value)) return 'legs';
   if (/pull|back|lat/.test(value)) return 'back';
   if (/push|chest|bench/.test(value)) return 'chest';
+  if (/upper/.test(value)) return 'full_body';
   if (/shoulder|delt/.test(value)) return 'shoulders';
   if (/arm|bicep|tricep/.test(value)) return 'arms';
   if (/core|ab/.test(value)) return 'core';
@@ -260,9 +256,9 @@ function planMeta(details: any, restDay: boolean) {
 const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.bg }, wrap: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 128 },
   backgroundGeometry: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, overflow: 'hidden' }, backgroundGlowOne: { position: 'absolute', width: 260, height: 260, borderRadius: 130, right: -90, top: 80, backgroundColor: colors.primarySoft, opacity: isDark ? .58 : .45 }, backgroundGlowTwo: { position: 'absolute', width: 220, height: 220, borderRadius: 110, left: -110, top: 500, backgroundColor: colors.blueSoft, opacity: .46 }, backgroundSlashOne: { position: 'absolute', width: 520, height: 2, backgroundColor: colors.primary, opacity: isDark ? .3 : .16, transform: [{ rotate: '-34deg' }], left: -70, top: 360 }, backgroundSlashTwo: { position: 'absolute', width: 420, height: 1, backgroundColor: colors.primary, opacity: isDark ? .22 : .12, transform: [{ rotate: '-34deg' }], right: -150, top: 690 },
-  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 11 }, profileCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center', position: 'relative' }, profileImage: { width: 48, height: 48, borderRadius: 24 }, profileInitial: { color: colors.text, fontSize: 18, fontWeight: '900' }, onlineDot: { position: 'absolute', right: -1, bottom: 1, width: 11, height: 11, borderRadius: 6, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.bg }, greeting: { color: colors.text, fontSize: 16, fontWeight: '600' }, headerSpacer: { flex: 1 }, headerIcon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', position: 'relative' }, alertDot: { position: 'absolute', right: 6, top: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 11 }, profileCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center', position: 'relative' }, profileImage: { width: 48, height: 48, borderRadius: 24 }, profileInitial: { color: colors.text, fontSize: 18, fontWeight: '900' }, onlineDot: { position: 'absolute', right: -1, bottom: 1, width: 11, height: 11, borderRadius: 6, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.bg }, greeting: { color: colors.text, fontSize: 16, fontWeight: '600' }, headerSpacer: { flex: 1 }, headerIcon: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', position: 'relative' }, alertDot: { position: 'absolute', right: 6, top: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   homeTitle: { color: colors.text, fontSize: 38, fontWeight: '900', letterSpacing: -.8, marginTop: 20, marginBottom: 16 },
-  heroCard: { minHeight: 235, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, overflow: 'hidden', position: 'relative', marginBottom: 20, shadowColor: colors.shadow, shadowOpacity: isDark ? .32 : .14, shadowRadius: 14, shadowOffset: { width: 0, height: 7 }, elevation: 5 }, heroGlow: { position: 'absolute', width: 230, height: 230, borderRadius: 115, right: -30, bottom: -100, backgroundColor: colors.primarySoft, opacity: .86 }, heroCopy: { width: '61%', padding: 18, zIndex: 3 }, eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: .35 }, heroTitle: { color: colors.text, fontSize: 29, fontWeight: '900', marginTop: 14, letterSpacing: -.4 }, heroMeta: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5, minHeight: 34 }, primaryAction: { alignSelf: 'flex-start', minWidth: 155, minHeight: 45, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, marginTop: 11 }, primaryActionText: { fontSize: 12, fontWeight: '900' }, heroSecondaryRow: { flexDirection: 'row', gap: 7, marginTop: 10 }, secondaryAction: { minHeight: 32, paddingHorizontal: 9, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, secondaryActionText: { color: colors.text, fontSize: 9, fontWeight: '800' }, heroImage: { position: 'absolute', width: '43%', height: '92%', right: 1, bottom: 0, resizeMode: 'contain' }, restHeroImage: { width: '54%', height: '100%', right: -18, resizeMode: 'cover' }, detailsAction: { position: 'absolute', right: 10, top: 10, alignItems: 'center', zIndex: 5, padding: 6, borderRadius: 12, backgroundColor: isDark ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.82)' }, detailsText: { color: colors.text, fontSize: 8, fontWeight: '800', textAlign: 'center', lineHeight: 10, marginTop: 2 },
+  heroCard: { minHeight: 246, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, overflow: 'hidden', position: 'relative', marginBottom: 20, shadowColor: colors.shadow, shadowOpacity: isDark ? .32 : .14, shadowRadius: 14, shadowOffset: { width: 0, height: 7 }, elevation: 5 }, heroGlow: { position: 'absolute', width: 250, height: 250, borderRadius: 125, right: -30, bottom: -108, backgroundColor: colors.primarySoft, opacity: .86 }, heroCopy: { width: '61%', padding: 18, zIndex: 3 }, eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: .35 }, heroTitle: { color: colors.text, fontSize: 29, fontWeight: '900', marginTop: 14, letterSpacing: -.4 }, heroMeta: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 5, minHeight: 34 }, primaryAction: { alignSelf: 'flex-start', minWidth: 155, minHeight: 48, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 15, marginTop: 11 }, primaryActionText: { fontSize: 12, fontWeight: '900' }, heroSecondaryRow: { flexDirection: 'row', gap: 7, marginTop: 10 }, secondaryAction: { minHeight: 48, paddingHorizontal: 9, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, secondaryActionText: { color: colors.text, fontSize: 9, fontWeight: '800' }, heroImage: { position: 'absolute', width: '45%', height: '94%', right: 1, bottom: 0, resizeMode: 'contain', backgroundColor: 'transparent' }, restHeroImage: { width: '58%', height: '94%', right: -28, bottom: -4, resizeMode: 'contain' }, detailsAction: { position: 'absolute', right: 10, top: 10, minWidth: 52, minHeight: 52, alignItems: 'center', justifyContent: 'center', zIndex: 5, padding: 6, borderRadius: 12, backgroundColor: isDark ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.82)' }, detailsText: { color: colors.text, fontSize: 8, fontWeight: '800', textAlign: 'center', lineHeight: 10, marginTop: 2 },
   sectionHeadingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4, marginBottom: 10 }, sectionHeading: { color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: .3, marginTop: 7, marginBottom: 10 }, sectionHint: { color: colors.muted, fontSize: 8, marginBottom: 10 }, weekHeadline: { color: colors.muted, fontSize: 10, marginBottom: 10, maxWidth: '62%', textAlign: 'right' },
   weekCard: { borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, padding: 14, marginBottom: 18 }, weekCalendar: { flexDirection: 'row', justifyContent: 'space-between' }, weekCell: { width: 36, alignItems: 'center' }, weekDay: { color: colors.muted, fontSize: 8, fontWeight: '900' }, weekDayToday: { color: colors.primary }, weekDate: { color: colors.muted, fontSize: 9, marginTop: 3 }, weekRing: { width: 31, height: 31, borderRadius: 16, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: 7 }, weekRingDone: { backgroundColor: colors.primary, borderColor: colors.primary }, weekRingToday: { borderColor: colors.primary, borderWidth: 2 }, weekMark: { color: colors.primary, fontSize: 14, fontWeight: '900' }, weekMarkDone: { color: contrastText(colors.primary) }, weekSummary: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 14, paddingTop: 12 }, weekSummaryIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }, weekSummaryText: { color: colors.text, fontSize: 11, fontWeight: '800', marginLeft: 9 }, weekSummaryLink: { color: colors.text, fontSize: 9, marginLeft: 'auto', textDecorationLine: 'underline' },
   quickTopRow: { flexDirection: 'row', gap: 9, marginBottom: 9 }, quickBottomRow: { flexDirection: 'row', gap: 9, marginBottom: 18 }, quickCard: { flex: 1, minHeight: 126, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center', shadowColor: colors.shadow, shadowOpacity: isDark ? .2 : .08, shadowRadius: 7, elevation: 2 }, quickLabel: { color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 9 }, wideQuickCard: { flex: 1, minHeight: 78, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 11 }, wideQuickLabel: { color: colors.text, fontSize: 12, fontWeight: '800', lineHeight: 16 },

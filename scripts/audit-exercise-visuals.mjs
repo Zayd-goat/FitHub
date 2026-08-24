@@ -1,20 +1,79 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
+import zlib from 'node:zlib';
+import ts from 'typescript';
 
 const root = path.resolve(import.meta.dirname, '..');
-const libraryText = fs.readFileSync(path.join(root, 'src/data/exerciseLibrary.ts'), 'utf8');
-const visualText = fs.readFileSync(path.join(root, 'src/data/exerciseVisuals.ts'), 'utf8');
-const exercises = [...libraryText.matchAll(/\{ name: "([^"]+)",[\s\S]*?equipment: "([^"]+)",[\s\S]*?slug: "([^"]+)"[\s\S]*?targetArea: "([^"]+)"/g)]
-  .map(([, name, equipment, slug, targetArea]) => ({ name, equipment, slug, targetArea }));
+const libraryFile = path.join(root, 'src/data/exerciseLibrary.ts');
+const visualFile = path.join(root, 'src/data/exerciseVisuals.ts');
+const libraryText = fs.readFileSync(libraryFile, 'utf8');
+const visualText = fs.readFileSync(visualFile, 'utf8');
+
+function evaluateTypeScript(file, dependencies = {}) {
+  const source = fs.readFileSync(file, 'utf8');
+  const code = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020,
+      esModuleInterop: true,
+    },
+    fileName: file,
+  }).outputText;
+  const module = { exports: {} };
+  const localRequire = (request) => {
+    if (Object.hasOwn(dependencies, request)) return dependencies[request];
+    if (/\.(png|jpe?g|webp)$/i.test(request)) return path.resolve(path.dirname(file), request);
+    if (request === 'react-native' || request.endsWith('/lib/types')) return {};
+    throw new Error(`Unsupported audit-time import ${request} in ${path.relative(root, file)}`);
+  };
+  Function('require', 'module', 'exports', '__filename', '__dirname', code)(
+    localRequire,
+    module,
+    module.exports,
+    file,
+    path.dirname(file),
+  );
+  return module.exports;
+}
+
+const libraryRuntime = evaluateTypeScript(libraryFile);
+const visualRuntime = evaluateTypeScript(visualFile, { './exerciseLibrary': libraryRuntime });
+const exercises = libraryRuntime.exerciseLibrary;
+if (!Array.isArray(exercises)) throw new Error('Could not evaluate the exercise catalogue at runtime.');
+
+const coverage = visualRuntime.exerciseVisualCoverage(exercises);
+const runtimeRows = [];
+const runtimeIssues = [];
+for (const exercise of exercises) {
+  const result = coverage.find((row) => row.slug === exercise.slug);
+  const male = visualRuntime.imageForExercise(exercise, 'male');
+  const female = visualRuntime.imageForExercise(exercise, 'female');
+  const expectedMaleRoot = path.join(root, 'assets/train_v3/male') + path.sep;
+  const expectedFemaleRoot = path.join(root, 'assets/train_v3/female') + path.sep;
+  const maleValid = typeof male === 'string' && male.startsWith(expectedMaleRoot) && fs.existsSync(male);
+  const femaleValid = typeof female === 'string' && female.startsWith(expectedFemaleRoot) && fs.existsSync(female);
+  if (!result?.exact || !maleValid || !femaleValid) {
+    runtimeIssues.push({
+      slug: exercise.slug,
+      exact: Boolean(result?.exact),
+      male: typeof male === 'string' ? path.relative(root, male) : null,
+      female: typeof female === 'string' ? path.relative(root, female) : null,
+    });
+  }
+  runtimeRows.push({
+    slug: exercise.slug,
+    name: exercise.name,
+    key: result?.key ?? null,
+    exact: Boolean(result?.exact),
+    male: maleValid ? path.relative(root, male) : null,
+    female: femaleValid ? path.relative(root, female) : null,
+  });
+}
+
 const required = [...visualText.matchAll(/require\('\.\.\/\.\.\/assets\/train_v3\/(male|female)\/([^']+\.png)'\)/g)]
   .map(([, gender, file]) => ({ gender, file }));
-
-const normalize = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-const aliasBlock = visualText.match(/const exactVisualAliases:[\s\S]*?= \{([\s\S]*?)\n\};/)?.[1] ?? '';
-const dedicatedBlock = visualText.match(/const dedicatedExerciseAssets:[\s\S]*?= \{([\s\S]*?)\n\};/)?.[1] ?? '';
-const exactAliasSlugs = new Set([...aliasBlock.matchAll(/^\s*'([^']+)':/gm)].map(([, slug]) => slug));
-const dedicatedSlugs = new Set([...dedicatedBlock.matchAll(/^\s*'([^']+)':\s*\{/gm)].map(([, slug]) => slug));
+const uniqueRequired = [...new Map(required.map((row) => [`${row.gender}/${row.file}`, row])).values()];
 
 const crcTable = Array.from({ length: 256 }, (_, value) => {
   let current = value;
@@ -28,34 +87,51 @@ function crc32(data) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function pngInfo(file) {
+function paeth(left, above, upperLeft) {
+  const estimate = left + above - upperLeft;
+  const leftDistance = Math.abs(estimate - left);
+  const aboveDistance = Math.abs(estimate - above);
+  const upperLeftDistance = Math.abs(estimate - upperLeft);
+  if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
+  if (aboveDistance <= upperLeftDistance) return above;
+  return upperLeft;
+}
+
+function pngInfo(file, expectedWidth, expectedHeight) {
   const data = fs.readFileSync(file);
-  const signature = data.subarray(0, 8).toString('hex');
-  if (signature !== '89504e470d0a1a0a') throw new Error(`Invalid PNG signature: ${file}`);
+  if (data.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') throw new Error(`Invalid PNG signature: ${file}`);
+
   let offset = 8;
   let width = 0;
   let height = 0;
+  let bitDepth = 0;
+  let colorType = -1;
+  let interlace = -1;
   let sawHeader = false;
   let sawEnd = false;
   let chunkCount = 0;
+  const idat = [];
+
   while (offset < data.length) {
     if (offset + 12 > data.length) throw new Error(`Truncated PNG chunk header: ${file}`);
     const length = data.readUInt32BE(offset);
     const typeStart = offset + 4;
     const chunkStart = offset + 8;
     const chunkEnd = chunkStart + length;
-    const crcOffset = chunkEnd;
     if (chunkEnd + 4 > data.length) throw new Error(`Truncated PNG chunk payload: ${file}`);
     const type = data.subarray(typeStart, chunkStart).toString('ascii');
-    const expectedCrc = data.readUInt32BE(crcOffset);
-    const actualCrc = crc32(data.subarray(typeStart, chunkEnd));
-    if (actualCrc !== expectedCrc) throw new Error(`PNG CRC mismatch in ${type}: ${file}`);
+    if (crc32(data.subarray(typeStart, chunkEnd)) !== data.readUInt32BE(chunkEnd)) throw new Error(`PNG CRC mismatch in ${type}: ${file}`);
     chunkCount += 1;
     if (type === 'IHDR') {
       if (sawHeader || length !== 13) throw new Error(`Invalid PNG IHDR: ${file}`);
       sawHeader = true;
       width = data.readUInt32BE(chunkStart);
       height = data.readUInt32BE(chunkStart + 4);
+      bitDepth = data[chunkStart + 8];
+      colorType = data[chunkStart + 9];
+      interlace = data[chunkStart + 12];
+    } else if (type === 'IDAT') {
+      idat.push(data.subarray(chunkStart, chunkEnd));
     }
     offset = chunkEnd + 4;
     if (type === 'IEND') {
@@ -64,52 +140,131 @@ function pngInfo(file) {
       break;
     }
   }
-  if (!sawHeader || !sawEnd) throw new Error(`Incomplete PNG structure: ${file}`);
+
+  if (!sawHeader || !sawEnd || !idat.length) throw new Error(`Incomplete PNG structure: ${file}`);
   if (offset !== data.length) throw new Error(`Unexpected bytes after PNG IEND: ${file}`);
-  if (width !== 768 || height !== 512) throw new Error(`Exercise visual must be 768x512: ${file} (${width}x${height})`);
-  return { width, height, chunkCount, sha256: crypto.createHash('sha256').update(data).digest('hex') };
+  if (width !== expectedWidth || height !== expectedHeight) throw new Error(`Visual must be ${expectedWidth}x${expectedHeight}: ${file} (${width}x${height})`);
+  if (bitDepth !== 8 || ![4, 6].includes(colorType) || interlace !== 0) throw new Error(`Visual must be a non-interlaced, 8-bit PNG with an alpha channel: ${file}`);
+
+  const bytesPerPixel = colorType === 6 ? 4 : 2;
+  const alphaOffset = bytesPerPixel - 1;
+  const stride = width * bytesPerPixel;
+  const inflated = zlib.inflateSync(Buffer.concat(idat));
+  if (inflated.length !== height * (stride + 1)) throw new Error(`Unexpected decoded PNG length: ${file}`);
+
+  let previous = Buffer.alloc(stride);
+  let transparentPixels = 0;
+  const cornerAlpha = [];
+  for (let y = 0; y < height; y += 1) {
+    const rowStart = y * (stride + 1);
+    const filter = inflated[rowStart];
+    const raw = inflated.subarray(rowStart + 1, rowStart + 1 + stride);
+    const current = Buffer.allocUnsafe(stride);
+    for (let index = 0; index < stride; index += 1) {
+      const left = index >= bytesPerPixel ? current[index - bytesPerPixel] : 0;
+      const above = previous[index];
+      const upperLeft = index >= bytesPerPixel ? previous[index - bytesPerPixel] : 0;
+      if (filter === 0) current[index] = raw[index];
+      else if (filter === 1) current[index] = (raw[index] + left) & 255;
+      else if (filter === 2) current[index] = (raw[index] + above) & 255;
+      else if (filter === 3) current[index] = (raw[index] + Math.floor((left + above) / 2)) & 255;
+      else if (filter === 4) current[index] = (raw[index] + paeth(left, above, upperLeft)) & 255;
+      else throw new Error(`Unsupported PNG row filter ${filter}: ${file}`);
+    }
+    for (let x = 0; x < width; x += 1) if (current[x * bytesPerPixel + alphaOffset] < 250) transparentPixels += 1;
+    if (y === 0 || y === height - 1) {
+      cornerAlpha.push(current[alphaOffset], current[(width - 1) * bytesPerPixel + alphaOffset]);
+    }
+    previous = current;
+  }
+
+  const transparentPixelRatio = transparentPixels / (width * height);
+  const transparentCorners = cornerAlpha.every((alpha) => alpha <= 10);
+  if (transparentPixelRatio < 0.02) throw new Error(`Visual needs at least 2% transparent pixels: ${file}`);
+  if (!transparentCorners) throw new Error(`Visual corners must be transparent for theme-safe rendering: ${file}`);
+
+  return {
+    width,
+    height,
+    bitDepth,
+    colorType,
+    hasAlphaChannel: true,
+    transparentPixelRatio: Number(transparentPixelRatio.toFixed(6)),
+    transparentCorners,
+    chunkCount,
+    sha256: crypto.createHash('sha256').update(data).digest('hex'),
+  };
 }
 
-const assetRows = required.map(({ gender, file }) => {
+const assetRows = uniqueRequired.map(({ gender, file }) => {
   const fullPath = path.join(root, 'assets/train_v3', gender, file);
   if (!fs.existsSync(fullPath)) throw new Error(`Missing ${gender} asset: ${file}`);
-  return { gender, file, ...pngInfo(fullPath) };
+  return { gender, file, ...pngInfo(fullPath, 768, 512) };
 });
 
-const male = new Set(assetRows.filter((x) => x.gender === 'male').map((x) => x.file));
-const female = new Set(assetRows.filter((x) => x.gender === 'female').map((x) => x.file));
+const groupRows = ['male', 'female'].flatMap((gender) =>
+  fs.readdirSync(path.join(root, 'assets/train_v4/groups', gender))
+    .filter((file) => file.endsWith('.png'))
+    .map((file) => ({ gender, file, ...pngInfo(path.join(root, 'assets/train_v4/groups', gender, file), 384, 512) })),
+);
+
+const homeRows = ['rest_day_male_v2.png', 'rest_day_female_v2.png'].map((file) => ({
+  file,
+  ...pngInfo(path.join(root, 'assets/home', file), 1672, 941),
+}));
+
+const male = new Set(assetRows.filter((row) => row.gender === 'male').map((row) => row.file));
+const female = new Set(assetRows.filter((row) => row.gender === 'female').map((row) => row.file));
 const parityIssues = [...new Set([...male, ...female])].filter((file) => !male.has(file) || !female.has(file));
-const duplicateHashes = assetRows.reduce((acc, row) => {
+const actualFiles = Object.fromEntries(['male', 'female'].map((gender) => [gender, fs.readdirSync(path.join(root, 'assets/train_v3', gender)).filter((file) => file.endsWith('.png')).sort()]));
+const unreferencedFiles = ['male', 'female'].flatMap((gender) => actualFiles[gender].filter((file) => !(gender === 'male' ? male : female).has(file)).map((file) => `${gender}/${file}`));
+
+const hashes = assetRows.reduce((groups, row) => {
   const key = `${row.gender}:${row.sha256}`;
-  (acc[key] ??= []).push(row.file);
-  return acc;
+  (groups[key] ??= []).push(row.file);
+  return groups;
 }, {});
-const duplicateGroups = Object.values(duplicateHashes).filter((files) => files.length > 1);
-const visualFileKeys = new Set([...male].map((file) => file.replace(/\.png$/, '')));
-const exactCandidates = exercises.filter((exercise) => dedicatedSlugs.has(exercise.slug) || exactAliasSlugs.has(exercise.slug) || visualFileKeys.has(normalize(exercise.slug)));
-const pendingDedicated = exercises.filter((exercise) => !exactCandidates.some((candidate) => candidate.slug === exercise.slug));
+const duplicateGroups = Object.values(hashes).filter((files) => new Set(files).size > 1);
+const pendingDedicated = runtimeRows.filter((row) => !row.exact);
 
 const report = {
-  version: '1.6.13',
+  version: '1.6.15',
   generated_at: new Date().toISOString(),
   catalogue_exercises: exercises.length,
+  runtime_resolved_exercises: runtimeRows.length,
+  runtime_resolution_issues: runtimeIssues,
   male_visuals: male.size,
   female_visuals: female.size,
+  png_references_checked: assetRows.length,
+  unique_exercise_pngs_checked: assetRows.length,
+  group_pngs_checked: groupRows.length,
+  home_pngs_checked: homeRows.length,
   gender_parity_issues: parityIssues,
+  unreferenced_exercise_files: unreferencedFiles,
   byte_identical_duplicate_groups: duplicateGroups,
-  pngs_checked: assetRows.length,
-  png_structure_checks: ['signature', 'chunk bounds', 'chunk CRC', 'IHDR', 'IEND', 'trailing bytes', '768x512 dimensions'],
-  exact_or_dedicated_candidates: exactCandidates.length,
   pending_dedicated_count: pendingDedicated.length,
   pending_dedicated_exercises: pendingDedicated,
-  release_ready: pendingDedicated.length === 0,
-  policy: 'Every catalogue exercise must resolve to an approved male/female movement asset. Every referenced PNG must pass full structural and parity checks before release.',
-  exercises,
+  png_structure_checks: [
+    'signature', 'chunk bounds', 'chunk CRC', 'IHDR', 'IDAT inflate', 'IEND', 'trailing bytes',
+    'expected dimensions', '8-bit alpha channel', 'row-filter decoding', 'transparent pixel ratio', 'transparent corners',
+  ],
+  home_art: homeRows,
+  group_art: groupRows,
+  runtime_mappings: runtimeRows,
+  release_ready: exercises.length === 230 && assetRows.length === 472 && male.size === 236 && female.size === 236 && runtimeIssues.length === 0 && parityIssues.length === 0 && unreferencedFiles.length === 0 && duplicateGroups.length === 0 && pendingDedicated.length === 0,
+  policy: 'Every catalogue exercise must resolve at runtime to an approved male and female movement asset. All exercise, muscle-group, and Rest Day PNGs must pass decoded alpha, dimensions, integrity, parity, orphan-file, and duplicate checks before release.',
 };
 
 const outDir = path.join(root, 'reports');
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'exercise-visual-audit.json'), `${JSON.stringify(report, null, 2)}\n`);
+
 if (exercises.length !== 230) throw new Error(`Expected 230 exercises, found ${exercises.length}`);
+if (assetRows.length !== 472 || male.size !== 236 || female.size !== 236) throw new Error(`Expected 472 unique exercise PNGs (236 male/236 female), found ${assetRows.length} (${male.size} male/${female.size} female)`);
+if (runtimeIssues.length) throw new Error(`Runtime mapping failed for: ${runtimeIssues.map((row) => row.slug).join(', ')}`);
 if (parityIssues.length) throw new Error(`Male/female asset parity failed for: ${parityIssues.join(', ')}`);
-console.log(`FitHub exercise visual audit passed: ${exercises.length} exercises, ${assetRows.length} PNG references, ${male.size} male/${female.size} female visual families, ${pendingDedicated.length} exercises still pending dedicated review.`);
+if (unreferencedFiles.length) throw new Error(`Unreferenced exercise assets found: ${unreferencedFiles.join(', ')}`);
+if (duplicateGroups.length) throw new Error(`Unexpected byte-identical exercise assets found: ${JSON.stringify(duplicateGroups)}`);
+if (pendingDedicated.length) throw new Error(`Exercises still pending exact visual coverage: ${pendingDedicated.map((row) => row.slug).join(', ')}`);
+
+console.log(`FitHub exercise visual audit passed: ${exercises.length} exercises, ${assetRows.length} PNG references, ${assetRows.length} unique exercise PNGs, ${male.size} male/${female.size} female visual families, ${pendingDedicated.length} exercises still pending dedicated review.`);
