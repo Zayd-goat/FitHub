@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+android/
+ios/
+.env
+.env.*
+!.env.example
+google-services.json
+*.jks
+*.keystore
+*.p12
+*firebase-adminsdk*.json
+service-account*.json
+build.json
+*.apk
+*.aab
