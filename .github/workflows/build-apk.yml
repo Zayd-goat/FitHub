@@ -86,7 +86,7 @@ jobs:
       - name: Upload FitHub APK
         uses: actions/upload-artifact@v4
         with:
-          name: FitHub-1.6.17-APK
+          name: FitHub-1.6.18-APK
           path: FitHub.apk
           if-no-files-found: error
           retention-days: 14
