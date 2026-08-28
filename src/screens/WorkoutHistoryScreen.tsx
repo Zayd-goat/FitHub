@@ -10,6 +10,17 @@ const dateKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 
 const sessionDateKey = (session: any) => dateKey(new Date(session.ended_at ?? session.started_at));
 type ManualSet = { id: string; weight: string; reps: string };
 type ManualExercise = { id: string; exercise: LibraryExercise; sets: ManualSet[]; distance: string; duration: string };
+type ManualWorkoutSetPayload = {
+  user_id: string;
+  session_id: string;
+  exercise_name: string;
+  set_number: number;
+  weight_kg: number | null;
+  reps: number | null;
+  distance_km: number | null;
+  duration_min: number | null;
+  created_at: string;
+};
 const newManualId = () => `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
 export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack }: { profile: Profile; initialSessionId?: string; onBack: () => void }) {
@@ -124,7 +135,7 @@ export default function WorkoutHistoryScreen({ profile, initialSessionId, onBack
       const sessionId = String(savedSession?.id ?? manualId ?? '');
       if (!sessionId) throw new Error('The workout was saved without a session identifier.');
       await supabase.from('workout_sets').delete().eq('session_id', sessionId).eq('user_id', profile.id);
-      const setPayload = manualExercises.flatMap((item) => item.exercise.metric_type === 'strength'
+      const setPayload: ManualWorkoutSetPayload[] = manualExercises.flatMap((item): ManualWorkoutSetPayload[] => item.exercise.metric_type === 'strength'
         ? item.sets.map((set,index) => ({ user_id:profile.id,session_id:sessionId,exercise_name:item.exercise.name,set_number:index+1,weight_kg:set.weight.trim()===''?0:displayToKg(Number(set.weight),weightUnit),reps:Number(set.reps),distance_km:null,duration_min:null,created_at:endedAt.toISOString() }))
         : [{ user_id:profile.id,session_id:sessionId,exercise_name:item.exercise.name,set_number:1,weight_kg:null,reps:null,distance_km:item.exercise.metric_type==='distance'&&Number(item.distance)>0?displayToKm(Number(item.distance),distanceUnit):null,duration_min:Number(item.duration)>0?Number(item.duration):null,created_at:endedAt.toISOString() }]);
       const { error:setError } = await supabase.from('workout_sets').insert(setPayload);

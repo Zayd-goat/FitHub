@@ -154,7 +154,7 @@ function SwipeDismissNotification({children,onDismiss,colors}:{children:React.Re
 
 const stylesForSwipe=(colors:any)=>StyleSheet.create({
   shell:{position:'relative',overflow:'hidden',borderRadius:16,marginBottom:10},
-  backdrop:{...StyleSheet.absoluteFillObject,backgroundColor:colors.primarySoft,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:18},
+  backdrop:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:colors.primarySoft,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:18},
   dismissText:{color:colors.primary,fontSize:10,fontWeight:'900',letterSpacing:.7},
 });
 
