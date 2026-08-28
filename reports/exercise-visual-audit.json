@@ -1,0 +1,2142 @@
+{
+  "version": "1.6.21",
+  "generated_at": "2026-08-28T12:04:47.991Z",
+  "catalogue_exercises": 229,
+  "runtime_resolved_exercises": 229,
+  "runtime_resolution_issues": [],
+  "male_visuals": 236,
+  "female_visuals": 236,
+  "png_references_checked": 472,
+  "unique_exercise_pngs_checked": 472,
+  "group_pngs_checked": 16,
+  "home_pngs_checked": 2,
+  "gender_parity_issues": [],
+  "unreferenced_exercise_files": [],
+  "byte_identical_duplicate_groups": [],
+  "pending_dedicated_count": 0,
+  "pending_dedicated_exercises": [],
+  "png_structure_checks": [
+    "signature",
+    "chunk bounds",
+    "chunk CRC",
+    "IHDR",
+    "IDAT inflate",
+    "IEND",
+    "trailing bytes",
+    "expected dimensions",
+    "8-bit alpha channel",
+    "row-filter decoding",
+    "transparent pixel ratio",
+    "transparent corners",
+    "detached alpha components",
+    "edge-touching fragment detection"
+  ],
+  "home_art": [
+    {
+      "file": "rest_day_male_v2.png",
+      "width": 1672,
+      "height": 941,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.786413,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 50,
+      "sha256": "c3d5b6e3e15b24c9492b5e649b02c61a244e02d983f8727fdc0c407958dafdc9"
+    },
+    {
+      "file": "rest_day_female_v2.png",
+      "width": 1672,
+      "height": 941,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.755981,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 50,
+      "sha256": "b262836b24f50bc35e7c2c2b3e6f8d2901ad304f89ec466a4e0cf347f91e77f1"
+    }
+  ],
+  "group_art": [
+    {
+      "gender": "male",
+      "file": "arms.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.767481,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "8e1da8e67d84882eec5e01b40eac36c2e5783ac2e885a3fe1942ffe3c3b32568"
+    },
+    {
+      "gender": "male",
+      "file": "back.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.754868,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "7413c5e6834b4219ad2c9aa115f4a10e0663efe68c87ab73e7d7c786d1158aea"
+    },
+    {
+      "gender": "male",
+      "file": "cardio.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.784678,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 13,
+      "sha256": "c791ce4aee2545832a9257214cb10eb949384a552ab3208e0e06eabaf1c75010"
+    },
+    {
+      "gender": "male",
+      "file": "chest.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.770411,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "79ff618930de0dad115a7b9c61f9ce81df7a5356eeb4821a588655948308e55c"
+    },
+    {
+      "gender": "male",
+      "file": "core.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.793823,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "972d0cb3e21e1b04df28dba0f4402d01413f338ad5f9db128da49aa42cb44811"
+    },
+    {
+      "gender": "male",
+      "file": "full_body.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.790782,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "fef6ef3f055a0b8c1ff353569cb733b3633cd7b37f9568334f6227fa276fca0a"
+    },
+    {
+      "gender": "male",
+      "file": "legs.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.790263,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "5377f441aea7f2b32f6987efd825a40960bc1fdd05a78f6b41c96b3a754975af"
+    },
+    {
+      "gender": "male",
+      "file": "shoulders.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.773814,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "67152e420d6a063467b7be8182d3024001effa5545293d2625cb45898c616b8d"
+    },
+    {
+      "gender": "female",
+      "file": "arms.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.784383,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "2c657176da164ab4841ce4f6dc08c72bd36f8e25fbe1fbac603cf4fd860df663"
+    },
+    {
+      "gender": "female",
+      "file": "back.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.781102,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "e5ce9a456189fe29b424b1d7b047b386a981ddaaedef3887919a56d504e78693"
+    },
+    {
+      "gender": "female",
+      "file": "cardio.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.777669,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 13,
+      "sha256": "b2ac67f8f9231d624b4decbd73eb63eba6492b353740f7eaf4478a67222e82fb"
+    },
+    {
+      "gender": "female",
+      "file": "chest.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.784617,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "402bf32583cf1e966e8248e11d816885dbd4d46755ed967ac4b64cd8a244364f"
+    },
+    {
+      "gender": "female",
+      "file": "core.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.794281,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "95c622637e533d5989073211ca1325a442e360a5c64f2d0e7c81c89a0ad4db8f"
+    },
+    {
+      "gender": "female",
+      "file": "full_body.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.792572,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "5c86b9ef72d0ea8be619f8993b08caea86e3df1e7332ff547fef1b9c102ae1c1"
+    },
+    {
+      "gender": "female",
+      "file": "legs.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.793009,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "a3ee8fa73d1d25ed55363a3d68c6179eac9adceb75c53101644ddd83686d78f3"
+    },
+    {
+      "gender": "female",
+      "file": "shoulders.png",
+      "width": 384,
+      "height": 512,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.781581,
+      "transparentCorners": true,
+      "alphaComponentCount": 1,
+      "detachedArtifactCount": 0,
+      "chunkCount": 12,
+      "sha256": "ac553e0c85e242cc4b592fc79521a6d3431a750c9a58fb1647de23890cf3ab2b"
+    }
+  ],
+  "runtime_mappings": [
+    {
+      "slug": "assisted-pull-up",
+      "name": "Assisted Pull-Up",
+      "key": "pull_up",
+      "exact": true,
+      "male": "assets/train_v3/male/assisted_pull_up_band_v2.png",
+      "female": "assets/train_v3/female/assisted_pull_up_band_v2.png"
+    },
+    {
+      "slug": "assisted-pull-up-machine",
+      "name": "Assisted Pull-Up Machine",
+      "key": "pull_up",
+      "exact": true,
+      "male": "assets/train_v3/male/assisted_pull_up_machine_v2.png",
+      "female": "assets/train_v3/female/assisted_pull_up_machine_v2.png"
+    },
+    {
+      "slug": "australian-row",
+      "name": "Australian Row",
+      "key": "inverted_row",
+      "exact": true,
+      "male": "assets/train_v3/male/australian_row_v2.png",
+      "female": "assets/train_v3/female/australian_row_v2.png"
+    },
+    {
+      "slug": "back-extension",
+      "name": "Back Extension",
+      "key": "back_extension",
+      "exact": true,
+      "male": "assets/train_v3/male/back_extension.png",
+      "female": "assets/train_v3/female/back_extension.png"
+    },
+    {
+      "slug": "barbell-row",
+      "name": "Barbell Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/barbell_row.png",
+      "female": "assets/train_v3/female/barbell_row.png"
+    },
+    {
+      "slug": "barbell-shrug",
+      "name": "Barbell Shrug",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/barbell_shrug_v2.png",
+      "female": "assets/train_v3/female/barbell_shrug_v2.png"
+    },
+    {
+      "slug": "chest-supported-row",
+      "name": "Chest Supported Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/chest_supported_row_v2.png",
+      "female": "assets/train_v3/female/chest_supported_row_v2.png"
+    },
+    {
+      "slug": "chin-up",
+      "name": "Chin-Up",
+      "key": "pull_up",
+      "exact": true,
+      "male": "assets/train_v3/male/chin_up_v2.png",
+      "female": "assets/train_v3/female/chin_up_v2.png"
+    },
+    {
+      "slug": "dumbbell-shrug",
+      "name": "Dumbbell Shrug",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_shrug_v2.png",
+      "female": "assets/train_v3/female/dumbbell_shrug_v2.png"
+    },
+    {
+      "slug": "good-morning",
+      "name": "Good Morning",
+      "key": "good_morning",
+      "exact": true,
+      "male": "assets/train_v3/male/good_morning.png",
+      "female": "assets/train_v3/female/good_morning.png"
+    },
+    {
+      "slug": "inverted-row",
+      "name": "Inverted Row",
+      "key": "inverted_row",
+      "exact": true,
+      "male": "assets/train_v3/male/inverted_row.png",
+      "female": "assets/train_v3/female/inverted_row.png"
+    },
+    {
+      "slug": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "key": "lat_pulldown",
+      "exact": true,
+      "male": "assets/train_v3/male/lat_pulldown.png",
+      "female": "assets/train_v3/female/lat_pulldown.png"
+    },
+    {
+      "slug": "lat-pulldown-machine",
+      "name": "Lat Pulldown Machine",
+      "key": "lat_pulldown",
+      "exact": true,
+      "male": "assets/train_v3/male/lat_pulldown_machine_v2.png",
+      "female": "assets/train_v3/female/lat_pulldown_machine_v2.png"
+    },
+    {
+      "slug": "machine-row",
+      "name": "Machine Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/machine_row_v2.png",
+      "female": "assets/train_v3/female/machine_row_v2.png"
+    },
+    {
+      "slug": "medicine-ball-throws",
+      "name": "Medicine Ball Throws",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/medicine_ball_throws_v2.png",
+      "female": "assets/train_v3/female/medicine_ball_throws_v2.png"
+    },
+    {
+      "slug": "neutral-grip-pull-up",
+      "name": "Neutral Grip Pull-Up",
+      "key": "pull_up",
+      "exact": true,
+      "male": "assets/train_v3/male/neutral_grip_pull_up_v2.png",
+      "female": "assets/train_v3/female/neutral_grip_pull_up_v2.png"
+    },
+    {
+      "slug": "one-arm-dumbbell-row",
+      "name": "One-Arm Dumbbell Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/one_arm_dumbbell_row_v2.png",
+      "female": "assets/train_v3/female/one_arm_dumbbell_row_v2.png"
+    },
+    {
+      "slug": "pendlay-row",
+      "name": "Pendlay Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/pendlay_row_v2.png",
+      "female": "assets/train_v3/female/pendlay_row_v2.png"
+    },
+    {
+      "slug": "pull-up",
+      "name": "Pull-Up",
+      "key": "pull_up",
+      "exact": true,
+      "male": "assets/train_v3/male/pull_up.png",
+      "female": "assets/train_v3/female/pull_up.png"
+    },
+    {
+      "slug": "seated-cable-row",
+      "name": "Seated Cable Row",
+      "key": "seated_cable_row",
+      "exact": true,
+      "male": "assets/train_v3/male/seated_cable_row.png",
+      "female": "assets/train_v3/female/seated_cable_row.png"
+    },
+    {
+      "slug": "seated-row-machine",
+      "name": "Seated Row Machine",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/seated_row_machine_v2.png",
+      "female": "assets/train_v3/female/seated_row_machine_v2.png"
+    },
+    {
+      "slug": "straight-arm-pulldown",
+      "name": "Straight Arm Pulldown",
+      "key": "seated_cable_row",
+      "exact": true,
+      "male": "assets/train_v3/male/straight_arm_pulldown_v2.png",
+      "female": "assets/train_v3/female/straight_arm_pulldown_v2.png"
+    },
+    {
+      "slug": "t-bar-row",
+      "name": "T-Bar Row",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/t_bar_row_v2.png",
+      "female": "assets/train_v3/female/t_bar_row_v2.png"
+    },
+    {
+      "slug": "trx-rows",
+      "name": "TRX Rows",
+      "key": "inverted_row",
+      "exact": true,
+      "male": "assets/train_v3/male/trx_rows_v2.png",
+      "female": "assets/train_v3/female/trx_rows_v2.png"
+    },
+    {
+      "slug": "trap-bar-shrug",
+      "name": "Trap Bar Shrug",
+      "key": "barbell_row",
+      "exact": true,
+      "male": "assets/train_v3/male/trap_bar_shrug_v2.png",
+      "female": "assets/train_v3/female/trap_bar_shrug_v2.png"
+    },
+    {
+      "slug": "alternating-dumbbell-curl",
+      "name": "Alternating Dumbbell Curl",
+      "key": "alternating_dumbbell_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/alternating_dumbbell_curl.png",
+      "female": "assets/train_v3/female/alternating_dumbbell_curl.png"
+    },
+    {
+      "slug": "barbell-curl",
+      "name": "Barbell Curl",
+      "key": "barbell_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/barbell_curl.png",
+      "female": "assets/train_v3/female/barbell_curl.png"
+    },
+    {
+      "slug": "bayesian-curl",
+      "name": "Bayesian Curl",
+      "key": "bayesian_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/bayesian_curl.png",
+      "female": "assets/train_v3/female/bayesian_curl.png"
+    },
+    {
+      "slug": "cable-curl",
+      "name": "Cable Curl",
+      "key": "cable_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_curl.png",
+      "female": "assets/train_v3/female/cable_curl.png"
+    },
+    {
+      "slug": "concentration-curl",
+      "name": "Concentration Curl",
+      "key": "concentration_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/concentration_curl.png",
+      "female": "assets/train_v3/female/concentration_curl.png"
+    },
+    {
+      "slug": "dumbbell-curl",
+      "name": "Dumbbell Curl",
+      "key": "dumbbell_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_curl.png",
+      "female": "assets/train_v3/female/dumbbell_curl.png"
+    },
+    {
+      "slug": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "key": "ez_bar_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/ez_bar_curl.png",
+      "female": "assets/train_v3/female/ez_bar_curl.png"
+    },
+    {
+      "slug": "hammer-curl",
+      "name": "Hammer Curl",
+      "key": "hammer_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/hammer_curl.png",
+      "female": "assets/train_v3/female/hammer_curl.png"
+    },
+    {
+      "slug": "incline-dumbbell-curl",
+      "name": "Incline Dumbbell Curl",
+      "key": "incline_dumbbell_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/incline_dumbbell_curl.png",
+      "female": "assets/train_v3/female/incline_dumbbell_curl.png"
+    },
+    {
+      "slug": "preacher-curl",
+      "name": "Preacher Curl",
+      "key": "preacher_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/preacher_curl.png",
+      "female": "assets/train_v3/female/preacher_curl.png"
+    },
+    {
+      "slug": "reverse-curl",
+      "name": "Reverse Curl",
+      "key": "reverse_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/reverse_curl.png",
+      "female": "assets/train_v3/female/reverse_curl.png"
+    },
+    {
+      "slug": "spider-curl",
+      "name": "Spider Curl",
+      "key": "spider_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/spider_curl.png",
+      "female": "assets/train_v3/female/spider_curl.png"
+    },
+    {
+      "slug": "zottman-curl",
+      "name": "Zottman Curl",
+      "key": "zottman_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/zottman_curl.png",
+      "female": "assets/train_v3/female/zottman_curl.png"
+    },
+    {
+      "slug": "outdoor-running",
+      "name": "Outdoor Running",
+      "key": "outdoor_running",
+      "exact": true,
+      "male": "assets/train_v3/male/outdoor_running.png",
+      "female": "assets/train_v3/female/outdoor_running.png"
+    },
+    {
+      "slug": "treadmill-running",
+      "name": "Treadmill Running",
+      "key": "treadmill_running",
+      "exact": true,
+      "male": "assets/train_v3/male/treadmill_running.png",
+      "female": "assets/train_v3/female/treadmill_running.png"
+    },
+    {
+      "slug": "outdoor-walking",
+      "name": "Outdoor Walking",
+      "key": "outdoor_walking",
+      "exact": true,
+      "male": "assets/train_v3/male/outdoor_walking.png",
+      "female": "assets/train_v3/female/outdoor_walking.png"
+    },
+    {
+      "slug": "treadmill-walking",
+      "name": "Treadmill Walking",
+      "key": "treadmill_walking",
+      "exact": true,
+      "male": "assets/train_v3/male/treadmill_walking.png",
+      "female": "assets/train_v3/female/treadmill_walking.png"
+    },
+    {
+      "slug": "incline-treadmill-walking",
+      "name": "Incline Treadmill Walking",
+      "key": "incline_treadmill_walking",
+      "exact": true,
+      "male": "assets/train_v3/male/incline_treadmill_walking.png",
+      "female": "assets/train_v3/female/incline_treadmill_walking.png"
+    },
+    {
+      "slug": "outdoor-cycling",
+      "name": "Outdoor Cycling",
+      "key": "outdoor_cycling",
+      "exact": true,
+      "male": "assets/train_v3/male/outdoor_cycling.png",
+      "female": "assets/train_v3/female/outdoor_cycling.png"
+    },
+    {
+      "slug": "stationary-bike",
+      "name": "Stationary Bike",
+      "key": "stationary_bike",
+      "exact": true,
+      "male": "assets/train_v3/male/stationary_bike.png",
+      "female": "assets/train_v3/female/stationary_bike.png"
+    },
+    {
+      "slug": "air-bike",
+      "name": "Air Bike",
+      "key": "air_bike",
+      "exact": true,
+      "male": "assets/train_v3/male/air_bike.png",
+      "female": "assets/train_v3/female/air_bike.png"
+    },
+    {
+      "slug": "rowing-machine",
+      "name": "Rowing Machine",
+      "key": "rowing_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/rowing_machine.png",
+      "female": "assets/train_v3/female/rowing_machine.png"
+    },
+    {
+      "slug": "elliptical",
+      "name": "Elliptical",
+      "key": "elliptical",
+      "exact": true,
+      "male": "assets/train_v3/male/elliptical.png",
+      "female": "assets/train_v3/female/elliptical.png"
+    },
+    {
+      "slug": "stairmaster",
+      "name": "StairMaster",
+      "key": "stairmaster",
+      "exact": true,
+      "male": "assets/train_v3/male/stairmaster.png",
+      "female": "assets/train_v3/female/stairmaster.png"
+    },
+    {
+      "slug": "skierg",
+      "name": "SkiErg",
+      "key": "skierg",
+      "exact": true,
+      "male": "assets/train_v3/male/skierg.png",
+      "female": "assets/train_v3/female/skierg.png"
+    },
+    {
+      "slug": "jump-rope",
+      "name": "Jump Rope",
+      "key": "jump_rope",
+      "exact": true,
+      "male": "assets/train_v3/male/jump_rope.png",
+      "female": "assets/train_v3/female/jump_rope.png"
+    },
+    {
+      "slug": "versaclimber",
+      "name": "VersaClimber",
+      "key": "versaclimber",
+      "exact": true,
+      "male": "assets/train_v3/male/versaclimber.png",
+      "female": "assets/train_v3/female/versaclimber.png"
+    },
+    {
+      "slug": "swimming",
+      "name": "Swimming",
+      "key": "swimming",
+      "exact": true,
+      "male": "assets/train_v3/male/swimming.png",
+      "female": "assets/train_v3/female/swimming.png"
+    },
+    {
+      "slug": "archer-push-up",
+      "name": "Archer Push-Up",
+      "key": "archer_push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/archer_push_up.png",
+      "female": "assets/train_v3/female/archer_push_up.png"
+    },
+    {
+      "slug": "barbell-bench-press",
+      "name": "Barbell Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/bench_press.png",
+      "female": "assets/train_v3/female/bench_press.png"
+    },
+    {
+      "slug": "bench-press",
+      "name": "Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/bench_press.png",
+      "female": "assets/train_v3/female/bench_press.png"
+    },
+    {
+      "slug": "cable-fly",
+      "name": "Cable Fly",
+      "key": "cable_chest_fly",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_chest_fly.png",
+      "female": "assets/train_v3/female/cable_chest_fly.png"
+    },
+    {
+      "slug": "chest-press-machine",
+      "name": "Chest Press Machine",
+      "key": "chest_press_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/chest_press_machine.png",
+      "female": "assets/train_v3/female/chest_press_machine.png"
+    },
+    {
+      "slug": "clap-push-up",
+      "name": "Clap Push-Up",
+      "key": "push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/clap_push_up_v2.png",
+      "female": "assets/train_v3/female/clap_push_up_v2.png"
+    },
+    {
+      "slug": "decline-bench-press",
+      "name": "Decline Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/decline_bench_press.png",
+      "female": "assets/train_v3/female/decline_bench_press.png"
+    },
+    {
+      "slug": "decline-dumbbell-press",
+      "name": "Decline Dumbbell Press",
+      "key": "incline_dumbbell_press",
+      "exact": true,
+      "male": "assets/train_v3/male/decline_dumbbell_press.png",
+      "female": "assets/train_v3/female/decline_dumbbell_press.png"
+    },
+    {
+      "slug": "decline-push-up",
+      "name": "Decline Push-Up",
+      "key": "push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/decline_push_up.png",
+      "female": "assets/train_v3/female/decline_push_up.png"
+    },
+    {
+      "slug": "diamond-push-up",
+      "name": "Diamond Push-Up",
+      "key": "diamond_push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/diamond_push_up.png",
+      "female": "assets/train_v3/female/diamond_push_up.png"
+    },
+    {
+      "slug": "dips",
+      "name": "Dips",
+      "key": "dips",
+      "exact": true,
+      "male": "assets/train_v3/male/dips.png",
+      "female": "assets/train_v3/female/dips.png"
+    },
+    {
+      "slug": "dumbbell-bench-press",
+      "name": "Dumbbell Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_bench_press.png",
+      "female": "assets/train_v3/female/dumbbell_bench_press.png"
+    },
+    {
+      "slug": "dumbbell-floor-press",
+      "name": "Dumbbell Floor Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_floor_press_v2.png",
+      "female": "assets/train_v3/female/dumbbell_floor_press_v2.png"
+    },
+    {
+      "slug": "dumbbell-fly",
+      "name": "Dumbbell Fly",
+      "key": "incline_dumbbell_press",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_fly_v2.png",
+      "female": "assets/train_v3/female/dumbbell_fly_v2.png"
+    },
+    {
+      "slug": "dumbbell-pullover",
+      "name": "Dumbbell Pullover",
+      "key": "incline_dumbbell_press",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_pullover_v2.png",
+      "female": "assets/train_v3/female/dumbbell_pullover_v2.png"
+    },
+    {
+      "slug": "high-to-low-cable-fly",
+      "name": "High-to-Low Cable Fly",
+      "key": "cable_chest_fly",
+      "exact": true,
+      "male": "assets/train_v3/male/high_to_low_cable_fly_v2.png",
+      "female": "assets/train_v3/female/high_to_low_cable_fly_v2.png"
+    },
+    {
+      "slug": "incline-barbell-bench-press",
+      "name": "Incline Barbell Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/incline_barbell_bench_press_v2.png",
+      "female": "assets/train_v3/female/incline_barbell_bench_press_v2.png"
+    },
+    {
+      "slug": "incline-bench-press",
+      "name": "Incline Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/incline_bench_press_v2.png",
+      "female": "assets/train_v3/female/incline_bench_press_v2.png"
+    },
+    {
+      "slug": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "key": "incline_dumbbell_press",
+      "exact": true,
+      "male": "assets/train_v3/male/incline_dumbbell_press.png",
+      "female": "assets/train_v3/female/incline_dumbbell_press.png"
+    },
+    {
+      "slug": "low-to-high-cable-fly",
+      "name": "Low-to-High Cable Fly",
+      "key": "cable_chest_fly",
+      "exact": true,
+      "male": "assets/train_v3/male/low_to_high_cable_fly_v2.png",
+      "female": "assets/train_v3/female/low_to_high_cable_fly_v2.png"
+    },
+    {
+      "slug": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "key": "chest_press_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/chest_press_machine.png",
+      "female": "assets/train_v3/female/chest_press_machine.png"
+    },
+    {
+      "slug": "pec-deck",
+      "name": "Pec Deck",
+      "key": "chest_press_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/pec_deck_v2.png",
+      "female": "assets/train_v3/female/pec_deck_v2.png"
+    },
+    {
+      "slug": "pec-deck-fly",
+      "name": "Pec Deck Fly",
+      "key": "chest_press_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/pec_deck_fly_v2.png",
+      "female": "assets/train_v3/female/pec_deck_fly_v2.png"
+    },
+    {
+      "slug": "push-up",
+      "name": "Push-Up",
+      "key": "push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/push_up.png",
+      "female": "assets/train_v3/female/push_up.png"
+    },
+    {
+      "slug": "trx-push-ups",
+      "name": "TRX Push-Ups",
+      "key": "trx_push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/trx_push_up.png",
+      "female": "assets/train_v3/female/trx_push_up.png"
+    },
+    {
+      "slug": "weighted-push-up",
+      "name": "Weighted Push-Up",
+      "key": "push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/weighted_push_up_v2.png",
+      "female": "assets/train_v3/female/weighted_push_up_v2.png"
+    },
+    {
+      "slug": "ab-wheel-rollout",
+      "name": "Ab Wheel Rollout",
+      "key": "ab_wheel",
+      "exact": true,
+      "male": "assets/train_v3/male/ab_wheel_rollout_v2.png",
+      "female": "assets/train_v3/female/ab_wheel_rollout_v2.png"
+    },
+    {
+      "slug": "bicycle-crunch",
+      "name": "Bicycle Crunch",
+      "key": "bicycle_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/bicycle_crunches_v2.png",
+      "female": "assets/train_v3/female/bicycle_crunches_v2.png"
+    },
+    {
+      "slug": "bird-dog",
+      "name": "Bird Dog",
+      "key": "bird_dog",
+      "exact": true,
+      "male": "assets/train_v3/male/bird_dog.png",
+      "female": "assets/train_v3/female/bird_dog.png"
+    },
+    {
+      "slug": "cable-crunch",
+      "name": "Cable Crunch",
+      "key": "cable_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_crunch.png",
+      "female": "assets/train_v3/female/cable_crunch.png"
+    },
+    {
+      "slug": "cable-wood-chop",
+      "name": "Cable Wood Chop",
+      "key": "cable_wood_chop",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_wood_chop.png",
+      "female": "assets/train_v3/female/cable_wood_chop.png"
+    },
+    {
+      "slug": "crunch",
+      "name": "Crunch",
+      "key": "bicycle_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/crunch_v2.png",
+      "female": "assets/train_v3/female/crunch_v2.png"
+    },
+    {
+      "slug": "dead-bug",
+      "name": "Dead Bug",
+      "key": "bird_dog",
+      "exact": true,
+      "male": "assets/train_v3/male/dead_bug_v2.png",
+      "female": "assets/train_v3/female/dead_bug_v2.png"
+    },
+    {
+      "slug": "decline-sit-up",
+      "name": "Decline Sit-Up",
+      "key": "bicycle_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/decline_sit_up_v2.png",
+      "female": "assets/train_v3/female/decline_sit_up_v2.png"
+    },
+    {
+      "slug": "hanging-knee-raise",
+      "name": "Hanging Knee Raise",
+      "key": "hanging_leg_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/hanging_knee_raise_v2.png",
+      "female": "assets/train_v3/female/hanging_knee_raise_v2.png"
+    },
+    {
+      "slug": "hanging-leg-raise",
+      "name": "Hanging Leg Raise",
+      "key": "hanging_leg_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/hanging_leg_raise.png",
+      "female": "assets/train_v3/female/hanging_leg_raise.png"
+    },
+    {
+      "slug": "hollow-hold",
+      "name": "Hollow Hold",
+      "key": "plank",
+      "exact": true,
+      "male": "assets/train_v3/male/hollow_hold_v2.png",
+      "female": "assets/train_v3/female/hollow_hold_v2.png"
+    },
+    {
+      "slug": "lying-leg-raise",
+      "name": "Lying Leg Raise",
+      "key": "hanging_leg_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/lying_leg_raise_v2.png",
+      "female": "assets/train_v3/female/lying_leg_raise_v2.png"
+    },
+    {
+      "slug": "pallof-press",
+      "name": "Pallof Press",
+      "key": "cable_wood_chop",
+      "exact": true,
+      "male": "assets/train_v3/male/pallof_press_v2.png",
+      "female": "assets/train_v3/female/pallof_press_v2.png"
+    },
+    {
+      "slug": "plank",
+      "name": "Plank",
+      "key": "plank",
+      "exact": true,
+      "male": "assets/train_v3/male/plank.png",
+      "female": "assets/train_v3/female/plank.png"
+    },
+    {
+      "slug": "reverse-crunch",
+      "name": "Reverse Crunch",
+      "key": "bicycle_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/reverse_crunch_v2.png",
+      "female": "assets/train_v3/female/reverse_crunch_v2.png"
+    },
+    {
+      "slug": "russian-twist",
+      "name": "Russian Twist",
+      "key": "russian_twist",
+      "exact": true,
+      "male": "assets/train_v3/male/russian_twist.png",
+      "female": "assets/train_v3/female/russian_twist.png"
+    },
+    {
+      "slug": "side-plank",
+      "name": "Side Plank",
+      "key": "side_plank",
+      "exact": true,
+      "male": "assets/train_v3/male/side_plank.png",
+      "female": "assets/train_v3/female/side_plank.png"
+    },
+    {
+      "slug": "sit-up",
+      "name": "Sit-Up",
+      "key": "bicycle_crunch",
+      "exact": true,
+      "male": "assets/train_v3/male/sit_up_v2.png",
+      "female": "assets/train_v3/female/sit_up_v2.png"
+    },
+    {
+      "slug": "toes-to-bar",
+      "name": "Toes-to-Bar",
+      "key": "hanging_leg_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/toes_to_bar_v2.png",
+      "female": "assets/train_v3/female/toes_to_bar_v2.png"
+    },
+    {
+      "slug": "v-ups",
+      "name": "V-Ups",
+      "key": "hanging_leg_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/v_ups_v2.png",
+      "female": "assets/train_v3/female/v_ups_v2.png"
+    },
+    {
+      "slug": "windshield-wipers",
+      "name": "Windshield Wipers",
+      "key": "russian_twist",
+      "exact": true,
+      "male": "assets/train_v3/male/windshield_wipers_v2.png",
+      "female": "assets/train_v3/female/windshield_wipers_v2.png"
+    },
+    {
+      "slug": "dead-hang",
+      "name": "Dead Hang",
+      "key": "plate_pinch_hold",
+      "exact": true,
+      "male": "assets/train_v3/male/dead_hang_v2.png",
+      "female": "assets/train_v3/female/dead_hang_v2.png"
+    },
+    {
+      "slug": "plate-pinch-hold",
+      "name": "Plate Pinch Hold",
+      "key": "plate_pinch_hold",
+      "exact": true,
+      "male": "assets/train_v3/male/plate_pinch_hold.png",
+      "female": "assets/train_v3/female/plate_pinch_hold.png"
+    },
+    {
+      "slug": "reverse-wrist-curl",
+      "name": "Reverse Wrist Curl",
+      "key": "reverse_wrist_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/reverse_wrist_curl.png",
+      "female": "assets/train_v3/female/reverse_wrist_curl.png"
+    },
+    {
+      "slug": "wrist-curl",
+      "name": "Wrist Curl",
+      "key": "wrist_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/wrist_curl.png",
+      "female": "assets/train_v3/female/wrist_curl.png"
+    },
+    {
+      "slug": "agility-ladder",
+      "name": "Agility Ladder",
+      "key": "agility_ladder",
+      "exact": true,
+      "male": "assets/train_v3/male/agility_ladder.png",
+      "female": "assets/train_v3/female/agility_ladder.png"
+    },
+    {
+      "slug": "atlas-stone-lift",
+      "name": "Atlas Stone Lift",
+      "key": "atlas_stone",
+      "exact": true,
+      "male": "assets/train_v3/male/atlas_stone_lift_v2.png",
+      "female": "assets/train_v3/female/atlas_stone_lift_v2.png"
+    },
+    {
+      "slug": "battle-ropes",
+      "name": "Battle Ropes",
+      "key": "battle_ropes",
+      "exact": true,
+      "male": "assets/train_v3/male/battle_ropes.png",
+      "female": "assets/train_v3/female/battle_ropes.png"
+    },
+    {
+      "slug": "bear-crawl",
+      "name": "Bear Crawl",
+      "key": "bear_crawl",
+      "exact": true,
+      "male": "assets/train_v3/male/bear_crawl.png",
+      "female": "assets/train_v3/female/bear_crawl.png"
+    },
+    {
+      "slug": "bounding",
+      "name": "Bounding",
+      "key": "agility_ladder",
+      "exact": true,
+      "male": "assets/train_v3/male/bounding_v2.png",
+      "female": "assets/train_v3/female/bounding_v2.png"
+    },
+    {
+      "slug": "box-jump",
+      "name": "Box Jump",
+      "key": "box_jump",
+      "exact": true,
+      "male": "assets/train_v3/male/box_jump.png",
+      "female": "assets/train_v3/female/box_jump.png"
+    },
+    {
+      "slug": "broad-jump",
+      "name": "Broad Jump",
+      "key": "agility_ladder",
+      "exact": true,
+      "male": "assets/train_v3/male/broad_jump_v2.png",
+      "female": "assets/train_v3/female/broad_jump_v2.png"
+    },
+    {
+      "slug": "burpees",
+      "name": "Burpees",
+      "key": "bear_crawl",
+      "exact": true,
+      "male": "assets/train_v3/male/burpees_v2.png",
+      "female": "assets/train_v3/female/burpees_v2.png"
+    },
+    {
+      "slug": "cable-pull-through",
+      "name": "Cable Pull-Through",
+      "key": "cable_pull_through",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_pull_through.png",
+      "female": "assets/train_v3/female/cable_pull_through.png"
+    },
+    {
+      "slug": "clean",
+      "name": "Clean",
+      "key": "power_clean",
+      "exact": true,
+      "male": "assets/train_v3/male/clean_v2.png",
+      "female": "assets/train_v3/female/clean_v2.png"
+    },
+    {
+      "slug": "clean-and-jerk",
+      "name": "Clean and Jerk",
+      "key": "clean_and_jerk",
+      "exact": true,
+      "male": "assets/train_v3/male/clean_and_jerk.png",
+      "female": "assets/train_v3/female/clean_and_jerk.png"
+    },
+    {
+      "slug": "crab-walk",
+      "name": "Crab Walk",
+      "key": "bear_crawl",
+      "exact": true,
+      "male": "assets/train_v3/male/crab_walk_v2.png",
+      "female": "assets/train_v3/female/crab_walk_v2.png"
+    },
+    {
+      "slug": "depth-jump",
+      "name": "Depth Jump",
+      "key": "agility_ladder",
+      "exact": true,
+      "male": "assets/train_v3/male/depth_jump_v2.png",
+      "female": "assets/train_v3/female/depth_jump_v2.png"
+    },
+    {
+      "slug": "farmer-s-carry",
+      "name": "Farmer's Carry",
+      "key": "farmer_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/farmer_s_carry_v2.png",
+      "female": "assets/train_v3/female/farmer_s_carry_v2.png"
+    },
+    {
+      "slug": "farmer-s-walk",
+      "name": "Farmer's Walk",
+      "key": "farmer_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/farmer_s_walk_v2.png",
+      "female": "assets/train_v3/female/farmer_s_walk_v2.png"
+    },
+    {
+      "slug": "front-rack-carry",
+      "name": "Front Rack Carry",
+      "key": "front_rack_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/front_rack_carry.png",
+      "female": "assets/train_v3/female/front_rack_carry.png"
+    },
+    {
+      "slug": "halo",
+      "name": "Halo",
+      "key": "kettlebell_halo",
+      "exact": true,
+      "male": "assets/train_v3/male/halo_v2.png",
+      "female": "assets/train_v3/female/halo_v2.png"
+    },
+    {
+      "slug": "hang-clean",
+      "name": "Hang Clean",
+      "key": "power_clean",
+      "exact": true,
+      "male": "assets/train_v3/male/hang_clean_v2.png",
+      "female": "assets/train_v3/female/hang_clean_v2.png"
+    },
+    {
+      "slug": "hip-abductor-machine",
+      "name": "Hip Abductor Machine",
+      "key": "hip_abductor_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/hip_abductor_machine.png",
+      "female": "assets/train_v3/female/hip_abductor_machine.png"
+    },
+    {
+      "slug": "hip-adductor-machine",
+      "name": "Hip Adductor Machine",
+      "key": "hip_adductor_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/hip_adductor_machine.png",
+      "female": "assets/train_v3/female/hip_adductor_machine.png"
+    },
+    {
+      "slug": "kettlebell-clean",
+      "name": "Kettlebell Clean",
+      "key": "kettlebell_clean",
+      "exact": true,
+      "male": "assets/train_v3/male/kettlebell_clean.png",
+      "female": "assets/train_v3/female/kettlebell_clean.png"
+    },
+    {
+      "slug": "kettlebell-press",
+      "name": "Kettlebell Press",
+      "key": "kettlebell_press",
+      "exact": true,
+      "male": "assets/train_v3/male/kettlebell_press.png",
+      "female": "assets/train_v3/female/kettlebell_press.png"
+    },
+    {
+      "slug": "kettlebell-snatch",
+      "name": "Kettlebell Snatch",
+      "key": "kettlebell_snatch",
+      "exact": true,
+      "male": "assets/train_v3/male/kettlebell_snatch.png",
+      "female": "assets/train_v3/female/kettlebell_snatch.png"
+    },
+    {
+      "slug": "log-press",
+      "name": "Log Press",
+      "key": "log_press",
+      "exact": true,
+      "male": "assets/train_v3/male/log_press.png",
+      "female": "assets/train_v3/female/log_press.png"
+    },
+    {
+      "slug": "medicine-ball-chest-pass",
+      "name": "Medicine Ball Chest Pass",
+      "key": "medicine_ball_chest_pass",
+      "exact": true,
+      "male": "assets/train_v3/male/medicine_ball_chest_pass.png",
+      "female": "assets/train_v3/female/medicine_ball_chest_pass.png"
+    },
+    {
+      "slug": "medicine-ball-slam",
+      "name": "Medicine Ball Slam",
+      "key": "medicine_ball_slam",
+      "exact": true,
+      "male": "assets/train_v3/male/medicine_ball_slam.png",
+      "female": "assets/train_v3/female/medicine_ball_slam.png"
+    },
+    {
+      "slug": "mountain-climbers",
+      "name": "Mountain Climbers",
+      "key": "bear_crawl",
+      "exact": true,
+      "male": "assets/train_v3/male/mountain_climbers_v2.png",
+      "female": "assets/train_v3/female/mountain_climbers_v2.png"
+    },
+    {
+      "slug": "muscle-up",
+      "name": "Muscle-Up",
+      "key": "muscle_up",
+      "exact": true,
+      "male": "assets/train_v3/male/muscle_up.png",
+      "female": "assets/train_v3/female/muscle_up.png"
+    },
+    {
+      "slug": "overhead-carry",
+      "name": "Overhead Carry",
+      "key": "overhead_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/overhead_carry.png",
+      "female": "assets/train_v3/female/overhead_carry.png"
+    },
+    {
+      "slug": "power-clean",
+      "name": "Power Clean",
+      "key": "power_clean",
+      "exact": true,
+      "male": "assets/train_v3/male/power_clean.png",
+      "female": "assets/train_v3/female/power_clean.png"
+    },
+    {
+      "slug": "power-snatch",
+      "name": "Power Snatch",
+      "key": "snatch",
+      "exact": true,
+      "male": "assets/train_v3/male/power_snatch_v2.png",
+      "female": "assets/train_v3/female/power_snatch_v2.png"
+    },
+    {
+      "slug": "push-jerk",
+      "name": "Push Jerk",
+      "key": "clean_and_jerk",
+      "exact": true,
+      "male": "assets/train_v3/male/push_jerk_v2.png",
+      "female": "assets/train_v3/female/push_jerk_v2.png"
+    },
+    {
+      "slug": "sandbag-carries",
+      "name": "Sandbag Carries",
+      "key": "sandbag_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/sandbag_carries_v2.png",
+      "female": "assets/train_v3/female/sandbag_carries_v2.png"
+    },
+    {
+      "slug": "sandbag-carry",
+      "name": "Sandbag Carry",
+      "key": "sandbag_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/sandbag_carry.png",
+      "female": "assets/train_v3/female/sandbag_carry.png"
+    },
+    {
+      "slug": "skater-jumps",
+      "name": "Skater Jumps",
+      "key": "agility_ladder",
+      "exact": true,
+      "male": "assets/train_v3/male/skater_jumps_v2.png",
+      "female": "assets/train_v3/female/skater_jumps_v2.png"
+    },
+    {
+      "slug": "sled-pull",
+      "name": "Sled Pull",
+      "key": "sled_pull",
+      "exact": true,
+      "male": "assets/train_v3/male/sled_pull.png",
+      "female": "assets/train_v3/female/sled_pull.png"
+    },
+    {
+      "slug": "sled-push",
+      "name": "Sled Push",
+      "key": "sled_push",
+      "exact": true,
+      "male": "assets/train_v3/male/sled_push.png",
+      "female": "assets/train_v3/female/sled_push.png"
+    },
+    {
+      "slug": "smith-machine",
+      "name": "Smith Machine",
+      "key": "smith_machine_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/smith_machine_v2.png",
+      "female": "assets/train_v3/female/smith_machine_v2.png"
+    },
+    {
+      "slug": "snatch",
+      "name": "Snatch",
+      "key": "snatch",
+      "exact": true,
+      "male": "assets/train_v3/male/snatch.png",
+      "female": "assets/train_v3/female/snatch.png"
+    },
+    {
+      "slug": "split-jerk",
+      "name": "Split Jerk",
+      "key": "clean_and_jerk",
+      "exact": true,
+      "male": "assets/train_v3/male/split_jerk_v2.png",
+      "female": "assets/train_v3/female/split_jerk_v2.png"
+    },
+    {
+      "slug": "suitcase-carry",
+      "name": "Suitcase Carry",
+      "key": "suitcase_carry",
+      "exact": true,
+      "male": "assets/train_v3/male/suitcase_carry.png",
+      "female": "assets/train_v3/female/suitcase_carry.png"
+    },
+    {
+      "slug": "tire-flip",
+      "name": "Tire Flip",
+      "key": "tire_flip",
+      "exact": true,
+      "male": "assets/train_v3/male/tire_flip.png",
+      "female": "assets/train_v3/female/tire_flip.png"
+    },
+    {
+      "slug": "tire-flips",
+      "name": "Tire Flips",
+      "key": "tire_flip",
+      "exact": true,
+      "male": "assets/train_v3/male/tire_flips_v2.png",
+      "female": "assets/train_v3/female/tire_flips_v2.png"
+    },
+    {
+      "slug": "turkish-get-up",
+      "name": "Turkish Get-Up",
+      "key": "turkish_get_up",
+      "exact": true,
+      "male": "assets/train_v3/male/turkish_get_up.png",
+      "female": "assets/train_v3/female/turkish_get_up.png"
+    },
+    {
+      "slug": "windmill",
+      "name": "Windmill",
+      "key": "kettlebell_windmill",
+      "exact": true,
+      "male": "assets/train_v3/male/windmill_v2.png",
+      "female": "assets/train_v3/female/windmill_v2.png"
+    },
+    {
+      "slug": "yoke-walk",
+      "name": "Yoke Walk",
+      "key": "yoke_walk",
+      "exact": true,
+      "male": "assets/train_v3/male/yoke_walk.png",
+      "female": "assets/train_v3/female/yoke_walk.png"
+    },
+    {
+      "slug": "back-squat",
+      "name": "Back Squat",
+      "key": "back_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/back_squat.png",
+      "female": "assets/train_v3/female/back_squat.png"
+    },
+    {
+      "slug": "barbell-back-squat",
+      "name": "Barbell Back Squat",
+      "key": "back_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/back_squat.png",
+      "female": "assets/train_v3/female/back_squat.png"
+    },
+    {
+      "slug": "barbell-glute-bridge",
+      "name": "Barbell Glute Bridge",
+      "key": "hip_thrust",
+      "exact": true,
+      "male": "assets/train_v3/male/barbell_glute_bridge_v2.png",
+      "female": "assets/train_v3/female/barbell_glute_bridge_v2.png"
+    },
+    {
+      "slug": "bodyweight-squat",
+      "name": "Bodyweight Squat",
+      "key": "bodyweight_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/bodyweight_squat.png",
+      "female": "assets/train_v3/female/bodyweight_squat.png"
+    },
+    {
+      "slug": "bulgarian-split-squat",
+      "name": "Bulgarian Split Squat",
+      "key": "bulgarian_split_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/bulgarian_split_squat.png",
+      "female": "assets/train_v3/female/bulgarian_split_squat.png"
+    },
+    {
+      "slug": "cable-kickback",
+      "name": "Cable Kickback",
+      "key": "cable_glute_kickback",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_kickback_v2.png",
+      "female": "assets/train_v3/female/cable_kickback_v2.png"
+    },
+    {
+      "slug": "conventional-deadlift",
+      "name": "Conventional Deadlift",
+      "key": "conventional_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/conventional_deadlift.png",
+      "female": "assets/train_v3/female/conventional_deadlift.png"
+    },
+    {
+      "slug": "deadlift",
+      "name": "Deadlift",
+      "key": "conventional_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/deadlift_v2.png",
+      "female": "assets/train_v3/female/deadlift_v2.png"
+    },
+    {
+      "slug": "donkey-calf-raise",
+      "name": "Donkey Calf Raise",
+      "key": "donkey_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/donkey_calf_raise.png",
+      "female": "assets/train_v3/female/donkey_calf_raise.png"
+    },
+    {
+      "slug": "frog-pumps",
+      "name": "Frog Pumps",
+      "key": "hip_thrust",
+      "exact": true,
+      "male": "assets/train_v3/male/frog_pumps_v2.png",
+      "female": "assets/train_v3/female/frog_pumps_v2.png"
+    },
+    {
+      "slug": "front-squat",
+      "name": "Front Squat",
+      "key": "front_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/front_squat.png",
+      "female": "assets/train_v3/female/front_squat.png"
+    },
+    {
+      "slug": "glute-ham-raise",
+      "name": "Glute Ham Raise",
+      "key": "lying_leg_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/glute_ham_raise_v2.png",
+      "female": "assets/train_v3/female/glute_ham_raise_v2.png"
+    },
+    {
+      "slug": "goblet-squat",
+      "name": "Goblet Squat",
+      "key": "goblet_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/goblet_squat.png",
+      "female": "assets/train_v3/female/goblet_squat.png"
+    },
+    {
+      "slug": "hack-squat",
+      "name": "Hack Squat",
+      "key": "hack_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/hack_squat.png",
+      "female": "assets/train_v3/female/hack_squat.png"
+    },
+    {
+      "slug": "hack-squat-machine",
+      "name": "Hack Squat Machine",
+      "key": "hack_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/hack_squat_machine_v2.png",
+      "female": "assets/train_v3/female/hack_squat_machine_v2.png"
+    },
+    {
+      "slug": "hip-abduction-machine",
+      "name": "Hip Abduction Machine",
+      "key": "hip_abductor_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/hip_abduction_machine_v2.png",
+      "female": "assets/train_v3/female/hip_abduction_machine_v2.png"
+    },
+    {
+      "slug": "hip-thrust",
+      "name": "Hip Thrust",
+      "key": "hip_thrust",
+      "exact": true,
+      "male": "assets/train_v3/male/hip_thrust.png",
+      "female": "assets/train_v3/female/hip_thrust.png"
+    },
+    {
+      "slug": "jump-squat",
+      "name": "Jump Squat",
+      "key": "bodyweight_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/jump_squat_v2.png",
+      "female": "assets/train_v3/female/jump_squat_v2.png"
+    },
+    {
+      "slug": "kettlebell-swing",
+      "name": "Kettlebell Swing",
+      "key": "kettlebell_swing",
+      "exact": true,
+      "male": "assets/train_v3/male/kettlebell_swing.png",
+      "female": "assets/train_v3/female/kettlebell_swing.png"
+    },
+    {
+      "slug": "leg-extension",
+      "name": "Leg Extension",
+      "key": "leg_extension",
+      "exact": true,
+      "male": "assets/train_v3/male/leg_extension.png",
+      "female": "assets/train_v3/female/leg_extension.png"
+    },
+    {
+      "slug": "leg-press",
+      "name": "Leg Press",
+      "key": "leg_press",
+      "exact": true,
+      "male": "assets/train_v3/male/leg_press.png",
+      "female": "assets/train_v3/female/leg_press.png"
+    },
+    {
+      "slug": "leg-press-calf-raise",
+      "name": "Leg Press Calf Raise",
+      "key": "leg_press",
+      "exact": true,
+      "male": "assets/train_v3/male/leg_press_calf_raise_v2.png",
+      "female": "assets/train_v3/female/leg_press_calf_raise_v2.png"
+    },
+    {
+      "slug": "lying-leg-curl",
+      "name": "Lying Leg Curl",
+      "key": "lying_leg_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/lying_leg_curl.png",
+      "female": "assets/train_v3/female/lying_leg_curl.png"
+    },
+    {
+      "slug": "nordic-curl",
+      "name": "Nordic Curl",
+      "key": "lying_leg_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/nordic_curl_v2.png",
+      "female": "assets/train_v3/female/nordic_curl_v2.png"
+    },
+    {
+      "slug": "pistol-squat",
+      "name": "Pistol Squat",
+      "key": "walking_lunge",
+      "exact": true,
+      "male": "assets/train_v3/male/pistol_squat_v2.png",
+      "female": "assets/train_v3/female/pistol_squat_v2.png"
+    },
+    {
+      "slug": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "key": "romanian_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/romanian_deadlift.png",
+      "female": "assets/train_v3/female/romanian_deadlift.png"
+    },
+    {
+      "slug": "romanian-deadlift-rdl",
+      "name": "Romanian Deadlift (RDL)",
+      "key": "romanian_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/romanian_deadlift.png",
+      "female": "assets/train_v3/female/romanian_deadlift.png"
+    },
+    {
+      "slug": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "key": "seated_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/seated_calf_raise.png",
+      "female": "assets/train_v3/female/seated_calf_raise.png"
+    },
+    {
+      "slug": "seated-calf-raise-machine",
+      "name": "Seated Calf Raise Machine",
+      "key": "seated_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/seated_calf_raise_machine_v2.png",
+      "female": "assets/train_v3/female/seated_calf_raise_machine_v2.png"
+    },
+    {
+      "slug": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "key": "seated_leg_curl",
+      "exact": true,
+      "male": "assets/train_v3/male/seated_leg_curl.png",
+      "female": "assets/train_v3/female/seated_leg_curl.png"
+    },
+    {
+      "slug": "single-leg-calf-raise",
+      "name": "Single-Leg Calf Raise",
+      "key": "single_leg_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/single_leg_calf_raise.png",
+      "female": "assets/train_v3/female/single_leg_calf_raise.png"
+    },
+    {
+      "slug": "single-leg-hip-thrust",
+      "name": "Single-Leg Hip Thrust",
+      "key": "hip_thrust",
+      "exact": true,
+      "male": "assets/train_v3/male/single_leg_hip_thrust_v2.png",
+      "female": "assets/train_v3/female/single_leg_hip_thrust_v2.png"
+    },
+    {
+      "slug": "sissy-squat",
+      "name": "Sissy Squat",
+      "key": "bodyweight_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/sissy_squat_v2.png",
+      "female": "assets/train_v3/female/sissy_squat_v2.png"
+    },
+    {
+      "slug": "smith-machine-squat",
+      "name": "Smith Machine Squat",
+      "key": "smith_machine_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/smith_machine_squat.png",
+      "female": "assets/train_v3/female/smith_machine_squat.png"
+    },
+    {
+      "slug": "split-squat",
+      "name": "Split Squat",
+      "key": "bulgarian_split_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/split_squat_v2.png",
+      "female": "assets/train_v3/female/split_squat_v2.png"
+    },
+    {
+      "slug": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "key": "standing_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/standing_calf_raise.png",
+      "female": "assets/train_v3/female/standing_calf_raise.png"
+    },
+    {
+      "slug": "standing-calf-raise-machine",
+      "name": "Standing Calf Raise Machine",
+      "key": "standing_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/standing_calf_raise_machine_v2.png",
+      "female": "assets/train_v3/female/standing_calf_raise_machine_v2.png"
+    },
+    {
+      "slug": "step-up",
+      "name": "Step-Up",
+      "key": "walking_lunge",
+      "exact": true,
+      "male": "assets/train_v3/male/step_up_v2.png",
+      "female": "assets/train_v3/female/step_up_v2.png"
+    },
+    {
+      "slug": "stiff-leg-deadlift",
+      "name": "Stiff-Leg Deadlift",
+      "key": "romanian_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/stiff_leg_deadlift_v2.png",
+      "female": "assets/train_v3/female/stiff_leg_deadlift_v2.png"
+    },
+    {
+      "slug": "sumo-deadlift",
+      "name": "Sumo Deadlift",
+      "key": "sumo_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/sumo_deadlift.png",
+      "female": "assets/train_v3/female/sumo_deadlift.png"
+    },
+    {
+      "slug": "sumo-squat",
+      "name": "Sumo Squat",
+      "key": "sumo_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/sumo_squat_v2.png",
+      "female": "assets/train_v3/female/sumo_squat_v2.png"
+    },
+    {
+      "slug": "tibialis-raise",
+      "name": "Tibialis Raise",
+      "key": "single_leg_calf_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/tibialis_raise_v2.png",
+      "female": "assets/train_v3/female/tibialis_raise_v2.png"
+    },
+    {
+      "slug": "trap-bar-deadlift",
+      "name": "Trap Bar Deadlift",
+      "key": "trap_bar_deadlift",
+      "exact": true,
+      "male": "assets/train_v3/male/trap_bar_deadlift.png",
+      "female": "assets/train_v3/female/trap_bar_deadlift.png"
+    },
+    {
+      "slug": "walking-lunge",
+      "name": "Walking Lunge",
+      "key": "walking_lunge",
+      "exact": true,
+      "male": "assets/train_v3/male/walking_lunge.png",
+      "female": "assets/train_v3/female/walking_lunge.png"
+    },
+    {
+      "slug": "zercher-squat",
+      "name": "Zercher Squat",
+      "key": "front_squat",
+      "exact": true,
+      "male": "assets/train_v3/male/zercher_squat_v2.png",
+      "female": "assets/train_v3/female/zercher_squat_v2.png"
+    },
+    {
+      "slug": "arnold-press",
+      "name": "Arnold Press",
+      "key": "dumbbell_shoulder_press",
+      "exact": true,
+      "male": "assets/train_v3/male/arnold_press_v2.png",
+      "female": "assets/train_v3/female/arnold_press_v2.png"
+    },
+    {
+      "slug": "cable-front-raise",
+      "name": "Cable Front Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_front_raise_v2.png",
+      "female": "assets/train_v3/female/cable_front_raise_v2.png"
+    },
+    {
+      "slug": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "key": "cable_lateral_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_lateral_raise.png",
+      "female": "assets/train_v3/female/cable_lateral_raise.png"
+    },
+    {
+      "slug": "cable-rear-delt-fly",
+      "name": "Cable Rear Delt Fly",
+      "key": "cable_rear_delt_fly",
+      "exact": true,
+      "male": "assets/train_v3/male/cable_rear_delt_fly.png",
+      "female": "assets/train_v3/female/cable_rear_delt_fly.png"
+    },
+    {
+      "slug": "chest-supported-rear-delt-raise",
+      "name": "Chest Supported Rear Delt Raise",
+      "key": "dumbbell_shoulder_press",
+      "exact": true,
+      "male": "assets/train_v3/male/chest_supported_rear_delt_raise_v2.png",
+      "female": "assets/train_v3/female/chest_supported_rear_delt_raise_v2.png"
+    },
+    {
+      "slug": "dumbbell-lateral-raise",
+      "name": "Dumbbell Lateral Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_lateral_raise_v2.png",
+      "female": "assets/train_v3/female/dumbbell_lateral_raise_v2.png"
+    },
+    {
+      "slug": "dumbbell-shoulder-press",
+      "name": "Dumbbell Shoulder Press",
+      "key": "dumbbell_shoulder_press",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_shoulder_press.png",
+      "female": "assets/train_v3/female/dumbbell_shoulder_press.png"
+    },
+    {
+      "slug": "face-pull",
+      "name": "Face Pull",
+      "key": "face_pull",
+      "exact": true,
+      "male": "assets/train_v3/male/face_pull.png",
+      "female": "assets/train_v3/female/face_pull.png"
+    },
+    {
+      "slug": "front-raise",
+      "name": "Front Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/front_raise_v2.png",
+      "female": "assets/train_v3/female/front_raise_v2.png"
+    },
+    {
+      "slug": "handstand-push-up",
+      "name": "Handstand Push-Up",
+      "key": "handstand_push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/handstand_push_up.png",
+      "female": "assets/train_v3/female/handstand_push_up.png"
+    },
+    {
+      "slug": "landmine-press",
+      "name": "Landmine Press",
+      "key": "landmine_press",
+      "exact": true,
+      "male": "assets/train_v3/male/landmine_press.png",
+      "female": "assets/train_v3/female/landmine_press.png"
+    },
+    {
+      "slug": "leaning-lateral-raise",
+      "name": "Leaning Lateral Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/leaning_lateral_raise_v2.png",
+      "female": "assets/train_v3/female/leaning_lateral_raise_v2.png"
+    },
+    {
+      "slug": "machine-lateral-raise",
+      "name": "Machine Lateral Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/machine_lateral_raise_v2.png",
+      "female": "assets/train_v3/female/machine_lateral_raise_v2.png"
+    },
+    {
+      "slug": "military-press",
+      "name": "Military Press",
+      "key": "barbell_overhead_press",
+      "exact": true,
+      "male": "assets/train_v3/male/military_press_v2.png",
+      "female": "assets/train_v3/female/military_press_v2.png"
+    },
+    {
+      "slug": "overhead-press",
+      "name": "Overhead Press",
+      "key": "barbell_overhead_press",
+      "exact": true,
+      "male": "assets/train_v3/male/overhead_press_v2.png",
+      "female": "assets/train_v3/female/overhead_press_v2.png"
+    },
+    {
+      "slug": "pike-push-up",
+      "name": "Pike Push-Up",
+      "key": "push_up",
+      "exact": true,
+      "male": "assets/train_v3/male/pike_push_up_v2.png",
+      "female": "assets/train_v3/female/pike_push_up_v2.png"
+    },
+    {
+      "slug": "plate-raise",
+      "name": "Plate Raise",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/plate_raise_v2.png",
+      "female": "assets/train_v3/female/plate_raise_v2.png"
+    },
+    {
+      "slug": "push-press",
+      "name": "Push Press",
+      "key": "barbell_overhead_press",
+      "exact": true,
+      "male": "assets/train_v3/male/push_press_v2.png",
+      "female": "assets/train_v3/female/push_press_v2.png"
+    },
+    {
+      "slug": "rear-delt-fly",
+      "name": "Rear Delt Fly",
+      "key": "dumbbell_front_raise",
+      "exact": true,
+      "male": "assets/train_v3/male/rear_delt_fly_v2.png",
+      "female": "assets/train_v3/female/rear_delt_fly_v2.png"
+    },
+    {
+      "slug": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "key": "reverse_pec_deck",
+      "exact": true,
+      "male": "assets/train_v3/male/reverse_pec_deck.png",
+      "female": "assets/train_v3/female/reverse_pec_deck.png"
+    },
+    {
+      "slug": "shoulder-press-machine",
+      "name": "Shoulder Press Machine",
+      "key": "shoulder_press_machine",
+      "exact": true,
+      "male": "assets/train_v3/male/shoulder_press_machine.png",
+      "female": "assets/train_v3/female/shoulder_press_machine.png"
+    },
+    {
+      "slug": "upright-row",
+      "name": "Upright Row",
+      "key": "upright_row",
+      "exact": true,
+      "male": "assets/train_v3/male/upright_row.png",
+      "female": "assets/train_v3/female/upright_row.png"
+    },
+    {
+      "slug": "bench-dips",
+      "name": "Bench Dips",
+      "key": "dips",
+      "exact": true,
+      "male": "assets/train_v3/male/bench_dips_v2.png",
+      "female": "assets/train_v3/female/bench_dips_v2.png"
+    },
+    {
+      "slug": "close-grip-bench-press",
+      "name": "Close Grip Bench Press",
+      "key": "bench_press",
+      "exact": true,
+      "male": "assets/train_v3/male/close_grip_bench_press_v2.png",
+      "female": "assets/train_v3/female/close_grip_bench_press_v2.png"
+    },
+    {
+      "slug": "dumbbell-overhead-extension",
+      "name": "Dumbbell Overhead Extension",
+      "key": "dumbbell_overhead_extension",
+      "exact": true,
+      "male": "assets/train_v3/male/dumbbell_overhead_extension.png",
+      "female": "assets/train_v3/female/dumbbell_overhead_extension.png"
+    },
+    {
+      "slug": "ez-bar-skull-crushers",
+      "name": "EZ Bar Skull Crushers",
+      "key": "ez_bar_skull_crusher",
+      "exact": true,
+      "male": "assets/train_v3/male/ez_bar_skull_crusher.png",
+      "female": "assets/train_v3/female/ez_bar_skull_crusher.png"
+    },
+    {
+      "slug": "jm-press",
+      "name": "JM Press",
+      "key": "jm_press",
+      "exact": true,
+      "male": "assets/train_v3/male/jm_press.png",
+      "female": "assets/train_v3/female/jm_press.png"
+    },
+    {
+      "slug": "overhead-cable-extension",
+      "name": "Overhead Cable Extension",
+      "key": "overhead_cable_extension",
+      "exact": true,
+      "male": "assets/train_v3/male/overhead_cable_extension.png",
+      "female": "assets/train_v3/female/overhead_cable_extension.png"
+    },
+    {
+      "slug": "parallel-bar-dips",
+      "name": "Parallel Bar Dips",
+      "key": "dips",
+      "exact": true,
+      "male": "assets/train_v3/male/parallel_bar_dips_v2.png",
+      "female": "assets/train_v3/female/parallel_bar_dips_v2.png"
+    },
+    {
+      "slug": "rope-pushdown",
+      "name": "Rope Pushdown",
+      "key": "rope_pushdown",
+      "exact": true,
+      "male": "assets/train_v3/male/rope_pushdown.png",
+      "female": "assets/train_v3/female/rope_pushdown.png"
+    },
+    {
+      "slug": "skull-crushers",
+      "name": "Skull Crushers",
+      "key": "ez_bar_skull_crusher",
+      "exact": true,
+      "male": "assets/train_v3/male/skull_crushers_v2.png",
+      "female": "assets/train_v3/female/skull_crushers_v2.png"
+    },
+    {
+      "slug": "straight-bar-pushdown",
+      "name": "Straight Bar Pushdown",
+      "key": "rope_pushdown",
+      "exact": true,
+      "male": "assets/train_v3/male/straight_bar_pushdown_v2.png",
+      "female": "assets/train_v3/female/straight_bar_pushdown_v2.png"
+    },
+    {
+      "slug": "tricep-kickback",
+      "name": "Tricep Kickback",
+      "key": "triceps_kickback",
+      "exact": true,
+      "male": "assets/train_v3/male/triceps_kickback.png",
+      "female": "assets/train_v3/female/triceps_kickback.png"
+    },
+    {
+      "slug": "v-bar-pushdown",
+      "name": "V-Bar Pushdown",
+      "key": "rope_pushdown",
+      "exact": true,
+      "male": "assets/train_v3/male/v_bar_pushdown_v2.png",
+      "female": "assets/train_v3/female/v_bar_pushdown_v2.png"
+    }
+  ],
+  "release_ready": true,
+  "policy": "Every catalogue exercise must resolve at runtime to an approved male and female movement asset. All exercise, muscle-group, and Rest Day PNGs must pass decoded alpha, dimensions, integrity, parity, orphan-file, and duplicate checks before release."
+}
