@@ -7,7 +7,13 @@ import { Food, Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 import { barcodeFood, foodDetails, ProviderFoodSummary, searchFoods } from '../../lib/nutritionApi';
 import NutritionLibraryScreen from '../NutritionLibraryScreen';
-import { BookmarkIcon, CalendarIcon, DinnerIcon, FoodBowlIcon, FoodDiaryHeroIcon, LunchIcon, MealSearchIcon, RecentIcon, SavedMealsIcon, ScanIcon, SearchIcon, SnackIcon, SunMealIcon, WaterBottleIcon, WaterGlassIcon } from '../../components/FitHubIcons';
+import {
+  FreshBreakfastIcon, FreshCalendarIcon, FreshChevronIcon, FreshCloseIcon, FreshCopyIcon,
+  FreshDinnerIcon, FreshFoodJournalIcon, FreshLunchIcon, FreshMealBowlIcon,
+  FreshMoreIcon, FreshNutritionIcon, FreshPlusIcon, FreshRecentIcon,
+  FreshSavedIcon, FreshScanIcon, FreshSearchIcon, FreshSnackIcon,
+  FreshWaterGlassIcon, FreshWaterIcon,
+} from '../../components/FitHubFreshIcons';
 import { profileAge } from '../../lib/profileAge';
 
 const localKey = (value: string | Date) => {
@@ -170,7 +176,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
   };
 
   const scanBarcode=async({data,type}:{data:string;type?:string})=>{
-    if(scanned)return;setScanned(true);
+    if(locked||scanned)return;setScanned(true);
     try{const match=await barcodeFood(data,type);if(!match.provider_food_id)throw new Error('No verified match was found.');const selected=(match.food ?? (await foodDetails(String(match.provider_food_id))).food) as Food;setScannerOpen(false);setSelectedProviderFood(selected);setSelectedServingId(selected.serving_id??selected.available_servings?.[0]?.serving_id??null);setServingCount('1');}
     catch(e:any){setScannerOpen(false);Alert.alert('Barcode not found',e?.message??'Use custom food to add it manually.');}
   };
@@ -249,7 +255,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
             {!locked?<View style={styles.goals}>
               <Text style={[styles.goalPill,cHit&&styles.hit]}>Calories {cHit?'✓':'•'}</Text>
               <Text style={[styles.goalPill,pHit&&styles.hit]}>Protein {pHit?'✓':'•'}</Text>
-            </View>:<Text style={styles.chevron}>›</Text>}
+            </View>:<FreshChevronIcon size={22} color={colors.muted}/>}
           </Card>
         </Pressable>;
       }) : <Card><Text style={styles.sub}>No food history yet.</Text></Card>}
@@ -269,13 +275,13 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
       <Text style={styles.finderSubtitle}>{locked?'Search your foods or add a simple meal description.':`Search verified foods, recent items and saved foods for ${mealType}.`}</Text>
       <View style={styles.mealTabs}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.mealTab,mealType===x&&styles.mealTabActive]}><Text style={[styles.mealTabText,mealType===x&&styles.mealTabTextActive]}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
       <Card style={styles.searchPanel}>
-        <View style={styles.searchField}><SearchIcon size={21} color={colors.muted}/><Input style={styles.searchInput} value={query} onChangeText={updateQuery} placeholder={locked?'Search saved and common foods…':'Search foods or brands…'}/></View>
+        <View style={styles.searchField}><FreshSearchIcon size={23} color={colors.muted} accentColor={colors.primary}/><Input style={styles.searchInput} value={query} onChangeText={updateQuery} placeholder={locked?'Search saved and common foods…':'Search foods or brands…'}/></View>
         {!locked?<View style={styles.finderActions}><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={()=>onlineSearch(0)} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></View>:null}
       </Card>
       <View style={styles.finderShortcutRow}>
-        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><RecentIcon color={colors.text}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
-        <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><BookmarkIcon color={colors.text}/><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
-        <Pressable onPress={()=>setManualOpen(!manualOpen)} style={styles.finderShortcut}><Text style={styles.finderShortcutIcon}>＋</Text><Text style={styles.finderShortcutText}>Custom food</Text></Pressable>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><FreshRecentIcon color={colors.text} accentColor={colors.primary}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><FreshSavedIcon color={colors.text} accentColor={colors.primary}/><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
+        <Pressable onPress={()=>setManualOpen(!manualOpen)} style={styles.finderShortcut}><FreshPlusIcon size={28} color={colors.text}/><Text style={styles.finderShortcutText}>Custom food</Text></Pressable>
       </View>
       {manualOpen?<Card style={styles.customFoodCard}>
         <SectionTitle title="Create a custom food" subtitle="Add a name and household serving to your private meal journal."/>
@@ -306,25 +312,29 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
     <RefreshableScrollView onRefresh={load} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
       <View style={styles.headerRow}>
         <Text style={styles.title}>FOOD</Text>
-        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.todayButton}><CalendarIcon size={21} color={colors.text} accentColor={colors.primary}/><Text style={styles.todayTitle}>Today</Text><Text style={styles.todayChevron}>⌄</Text></Pressable>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.todayButton} accessibilityRole="button" accessibilityLabel="Open food history"><FreshCalendarIcon size={23} color={colors.text} accentColor={colors.primary}/><Text style={styles.todayTitle}>Today</Text><FreshChevronIcon size={17} color={colors.muted} direction="down"/></Pressable>
       </View>
 
       <View style={styles.weekStrip}>{[-2,-1,0,1,2,3,4].map((offset)=>{const d=new Date();d.setDate(d.getDate()+offset);const active=offset===0;return <View key={offset} style={[styles.weekDay,active&&styles.weekDayOn]}><Text style={[styles.weekName,active&&styles.weekNameOn]}>{d.toLocaleDateString(undefined,{weekday:'short'}).toUpperCase()}</Text><Text style={[styles.weekNumber,active&&styles.weekNameOn]}>{d.getDate()}</Text></View>})}</View>
 
-      <Card style={styles.diaryHero}><View style={styles.diaryIllustration}><FoodDiaryHeroIcon size={84} color={colors.text} accentColor={colors.primary}/></View><View style={styles.diaryCopy}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep your meals organised in one place</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View></Card>
+      <Card style={styles.diaryHero}><View style={styles.diaryIllustration}><FreshFoodJournalIcon size={72} color={colors.text} accentColor={colors.primary}/></View><View style={styles.diaryCopy}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep every meal and drink easy to find</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View></Card>
 
-      <View style={styles.quickActions}>{[
-        [<MealSearchIcon size={37} color={colors.text} accentColor={colors.primary}/>, 'Search',()=>setFinderOpen(true)],[<ScanIcon size={34} color={colors.text}/>, 'Scan',()=>{setScanned(false);setScannerOpen(true)}],[<RecentIcon size={34} color={colors.text}/>, 'Recent',()=>setHistoryOpen(true)],[<SavedMealsIcon size={37} color={colors.text} accentColor={colors.primary}/>, 'Saved Meals',()=>setLibraryOpen(true)],
-      ].map(([icon,label,action]:any)=><Pressable key={label} onPress={action} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]}><View style={styles.quickIconCircle}>{icon}</View><Text style={styles.quickLabel}>{label}</Text></Pressable>)}</View>
+      <Pressable onPress={()=>setFinderOpen(true)} style={({pressed})=>[styles.primaryFoodAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel={locked?'Add a meal':'Search and add food'}><View style={styles.primaryFoodIcon}><FreshSearchIcon size={31} color={colors.text} accentColor={colors.primary}/></View><View style={styles.primaryFoodCopy}><Text style={styles.primaryFoodTitle}>{locked?'Add a meal':'Search and add food'}</Text><Text style={styles.primaryFoodSub}>{locked?'Use saved, common or custom meals':'Verified foods, saved items and custom meals'}</Text></View><FreshChevronIcon size={21} color={colors.primary}/></Pressable>
 
-      <View style={styles.mealTimeline}>{(['breakfast','lunch','dinner','snacks'] as const).map((type,index)=><MealDiaryCard key={type} type={type} index={index} total={4} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog} onCopy={()=>copyPreviousMeal(type)} onSave={()=>saveCurrentMeal(type)}/>)}</View>
+      <View style={styles.quickActions}>
+        {!locked?<Pressable onPress={()=>{setScanned(false);setScannerOpen(true)}} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button"><View style={styles.quickIconCircle}><FreshScanIcon size={31} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Scan</Text></Pressable>:null}
+        <Pressable onPress={()=>setHistoryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button"><View style={styles.quickIconCircle}><FreshRecentIcon size={31} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setLibraryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button"><View style={styles.quickIconCircle}><FreshSavedIcon size={31} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Saved</Text></Pressable>
+      </View>
 
-      <Card style={styles.waterCard}><View style={styles.waterTop}><View style={styles.waterHeading}><View style={styles.waterBottleStage}><WaterBottleIcon size={49} color={colors.text} accentColor={colors.primary}/></View><View><Text style={styles.waterTitle}>WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View></View><Pressable onPress={()=>addWater(250)} style={styles.waterPlus}><Text style={styles.redPlusText}>＋</Text></Pressable></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><WaterGlassIcon key={i} size={34} color={colors.primary} filled={i<Math.min(6,Math.floor(waterTotal/250))}/>)}</View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
+      <View style={styles.mealList}>{(['breakfast','lunch','dinner','snacks'] as const).map((type)=><MealDiaryCard key={type} type={type} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog} onCopy={()=>copyPreviousMeal(type)} onSave={()=>saveCurrentMeal(type)}/>)}</View>
 
-      {!locked?<Card><Pressable onPress={()=>setNutritionOpen(!nutritionOpen)} style={styles.nutritionHeader}><View><Text style={styles.nutritionTitle}>↗  Nutrition overview</Text><Text style={styles.foodMeta}>View nutrients and serving details</Text></View><Text style={styles.chevron}>{nutritionOpen?'⌃':'⌄'}</Text></Pressable>{nutritionOpen?<><View style={styles.ringRow}><RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/><RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/><RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/><RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/></View></>:null}</Card>:<Card><SectionTitle title="Meal journal" subtitle="You can record meals and review your routine. Nutrition targets are not shown for younger accounts."/></Card>}
+      <Card style={styles.waterCard}><View style={styles.waterTop}><View style={styles.waterHeading}><View style={styles.waterBottleStage}><FreshWaterIcon size={48} color={colors.text} accentColor={colors.primary}/></View><View><Text style={styles.waterTitle}>WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View></View><Pressable onPress={()=>addWater(250)} style={styles.waterPlus} accessibilityRole="button" accessibilityLabel="Add 250 millilitres of water"><FreshPlusIcon size={27} color="#FFFFFF"/></Pressable></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><FreshWaterGlassIcon key={i} size={34} color={colors.primary} filled={i<Math.min(6,Math.floor(waterTotal/250))}/>)}</View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])} style={styles.undoButton}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
+
+      {!locked?<Card style={styles.nutritionCard}><Pressable onPress={()=>setNutritionOpen(!nutritionOpen)} style={styles.nutritionHeader} accessibilityRole="button"><View style={styles.nutritionHeading}><View style={styles.nutritionIconStage}><FreshNutritionIcon size={30} color={colors.text} accentColor={colors.primary}/></View><View><Text style={styles.nutritionTitle}>Nutrition overview</Text><Text style={styles.foodMeta}>View nutrients and serving details</Text></View></View><FreshChevronIcon size={21} color={colors.muted} direction={nutritionOpen?'up':'down'}/></Pressable>{nutritionOpen?<View style={styles.ringRow}><RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/><RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/><RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/><RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/></View>:null}</Card>:<Card><SectionTitle title="Meal journal" subtitle="You can record meals and review your routine. Nutrition targets are not shown for younger accounts."/></Card>}
 
       {finderOpen?<Card>
-        <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':`Add to ${mealType}`}/><Pressable onPress={()=>setFinderOpen(false)}><Text style={styles.closeFinder}>×</Text></Pressable></View>
+        <View style={styles.sectionHeader}><SectionTitle title={locked?'Add a meal':`Add to ${mealType}`}/><Pressable onPress={()=>setFinderOpen(false)} style={styles.closeTarget} accessibilityRole="button" accessibilityLabel="Close food finder"><FreshCloseIcon size={26} color={colors.muted} accentColor={colors.primary}/></Pressable></View>
         <View style={styles.two}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.goalPill,mealType===x&&styles.hit]}><Text style={styles.foodMeta}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
         <Input value={query} onChangeText={updateQuery} placeholder={locked?'Search saved/common foods…':'Search chicken, oats, banana…'}/>
         {!locked?<><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={()=>onlineSearch(0)} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></>:null}
@@ -364,7 +374,7 @@ function ProviderFoodDetailModal({food,selectedServingId,servingCount,mealType,o
   return <Modal visible={Boolean(food)} transparent animationType="fade" onRequestClose={onClose}>
     <Pressable style={s.detailBackdrop} onPress={onClose}>
       <Pressable style={s.detailSheet} onPress={(event)=>event.stopPropagation()}>
-        <View style={s.detailHeader}><View style={{flex:1}}><Text style={s.detailEyebrow}>FATSECRET VERIFIED FOOD</Text><Text style={s.detailName}>{food?.name}</Text>{food?.brand?<Text style={s.providerBrand}>{food.brand}</Text>:null}</View><Pressable onPress={onClose}><Text style={s.detailClose}>×</Text></Pressable></View>
+        <View style={s.detailHeader}><View style={{flex:1}}><Text style={s.detailEyebrow}>FATSECRET VERIFIED FOOD</Text><Text style={s.detailName}>{food?.name}</Text>{food?.brand?<Text style={s.providerBrand}>{food.brand}</Text>:null}</View><Pressable onPress={onClose} style={s.closeTarget} accessibilityRole="button" accessibilityLabel="Close food details"><FreshCloseIcon size={26} color={colors.muted} accentColor={colors.primary}/></Pressable></View>
         <Text style={s.detailLabel}>Choose serving</Text>
         <ScrollView style={s.servingList} nestedScrollEnabled>{servings.length?servings.map((serving)=><Pressable key={serving.serving_id??serving.label} onPress={()=>onServing(serving.serving_id)} style={[s.servingOption,serving.serving_id===selectedServingId&&s.servingOptionActive]}><Text style={[s.servingOptionText,serving.serving_id===selectedServingId&&s.servingOptionTextActive]}>{serving.label}</Text><Text style={s.servingCalories}>{Math.round(serving.calories)} kcal</Text></Pressable>):<View style={s.servingOption}><Text style={s.servingOptionText}>{food?.serving??'1 serving'}</Text></View>}</ScrollView>
         <Text style={s.detailLabel}>Number of servings</Text><Input value={servingCount} onChangeText={onServingCount} keyboardType="decimal-pad" placeholder="1"/>
@@ -375,9 +385,21 @@ function ProviderFoodDetailModal({food,selectedServingId,servingCount,mealType,o
   </Modal>;
 }
 
-function MealDiaryCard({type,index,total,rows,expanded,locked,onToggle,onAdd,onRemove,onCopy,onSave}:{type:'breakfast'|'lunch'|'dinner'|'snacks';index:number;total:number;rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void;onCopy:()=>void;onSave:()=>void}){
-  const {colors}=useTheme();const s=createStyles(colors);const Icon=type==='breakfast'?SunMealIcon:type==='lunch'?LunchIcon:type==='dinner'?DinnerIcon:SnackIcon;
-  return <View style={s.timelineRow}><View style={s.timelineRail}>{index>0?<View style={s.timelineLineTop}/>:null}<View style={s.mealIconCircle}><Icon size={34} color={colors.text} accentColor={colors.primary}/></View>{index<total-1?<View style={s.timelineLineBottom}/>:null}</View><Card style={s.mealCard}><View style={s.mealHead}><Pressable onPress={onToggle} style={s.mealHeadText}><View><Text style={s.mealTitle}>{type[0].toUpperCase()+type.slice(1)}</Text>{!rows.length?<Text style={s.foodMeta}>Nothing logged yet</Text>:<Text style={s.foodMeta}>{rows.length} item{rows.length===1?'':'s'} logged</Text>}</View></Pressable><Text style={s.chevron}>{expanded?'⌃':'⌄'}</Text><Pressable onPress={onAdd} style={s.redPlus}><Text style={s.redPlusText}>＋</Text></Pressable></View>{expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><FoodBowlIcon size={32} color={colors.text} accentColor={colors.primary}/></View><View style={{flex:1}}><Text style={s.foodName}>{row.food_name}</Text><Text style={s.foodMeta}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)}><Text style={s.mealMore}>⋮</Text></Pressable></View>):null}{expanded&&rows.length?<View style={s.mealFooter}><Pressable onPress={onCopy} style={s.mealFooterAction}><Text style={s.copyIcon}>▣</Text><Text style={s.mealFooterText}>Copy yesterday</Text></Pressable><View style={s.mealFooterDivider}/><Pressable onPress={onSave} style={s.mealFooterAction}><BookmarkIcon size={17} color={colors.text}/><Text style={s.mealFooterText}>Save meal</Text></Pressable></View>:null}</Card></View>;
+function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove,onCopy,onSave}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void;onCopy:()=>void;onSave:()=>void}){
+  const {colors}=useTheme();
+  const s=createStyles(colors);
+  const Icon=type==='breakfast'?FreshBreakfastIcon:type==='lunch'?FreshLunchIcon:type==='dinner'?FreshDinnerIcon:FreshSnackIcon;
+  const title=type[0].toUpperCase()+type.slice(1);
+  return <Card style={s.mealCard}>
+    <View style={s.mealHead}>
+      <View style={s.mealIconCircle}><Icon size={36} color={colors.text} accentColor={colors.primary}/></View>
+      <Pressable onPress={onToggle} style={s.mealHeadText} accessibilityRole="button" accessibilityLabel={`${title}, ${rows.length} items, ${expanded?'collapse':'expand'}`}><Text style={s.mealTitle}>{title}</Text><Text style={s.foodMeta}>{rows.length?`${rows.length} item${rows.length===1?'':'s'} logged`:'Nothing logged yet'}</Text></Pressable>
+      <Pressable onPress={onToggle} style={s.mealToggle} accessibilityRole="button" accessibilityLabel={expanded?'Collapse meal':'Expand meal'}><FreshChevronIcon size={22} color={colors.muted} direction={expanded?'up':'down'}/></Pressable>
+      <Pressable onPress={onAdd} style={s.redPlus} accessibilityRole="button" accessibilityLabel={`Add to ${title}`}><FreshPlusIcon size={27} color="#FFFFFF"/></Pressable>
+    </View>
+    {expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><FreshMealBowlIcon size={31} color={colors.text} accentColor={colors.primary}/></View><View style={{flex:1,minWidth:0}}><Text style={s.foodName} numberOfLines={1}>{row.food_name}</Text><Text style={s.foodMeta} numberOfLines={1}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)} style={s.moreTarget} accessibilityRole="button" accessibilityLabel={`Options for ${row.food_name}`}><FreshMoreIcon size={22} color={colors.muted}/></Pressable></View>):null}
+    {expanded&&rows.length?<View style={s.mealFooter}><Pressable onPress={onCopy} style={s.mealFooterAction}><FreshCopyIcon size={19} color={colors.text} accentColor={colors.primary}/><Text style={s.mealFooterText}>Copy yesterday</Text></Pressable><View style={s.mealFooterDivider}/><Pressable onPress={onSave} style={s.mealFooterAction}><FreshSavedIcon size={19} color={colors.text} accentColor={colors.primary}/><Text style={s.mealFooterText}>Save meal</Text></Pressable></View>:null}
+  </Card>;
 }
 
 function sumLogs(rows:any[]){
@@ -464,55 +486,61 @@ function FoodRow({food,onAdd,hideNutrition}:{food:Food;onAdd:()=>void;hideNutrit
 function TopBack({title,onBack}:{title:string;onBack:()=>void}){
   const {colors}=useTheme();
   const s=createStyles(colors);
-  return <View style={s.backRow}><Pressable onPress={onBack}><Text style={s.back}>‹</Text></Pressable><Text style={s.backTitle}>{title}</Text></View>;
+  return <View style={s.backRow}><Pressable onPress={onBack} style={s.backTarget} accessibilityRole="button" accessibilityLabel="Go back"><FreshChevronIcon size={26} color={colors.text} direction="left"/></Pressable><Text style={s.backTitle}>{title}</Text></View>;
 }
 
 const createStyles=(colors:any)=>StyleSheet.create({
-  wrap:{padding:16,paddingTop:13,paddingBottom:52},
+  wrap:{padding:16,paddingTop:13,paddingBottom:104},
   headerRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:16},
   title:{color:colors.text,fontSize:31,fontWeight:'900',letterSpacing:-.5},
-  todayButton:{minHeight:44,flexDirection:'row',alignItems:'center',gap:6,paddingHorizontal:11,borderRadius:14,backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border},
+  todayButton:{minHeight:48,flexDirection:'row',alignItems:'center',gap:6,paddingHorizontal:12,borderRadius:15,backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border},
   todayTitle:{color:colors.text,fontSize:15,fontWeight:'900'},todayChevron:{color:colors.muted,fontSize:16},
   weekStrip:{flexDirection:'row',justifyContent:'space-between',marginBottom:18},
-  weekDay:{width:40,alignItems:'center',paddingVertical:8,borderRadius:13},
+  weekDay:{flex:1,minWidth:0,alignItems:'center',paddingVertical:8,borderRadius:13},
   weekDayOn:{backgroundColor:colors.primary},
   weekName:{color:colors.muted,fontSize:8,fontWeight:'900'},
   weekNameOn:{color:'#FFFFFF'},
   weekNumber:{color:colors.text,fontSize:15,fontWeight:'900',marginTop:3},
-  diaryHero:{flexDirection:'row',alignItems:'center',minHeight:154,paddingHorizontal:16,paddingVertical:20,borderRadius:22,shadowColor:colors.shadow,shadowOpacity:.1,shadowRadius:10,shadowOffset:{width:0,height:4},elevation:3},
-  diaryIllustration:{width:92,height:92,borderRadius:28,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center',marginRight:14},
+  diaryHero:{flexDirection:'row',alignItems:'center',minHeight:146,paddingHorizontal:15,paddingVertical:18,borderRadius:23,shadowColor:colors.shadow,shadowOpacity:.1,shadowRadius:10,shadowOffset:{width:0,height:4},elevation:3},
+  diaryIllustration:{width:78,height:78,borderRadius:25,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center',marginRight:13},
   diaryCopy:{flex:1},
-  diaryEyebrow:{color:colors.text,fontSize:19,fontWeight:'900'},
+  diaryEyebrow:{color:colors.text,fontSize:18,fontWeight:'900'},
   diarySub:{color:colors.muted,fontSize:11,marginTop:5,lineHeight:16},
   diaryCount:{color:colors.text,fontSize:13,marginTop:14},
   diaryTrack:{height:7,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:9},
   diaryFill:{height:'100%',backgroundColor:colors.primary,borderRadius:99},
-  diaryIcon:{color:colors.primary,fontSize:40,marginLeft:18},
-  quickActions:{flexDirection:'row',alignItems:'stretch',gap:9,marginTop:2,marginBottom:19},
-  quickAction:{flex:1,minHeight:96,alignItems:'center',justifyContent:'center',borderRadius:18,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,shadowColor:colors.shadow,shadowOpacity:.08,shadowRadius:7,shadowOffset:{width:0,height:3},elevation:2},quickActionPressed:{opacity:.65,transform:[{scale:.97}]},
-  quickDivider:{display:'none'},
+  primaryFoodAction:{minHeight:76,flexDirection:'row',alignItems:'center',gap:12,paddingHorizontal:13,paddingVertical:11,marginTop:2,marginBottom:10,borderRadius:20,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,shadowColor:colors.shadow,shadowOpacity:.08,shadowRadius:7,shadowOffset:{width:0,height:3},elevation:2},
+  primaryFoodIcon:{width:52,height:52,borderRadius:18,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
+  primaryFoodCopy:{flex:1,minWidth:0},
+  primaryFoodTitle:{color:colors.text,fontSize:15,fontWeight:'900'},
+  primaryFoodSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:3},
+  quickActions:{flexDirection:'row',alignItems:'stretch',gap:9,marginBottom:18},
+  quickAction:{flex:1,minHeight:90,alignItems:'center',justifyContent:'center',borderRadius:18,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,shadowColor:colors.shadow,shadowOpacity:.07,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:2},quickActionPressed:{opacity:.68,transform:[{scale:.98}]},
   quickIconCircle:{width:48,height:48,borderRadius:17,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
-  quickLabel:{color:colors.text,fontSize:10,fontWeight:'800',marginTop:7,textAlign:'center'},
-  mealTimeline:{marginBottom:5},timelineRow:{flexDirection:'row',alignItems:'stretch'},timelineRail:{width:54,alignItems:'center',position:'relative'},timelineLineTop:{position:'absolute',top:0,bottom:'50%',width:2,backgroundColor:colors.border},timelineLineBottom:{position:'absolute',top:'50%',bottom:0,width:2,backgroundColor:colors.border},mealIconCircle:{width:45,height:45,borderRadius:16,marginTop:15,backgroundColor:colors.primarySoft,borderWidth:1.5,borderColor:colors.primary,alignItems:'center',justifyContent:'center',zIndex:2},
-  mealCard:{padding:0,overflow:'hidden',flex:1},
-  mealHead:{minHeight:76,flexDirection:'row',alignItems:'center',paddingHorizontal:15,gap:10},
-  mealHeadText:{flex:1,flexDirection:'row',alignItems:'center',gap:10},
-  mealIcon:{color:colors.primary,fontSize:23},
-  mealTitle:{color:colors.text,fontSize:18,fontWeight:'900'},
-  redPlus:{width:46,height:46,borderRadius:23,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
-  redPlusText:{color:'#FFFFFF',fontSize:27,fontWeight:'500',lineHeight:31},
+  quickLabel:{color:colors.text,fontSize:10,fontWeight:'800',marginTop:6,textAlign:'center'},
+  mealList:{marginBottom:4},
+  mealIconCircle:{width:52,height:52,borderRadius:18,backgroundColor:colors.primarySoft,borderWidth:1,borderColor:colors.border,alignItems:'center',justifyContent:'center'},
+  mealCard:{padding:0,overflow:'hidden',marginBottom:10},
+  mealHead:{minHeight:82,flexDirection:'row',alignItems:'center',paddingLeft:11,paddingRight:9,gap:8},
+  mealHeadText:{flex:1,minWidth:0,justifyContent:'center',alignSelf:'stretch'},
+  mealToggle:{width:48,height:48,borderRadius:16,alignItems:'center',justifyContent:'center'},
+  mealTitle:{color:colors.text,fontSize:17,fontWeight:'900'},
+  redPlus:{width:48,height:48,borderRadius:24,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
   mealFood:{flexDirection:'row',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:colors.border,padding:11},
-  mealFooter:{flexDirection:'row',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,minHeight:45},
-  mealFooterAction:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8},
+  mealFooter:{flexDirection:'row',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,minHeight:48},
+  mealFooterAction:{flex:1,minHeight:48,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8},
   mealFooterDivider:{width:1,height:23,backgroundColor:colors.border},
   mealFooterText:{color:colors.text,fontSize:11,fontWeight:'700'},
-  copyIcon:{color:colors.text,fontSize:17},
-  foodThumb:{width:54,height:45,borderRadius:10,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center'},
-  foodThumbText:{color:colors.primary,fontSize:22},
-  mealMore:{color:colors.muted,fontSize:24,paddingHorizontal:5},
-  waterCard:{minHeight:170,padding:16,backgroundColor:colors.panel,borderColor:colors.border,borderRadius:22,shadowColor:colors.shadow,shadowOpacity:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:2},waterTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},waterHeading:{flexDirection:'row',alignItems:'center',gap:12},waterBottleStage:{width:58,height:58,borderRadius:18,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},waterDropCircle:{width:42,height:42,borderRadius:21,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},waterTitle:{color:colors.text,fontSize:18,fontWeight:'900'},waterSub:{color:colors.muted,fontSize:12,marginTop:4},waterPlus:{width:48,height:48,borderRadius:24,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
-  waterGlasses:{flexDirection:'row',justifyContent:'space-between',marginTop:17,paddingHorizontal:2},waterGlass:{width:27,height:33,borderWidth:2,borderColor:colors.muted,borderRadius:5},waterGlassFull:{backgroundColor:colors.blue,borderColor:colors.blue},undo:{color:colors.muted,fontSize:10,textDecorationLine:'underline',marginTop:11},
-  nutritionHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},nutritionTitle:{color:colors.text,fontSize:16,fontWeight:'900'},closeFinder:{color:colors.muted,fontSize:29,paddingHorizontal:8},
+  foodThumb:{width:48,height:44,borderRadius:14,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center'},
+  moreTarget:{width:48,height:48,borderRadius:15,alignItems:'center',justifyContent:'center'},
+  waterCard:{minHeight:170,padding:16,backgroundColor:colors.panel,borderColor:colors.border,borderRadius:22,shadowColor:colors.shadow,shadowOpacity:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:2},waterTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},waterHeading:{flexDirection:'row',alignItems:'center',gap:12},waterBottleStage:{width:58,height:58,borderRadius:18,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},waterTitle:{color:colors.text,fontSize:18,fontWeight:'900'},waterSub:{color:colors.muted,fontSize:12,marginTop:4},waterPlus:{width:48,height:48,borderRadius:24,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
+  waterGlasses:{flexDirection:'row',justifyContent:'space-between',marginTop:17,paddingHorizontal:2},
+  undoButton:{minHeight:48,alignSelf:'flex-start',justifyContent:'center'},undo:{color:colors.muted,fontSize:10,textDecorationLine:'underline'},
+  nutritionCard:{padding:12},
+  nutritionHeader:{minHeight:60,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  nutritionHeading:{flexDirection:'row',alignItems:'center',gap:10,flex:1,minWidth:0},
+  nutritionIconStage:{width:46,height:46,borderRadius:15,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
+  nutritionTitle:{color:colors.text,fontSize:16,fontWeight:'900'},closeTarget:{width:48,height:48,borderRadius:16,alignItems:'center',justifyContent:'center'},
   sub:{color:colors.muted,lineHeight:19,marginTop:4,marginBottom:12,flexShrink:1},
   progressPanel:{backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border,borderRadius:17,padding:13,marginBottom:12},
   dayRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:10},
@@ -546,7 +574,6 @@ const createStyles=(colors:any)=>StyleSheet.create({
   finderShortcutRow:{flexDirection:'row',gap:8,marginBottom:14},
   finderShortcut:{flex:1,minHeight:72,borderWidth:1,borderColor:colors.border,borderRadius:13,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},
   finderShortcutText:{color:colors.text,fontWeight:'800',fontSize:10,marginTop:5},
-  finderShortcutIcon:{color:colors.text,fontSize:25,lineHeight:25},
   customFoodCard:{marginBottom:14},
   two:{flexDirection:'row',gap:8},
   foodRow:{flexDirection:'row',alignItems:'center',backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border,borderRadius:14,padding:13,marginBottom:8},
@@ -564,18 +591,18 @@ const createStyles=(colors:any)=>StyleSheet.create({
   macroMini:{flex:1,backgroundColor:colors.panel2,borderRadius:10,padding:9,alignItems:'center'},
   macroMiniValue:{color:colors.text,fontWeight:'900'},
   macroMiniLabel:{color:colors.muted,fontSize:8,marginTop:3,textAlign:'center'},
-  backRow:{flexDirection:'row',alignItems:'center',gap:8,marginBottom:12},
-  back:{color:colors.text,fontSize:38,fontWeight:'300',marginRight:10},
+  backRow:{flexDirection:'row',alignItems:'center',gap:4,marginBottom:12},
+  backTarget:{width:48,height:48,borderRadius:16,alignItems:'center',justifyContent:'center'},
   backTitle:{color:colors.text,fontSize:25,fontWeight:'900'},
   historyCard:{flexDirection:'row',alignItems:'center'},
   historyDate:{color:colors.text,fontWeight:'900',fontSize:15},
   goals:{alignItems:'flex-end',gap:5},
   goalPill:{color:colors.muted,fontSize:9,fontWeight:'900',backgroundColor:colors.panel2,paddingHorizontal:7,paddingVertical:4,borderRadius:7},
   hit:{color:colors.green,backgroundColor:colors.greenSoft},
-  chevron:{color:colors.muted,fontSize:25},remove:{color:colors.danger,fontSize:9,fontWeight:'900',marginLeft:8},
+  remove:{color:colors.danger,fontSize:9,fontWeight:'900',marginLeft:8},
   detailBackdrop:{flex:1,backgroundColor:'rgba(0,0,0,.62)',justifyContent:'flex-end'},
   detailSheet:{maxHeight:'86%',backgroundColor:colors.panel,borderTopLeftRadius:24,borderTopRightRadius:24,borderWidth:1,borderColor:colors.border,padding:18,paddingBottom:28},
-  detailHeader:{flexDirection:'row',alignItems:'flex-start',gap:10,marginBottom:12},detailEyebrow:{color:colors.green,fontSize:8,fontWeight:'900',letterSpacing:.5},detailName:{color:colors.text,fontSize:22,fontWeight:'900',marginTop:4},detailClose:{color:colors.muted,fontSize:31,lineHeight:31,paddingHorizontal:4},
+  detailHeader:{flexDirection:'row',alignItems:'flex-start',gap:10,marginBottom:12},detailEyebrow:{color:colors.green,fontSize:8,fontWeight:'900',letterSpacing:.5},detailName:{color:colors.text,fontSize:22,fontWeight:'900',marginTop:4},
   detailLabel:{color:colors.muted,fontSize:9,fontWeight:'900',textTransform:'uppercase',marginTop:8,marginBottom:7},servingList:{maxHeight:220,marginBottom:5},servingOption:{minHeight:46,borderWidth:1,borderColor:colors.border,borderRadius:11,paddingHorizontal:11,marginBottom:6,flexDirection:'row',alignItems:'center',justifyContent:'space-between',backgroundColor:colors.panel2},servingOptionActive:{borderColor:colors.primary,backgroundColor:colors.primarySoft},servingOptionText:{color:colors.text,fontSize:11,fontWeight:'800',flex:1,paddingRight:8},servingOptionTextActive:{color:colors.primary},servingCalories:{color:colors.muted,fontSize:9},
   detailNutrition:{flexDirection:'row',justifyContent:'space-between',backgroundColor:colors.panel2,borderRadius:13,padding:12,marginBottom:8},detailMetricValue:{color:colors.text,fontWeight:'900',fontSize:13,textAlign:'center'},detailMetricLabel:{color:colors.muted,fontSize:8,marginTop:2,textAlign:'center'}
 });

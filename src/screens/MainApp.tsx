@@ -5,7 +5,7 @@ import { Alert, BackHandler, Linking, Pressable, StatusBar, StyleSheet, Text, Vi
 import { Profile } from '../lib/types';
 import { useTheme } from '../components/UI';
 import { supabase } from '../lib/supabase';
-import DashboardTab, { DailyActivityFocus, HomeProgressFocus } from './tabs/DashboardTab';
+import DashboardTab, { DailyActivityFocus, HomeProgressFocus } from './tabs/DashboardTabV2';
 import FoodTab, { FoodTabHandle } from './tabs/FoodTab';
 import WorkoutTab, { WorkoutTabHandle } from './tabs/WorkoutTab';
 import FriendsTab, { FriendsTabHandle } from './tabs/FriendsTab';
@@ -22,7 +22,7 @@ import CustomizationScreen from './CustomizationScreen';
 import SharedGymScreen from './SharedGymScreen';
 import NotificationsScreen from './NotificationsScreen';
 import { SharedWorkoutLaunch } from '../lib/sharedGym';
-import { FoodNavIcon, FriendsNavIcon, HomeNavIcon, ProfileNavIcon, TrainNavIcon } from '../components/FitHubIcons';
+import { FreshChevronIcon, FreshFoodNavIcon, FreshFriendsNavIcon, FreshHomeNavIcon, FreshProfileNavIcon, FreshTrainNavIcon } from '../components/FitHubFreshIcons';
 import {
   cancelSameDaySupplementReschedule,
   GYM_INVITE_ACCEPT_ACTION,
@@ -267,14 +267,13 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
     {activeWorkoutBar&&(page!=='main'||tab!=='workout')?<Pressable onPress={()=>chooseTab('workout')} style={styles.floatingWorkout} accessibilityRole="button" accessibilityLabel="Resume active workout">
       <View style={styles.floatingWorkoutPulse}/>
       <View style={{flex:1}}><Text style={styles.floatingWorkoutLabel}>WORKOUT IN PROGRESS</Text><Text style={styles.floatingWorkoutName} numberOfLines={1}>{activeWorkoutBar.name} · {activeWorkoutBar.exercise}</Text></View>
-      <View style={styles.floatingWorkoutRight}><Text style={styles.floatingWorkoutTime}>{formatElapsed(activeWorkoutElapsed)}</Text><Text style={styles.floatingWorkoutResume}>RESUME ›</Text></View>
+      <View style={styles.floatingWorkoutRight}><Text style={styles.floatingWorkoutTime}>{formatElapsed(activeWorkoutElapsed)}</Text><View style={styles.floatingWorkoutResumeRow}><Text style={styles.floatingWorkoutResume}>RESUME</Text><FreshChevronIcon size={14} color={colors.primary}/></View></View>
     </Pressable>:null}
     <View style={styles.nav}>{tabs.map(([key, label]) => {
       const active = page === 'main' && tab === key;
       const primary = key === 'workout';
       return <Pressable key={key} onPress={() => chooseTab(key)} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label} style={({pressed})=>[styles.navItem,pressed&&styles.navPressed]}>
-        {active && !primary ? <View style={styles.activeBar}/> : null}
-        <View style={[styles.iconWrap, primary && styles.trainButton, primary && active && styles.trainButtonActive]}>
+        <View style={[styles.iconWrap, active && !primary && styles.activeIndicator, primary && styles.trainButton, primary && active && styles.trainButtonActive]}>
           <BottomNavIcon tab={key} active={active} color={primary ? '#FFFFFF' : active ? colors.primary : colors.muted} accent={primary ? colors.primarySoft : colors.primary}/>
           {key === 'friends' && friendsBadge > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{friendsBadge > 9 ? '9+' : friendsBadge}</Text></View> : null}
         </View>
@@ -293,26 +292,27 @@ const createStyles = (colors: any) => StyleSheet.create({
   floatingWorkoutName:{color:colors.text,fontSize:12,fontWeight:'900',marginTop:3},
   floatingWorkoutRight:{alignItems:'flex-end'},
   floatingWorkoutTime:{color:colors.text,fontSize:13,fontWeight:'900'},
-  floatingWorkoutResume:{color:colors.primary,fontSize:8,fontWeight:'900',marginTop:3},
-  nav: { minHeight: 94, flexDirection: 'row', marginHorizontal: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.border, borderRadius: 23, backgroundColor: colors.nav, paddingBottom: 11, paddingTop: 9, overflow: 'visible', shadowColor:'#000',shadowOpacity:.14,shadowRadius:12,shadowOffset:{width:0,height:4},elevation:12 },
-  navItem: { flex: 1, minHeight: 68, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  floatingWorkoutResumeRow:{flexDirection:'row',alignItems:'center',marginTop:3},
+  floatingWorkoutResume:{color:colors.primary,fontSize:8,fontWeight:'900'},
+  nav: { minHeight: 82, flexDirection: 'row', marginHorizontal: 9, marginBottom: 7, borderWidth: 1, borderColor: colors.border, borderRadius: 25, backgroundColor: colors.nav, paddingBottom: 8, paddingTop: 8, overflow: 'visible', shadowColor:'#000',shadowOpacity:.14,shadowRadius:12,shadowOffset:{width:0,height:4},elevation:12 },
+  navItem: { flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   navPressed: { opacity: 0.68 },
-  activeBar: { position: 'absolute', top: -9, width: 36, height: 4, borderRadius: 999, backgroundColor: colors.primary },
-  iconWrap: { width: 48, height: 38, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  trainButton: { width: 68, height: 68, borderRadius: 34, marginTop: -34, backgroundColor: colors.primary, borderWidth: 5, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.3,shadowRadius:11,shadowOffset:{width:0,height:5},elevation:11 },
+  iconWrap: { width: 52, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  activeIndicator: { backgroundColor: colors.primarySoft },
+  trainButton: { width: 62, height: 62, borderRadius: 31, marginTop: -24, backgroundColor: colors.primary, borderWidth: 4, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.26,shadowRadius:10,shadowOffset:{width:0,height:5},elevation:10 },
   trainButtonActive: { transform: [{ scale: 1.04 }] },
-  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 4 },
-  trainLabel: { marginTop: 1, color: colors.text, fontWeight: '900' },
+  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 3 },
+  trainLabel: { marginTop: 0, color: colors.text, fontWeight: '900' },
   badge: { position: 'absolute', right: 0, top: -3, minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.nav, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#FFFFFF', fontSize: 8, fontWeight: '900' },
 });
 
 function BottomNavIcon({tab,active,color,accent}:{tab:Tab;active:boolean;color:string;accent:string}){
-  if(tab==='home')return <HomeNavIcon size={27} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='friends')return <FriendsNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='workout')return <TrainNavIcon size={31} color={color} accentColor={accent}/>;
-  if(tab==='food')return <FoodNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
-  return <ProfileNavIcon size={27} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='home')return <FreshHomeNavIcon size={27} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='friends')return <FreshFriendsNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='workout')return <FreshTrainNavIcon size={31} color={color} accentColor={accent}/>;
+  if(tab==='food')return <FreshFoodNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
+  return <FreshProfileNavIcon size={27} color={color} accentColor={accent} filled={active}/>;
 }
 
 const formatElapsed=(seconds:number)=>{

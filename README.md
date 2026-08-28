@@ -1,31 +1,41 @@
-# FitHub 1.6.21
+# FitHub 1.6.22
 
 FitHub is an Expo/React Native training, nutrition, progress, and social-fitness app backed by Supabase.
 
-Start with [START_HERE_FITHUB_1_6_21.md](START_HERE_FITHUB_1_6_21.md), then follow [FITHUB_1_6_21_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_21_COMPLETE_UPDATE_GUIDE.md).
+Start with [START_HERE_FITHUB_1_6_22.md](START_HERE_FITHUB_1_6_22.md), then follow [FITHUB_1_6_22_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_22_COMPLETE_UPDATE_GUIDE.md).
 
-## 1.6.21 highlights
+## 1.6.22 highlights
 
-- Implements the approved Home design with the exact week-card structure, gym-styled Quick Access icon family, spacing, rounded cards, and theme-aware colours.
-- Implements the approved Food design with its diary illustration, four separate action cards, connected meal timeline, meal icons, water card, and shared floating navigation dock.
-- Rebuilds My Fitness Journey around current-versus-previous comparisons, tap-selectable activity trends, clearer report dates, and private progress highlights.
-- Keeps younger accounts focused on workout consistency, recorded exercises, setup, and technique instead of load-based records.
-- Retains all 1.6.20 workout-history, drag ordering, exercise-guidance, notification, gym-invite response, post-editor Back, and Clubs fixes.
+- Rebuilds Home around a clear Today’s Plan, responsive Your Week summary, readable two-column Quick Access grid, full-width Run Metrics entry, and Friend Feed.
+- Rebuilds Food around one primary add/search action, compact shortcuts, full-width meal cards, clearer Water controls, and an expandable Nutrition overview.
+- Replaces every icon visible on Home, Food, and the bottom navigation with 35 original theme-aware SVG components built for FitHub.
+- Prevents narrow-screen text failures such as five-line Community labels and broken active-minute values.
+- Adds 48 dp interaction targets and enough lower-page clearance so the floating navigation does not cover content.
+- Preserves all existing routes, workout data, Food handlers, themes, feature hiding, pull-to-refresh, and Back behavior.
 
 ## Release identity
 
-- App: `1.6.21`
-- Android version code: `31`
-- iOS build number: `31`
-- APK artifact: `FitHub-1.6.21-APK`
-- New SQL for 1.6.21: none
+- App: `1.6.22`
+- Android version code: `32`
+- iOS build number: `32`
+- APK artifact: `FitHub-1.6.22-APK`
+- New SQL or Edge Function for 1.6.22: none
 
-## Required deployment work
+## Deployment boundary
 
-If 1.6.20 is already fully deployed, 1.6.21 requires only the source replacement and a fresh APK build. Do not rerun the 1.6.20 migration or redeploy Edge Functions solely for this UI release. Full steps and tests are in the complete guide.
+If FitHub 1.6.20 or later is already fully deployed, 1.6.22 needs only the source replacement and a new APK build. Do not rerun an older migration or redeploy an Edge Function solely for this UI release.
 
-The mobile app uses only the Supabase publishable/anon key. Never put a service-role key, cron secret, SMTP password, FatSecret client secret, Firebase service-account key, Android keystore, or real `.env` file in GitHub or an APK.
+The app uses only a Supabase publishable/anon key. Never add service-role keys, SMTP passwords, FatSecret secrets, Firebase service-account keys, Android signing keys, tokens, or a real `.env` file to GitHub or the APK.
 
-## Safety boundary
+## Younger-account safeguards
 
-Under-18 accounts retain the existing protections: numerical calorie/macro tools and load-based Clubs are hidden, while Community challenges use consistency-based targets and private/friends visibility.
+Younger accounts keep a neutral meal journal but do not receive online nutrition search, barcode scanning, calorie/macro targets, or load-based progress pressure. Home continues to focus on workouts, activity, consistency, recovery, and community participation.
+
+## Design basis
+
+The redesign follows current platform guidance for adaptable layouts, touch accessibility, and five-destination bottom navigation:
+
+- Android accessibility: https://developer.android.com/guide/topics/ui/accessibility/apps
+- Android adaptive layouts: https://developer.android.com/develop/ui/views/layout/use-window-size-classes
+- Material navigation bars: https://m3.material.io/components/navigation-bar
+- Material cards: https://m3.material.io/components/cards/guidelines

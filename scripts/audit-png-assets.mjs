@@ -46,7 +46,7 @@ const duplicateGroups = Object.values(exerciseRows.reduce((groups, row) => {
 }, {})).filter((files) => files.length > 1);
 
 const report = {
-  version: '1.6.21',
+  version: '1.6.22',
   generated_at: new Date().toISOString(),
   exercise_pngs_checked: exerciseRows.length,
   male_visuals: male.size,

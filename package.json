@@ -1,6 +1,6 @@
 {
   "name": "fithub",
-  "version": "1.6.21",
+  "version": "1.6.22",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "audit:exercise-visuals": "node scripts/audit-exercise-visuals.mjs",
     "audit:png-assets": "node scripts/audit-png-assets.mjs",
-    "audit:references": "node scripts/audit-source-references.mjs"
+    "audit:references": "node scripts/audit-source-references.mjs",
+    "audit:home-food-ui": "node scripts/audit-home-food-ui.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
