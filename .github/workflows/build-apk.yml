@@ -67,6 +67,12 @@ jobs:
       - name: Audit every exercise visual
         run: npm run audit:exercise-visuals
 
+      - name: Audit Home and Food UI safeguards
+        run: npm run audit:home-food-ui
+
+      - name: Audit PNG asset integrity
+        run: npm run audit:png-assets
+
       - name: Generate Android project
         run: npx expo prebuild --platform android --clean
 
@@ -89,7 +95,7 @@ jobs:
       - name: Upload FitHub APK
         uses: actions/upload-artifact@v4
         with:
-          name: FitHub-1.6.21-APK
+          name: FitHub-1.6.22-APK
           path: FitHub.apk
           if-no-files-found: error
           retention-days: 14
