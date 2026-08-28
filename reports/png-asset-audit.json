@@ -1,0 +1,13 @@
+{
+  "version": "1.6.20",
+  "generated_at": "2026-08-28T08:29:30.869Z",
+  "exercise_pngs_checked": 472,
+  "male_visuals": 236,
+  "female_visuals": 236,
+  "group_pngs_checked": 16,
+  "home_pngs_checked": 2,
+  "gender_parity_issues": [],
+  "unreferenced_exercise_files": [],
+  "byte_identical_duplicate_groups": [],
+  "release_ready": true
+}
