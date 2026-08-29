@@ -1,6 +1,6 @@
 {
   "name": "fithub",
-  "version": "1.6.23",
+  "version": "1.6.24",
   "private": true,
   "main": "index.js",
   "scripts": {

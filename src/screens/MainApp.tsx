@@ -298,25 +298,25 @@ const createStyles = (colors: any) => StyleSheet.create({
   floatingWorkoutTime:{color:colors.text,fontSize:13,fontWeight:'900'},
   floatingWorkoutResumeRow:{flexDirection:'row',alignItems:'center',marginTop:3},
   floatingWorkoutResume:{color:colors.primary,fontSize:8,fontWeight:'900'},
-  nav: { minHeight: 84, flexDirection: 'row', marginHorizontal: 10, marginBottom: 7, borderWidth: 1, borderColor: colors.border, borderRadius: 25, backgroundColor: colors.nav, paddingBottom: 8, paddingTop: 8, overflow: 'visible', shadowColor:'#000',shadowOpacity:.15,shadowRadius:14,shadowOffset:{width:0,height:5},elevation:12 },
-  navItem: { flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  nav: { minHeight: 68, flexDirection: 'row', marginHorizontal: 10, marginBottom: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 24, backgroundColor: colors.nav, paddingBottom: 4, paddingTop: 4, overflow: 'visible', shadowColor:'#000',shadowOpacity:.14,shadowRadius:13,shadowOffset:{width:0,height:5},elevation:12 },
+  navItem: { flex: 1, minHeight: 58, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   navPressed: { opacity: 0.68 },
-  iconWrap: { width: 52, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  iconWrap: { width: 48, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   activeIndicator: { backgroundColor: 'transparent' },
-  trainButton: { width: 68, height: 68, borderRadius: 34, marginTop: -28, backgroundColor: colors.primary, borderWidth: 5, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.27,shadowRadius:11,shadowOffset:{width:0,height:5},elevation:10 },
+  trainButton: { width: 64, height: 64, borderRadius: 32, marginTop: -25, backgroundColor: colors.primary, borderWidth: 5, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.25,shadowRadius:10,shadowOffset:{width:0,height:5},elevation:10 },
   trainButtonActive: { transform: [{ scale: 1.04 }] },
-  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 3 },
+  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 2 },
   trainLabel: { marginTop: 0, color: colors.text, fontWeight: '900' },
   badge: { position: 'absolute', right: 0, top: -3, minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.nav, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#FFFFFF', fontSize: 8, fontWeight: '900' },
 });
 
 function BottomNavIcon({tab,active,color,accent}:{tab:Tab;active:boolean;color:string;accent:string}){
-  if(tab==='home')return <ReferenceHomeNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='friends')return <ReferenceFriendsNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='workout')return <ReferenceTrainNavIcon size={35} color={color}/>;
-  if(tab==='food')return <ReferenceFoodNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
-  return <ReferenceProfileNavIcon size={28} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='home')return <ReferenceHomeNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='friends')return <ReferenceFriendsNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='workout')return <ReferenceTrainNavIcon size={34} color={color}/>;
+  if(tab==='food')return <ReferenceFoodNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
+  return <ReferenceProfileNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
 }
 
 const formatElapsed=(seconds:number)=>{

@@ -21,11 +21,16 @@ check('Reference icon system is substantial', (files.icons.match(/export const R
 check('Home adapts at compact phone widths', /useWindowDimensions\(\)\.width\s*<\s*390/.test(files.home), 'compact breakpoint at 390 dp');
 check('Home has protected navigation clearance', /wrap:\s*\{[^}]*paddingBottom:\s*(?:8[6-9]|9\d|1\d\d)/s.test(files.home), 'Home bottom padding >= 86 dp');
 check('Food has protected navigation clearance', /wrap:\s*\{[^}]*paddingBottom:\s*(?:9\d|1\d\d)/s.test(files.food), 'Food bottom padding >= 90 dp');
-check('Interactive Home controls use 48 dp targets', /headerIcon:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.home) && /primaryAction:\s*\{[^}]*minHeight:\s*50/s.test(files.home) && /hitSlop=\{3\}/.test(files.home), '48 dp header and expanded plan-action targets');
+check('Compact Home controls keep expanded touch targets', /headerIcon:\s*\{[^}]*width:\s*44[^}]*height:\s*44/s.test(files.home) && (files.home.match(/hitSlop=\{4\}/g) ?? []).length >= 2 && /primaryAction:\s*\{[^}]*minHeight:\s*43/s.test(files.home) && /hitSlop=\{3\}/.test(files.home), '44 dp header controls plus expanded compact action targets');
 check('Interactive Food controls use 48 dp targets', /mealToggle:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.food) && /redPlus:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.food), '48 dp meal controls');
 check('Community label is explicitly constrained', /label="Community Challenges"/.test(files.home) && /numberOfLines=\{2\}/.test(files.home), 'two-line card labels');
 check('Home omits the rejected oversized HOME heading', !/<Text style=\{styles\.homeTitle\}>HOME<\/Text>/.test(files.home), 'greeting begins the approved composition');
-check('Home uses the approved Today plan equipment artwork', /todays_plan_equipment_v1\.png/.test(files.home), 'transparent bench, rack, barbell and shaker asset');
+check('Home uses the approved Today plan equipment artwork', /todays_plan_equipment_v2\.png/.test(files.home), 'transparent bench, rack, loaded barbell, shaker and towel asset');
+check('Home uses the approved gym-pattern background', /ReferenceHomeBackdrop/.test(files.home) && /export const ReferenceHomeBackdrop/.test(files.icons), 'subtle FitHub gym-pattern wash');
+check('Your Week heading sits inside the progress card', /<Text style=\{styles\.weekCardHeading\}>YOUR WEEK<\/Text>/.test(files.home) && !/weekHeadline/.test(files.home), 'locked compact week composition');
+check('Home keeps one compact friend-feed item', /slice\(0, 1\)/.test(files.home) && !/openFeedRow/.test(files.home), 'single recent friend activity row');
+check('Quick Access uses the approved compact tile proportions', /quickTile:\s*\{[^}]*minHeight:\s*70/s.test(files.home) && /quickTileWide:\s*\{[^}]*width:\s*'100%'[^}]*minHeight:\s*58/s.test(files.home), 'two compact rows plus full-width Run Metrics');
+check('Bottom navigation uses the approved slim raised-Train proportions', /nav:\s*\{[^}]*minHeight:\s*68/s.test(files.main) && /trainButton:\s*\{[^}]*width:\s*64[^}]*height:\s*64/s.test(files.main), '68 dp bar with 64 dp raised Train control');
 check('Run Metrics is a full-width destination', /wide icon=\{<ReferenceRunMetricsIcon/.test(files.home) && /quickTileWide:\s*\{[^}]*width:\s*'100%'/s.test(files.home), 'full-width Run Metrics card');
 check('Food has the approved illustrated side timeline', /mealTimelineRail/.test(files.food) && /mealTimelineDot/.test(files.food), 'four timeline meal rows');
 check('Food removes the rejected extra search banner', !/primaryFoodAction|primaryFoodTitle/.test(files.food), 'four shortcuts follow the diary hero directly');

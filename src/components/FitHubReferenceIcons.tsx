@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Circle, Ellipse, G, Line, Path, Polygon, Rect } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Path, Polygon, Rect, Stop } from 'react-native-svg';
 
 export type ReferenceIconProps = {
   size?: number;
@@ -22,6 +22,40 @@ const GREEN_DARK = '#2F7D3D';
 const ORANGE = '#F2A43A';
 const GOLD = '#F7C94C';
 const WHITE = '#FFFFFF';
+
+export const ReferenceHomeBackdrop = ({ color = '#19BFD9', accentColor = '#102B35' }: ReferenceIconProps) =>
+  <Svg width="100%" height="100%" viewBox="0 0 390 920" preserveAspectRatio="xMidYMid slice">
+    <Defs>
+      <LinearGradient id="home-wash" x1="0" y1="0" x2="1" y2="1">
+        <Stop offset="0" stopColor={color} stopOpacity=".02"/>
+        <Stop offset=".55" stopColor={color} stopOpacity=".09"/>
+        <Stop offset="1" stopColor={color} stopOpacity=".025"/>
+      </LinearGradient>
+    </Defs>
+    <Rect width="390" height="920" fill="url(#home-wash)"/>
+    <Path d="M-72 312 211 29h102L2 340z" fill={WHITE} fillOpacity=".2"/>
+    <Path d="M255-38 428 135v88L201-3z" fill={WHITE} fillOpacity=".18"/>
+    <Path d="M-66 690 285 339h73L-9 709z" fill={color} fillOpacity=".04"/>
+    <Path d="M128 943 437 634v67L195 943z" fill={WHITE} fillOpacity=".18"/>
+    <G opacity=".06" fill="none" stroke={accentColor} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M135 75h154M147 59v32M157 50v50M267 50v50M277 59v32"/>
+      <Circle cx="212" cy="75" r="27"/><Circle cx="212" cy="75" r="10"/>
+      <Path d="M20 568h114M33 554v28M44 546v44M111 546v44M122 554v28"/>
+      <Circle cx="78" cy="568" r="20"/><Circle cx="78" cy="568" r="7"/>
+      <Path d="M246 781h115M258 769v24M268 762v38M339 762v38M349 769v24"/>
+    </G>
+    <G opacity=".12" fill={color}>
+      <Circle cx="346" cy="185" r="2"/><Circle cx="356" cy="185" r="2"/><Circle cx="366" cy="185" r="2"/>
+      <Circle cx="346" cy="195" r="2"/><Circle cx="356" cy="195" r="2"/><Circle cx="366" cy="195" r="2"/>
+      <Circle cx="346" cy="205" r="2"/><Circle cx="356" cy="205" r="2"/><Circle cx="366" cy="205" r="2"/>
+      <Circle cx="24" cy="430" r="2"/><Circle cx="34" cy="430" r="2"/><Circle cx="44" cy="430" r="2"/>
+      <Circle cx="24" cy="440" r="2"/><Circle cx="34" cy="440" r="2"/><Circle cx="44" cy="440" r="2"/>
+    </G>
+    <G opacity=".08" stroke={color} strokeWidth="1.5">
+      <Line x1="292" y1="265" x2="417" y2="140"/><Line x1="307" y1="280" x2="432" y2="155"/>
+      <Line x1="-42" y1="846" x2="134" y2="670"/><Line x1="-29" y1="859" x2="147" y2="683"/>
+    </G>
+  </Svg>;
 
 export const ReferencePlayIcon = ({ size = 22, color = WHITE }: ReferenceIconProps) =>
   <Svg width={size} height={size} viewBox="0 0 32 32"><Path d="M10 6.5v19l15-9.5z" fill={color}/></Svg>;
@@ -57,21 +91,21 @@ export const ReferenceFeedIcon = ({ size = 24, color = '#102B35', accentColor = 
 
 export const ReferenceJourneyIcon = ({ size = 58, color = '#102B35', accentColor = '#19BFD9' }: ReferenceIconProps) =>
   <Svg width={size} height={size} viewBox="0 0 64 64">
-    <Path d="M11 53c3-8 17-5 18-14 1-7-12-7-10-15 1-6 12-7 20-7" {...stroke(color, 4)}/>
-    <Circle cx="11" cy="53" r="4" fill={accentColor} stroke={TEAL_DARK} strokeWidth="2"/>
-    <Circle cx="28" cy="39" r="3" fill={accentColor}/><Circle cx="20" cy="24" r="3" fill={accentColor}/>
-    <Path d="M39 7v19" {...stroke(color, 2.6)}/><Path d="M40 8h14l-4 5 4 5H40z" fill={accentColor} stroke={color} strokeWidth="2" strokeLinejoin="round"/>
-    <Path d="M37 50v7M42 47v13M54 47v13M59 50v7M42 54h12" {...stroke(color, 2.8)}/>
-    <Circle cx="48" cy="54" r="7" fill={accentColor}/><Path d="M45 54h6M48 51v6" stroke={WHITE} strokeWidth="1.8" strokeLinecap="round"/>
+    <Path d="M15 47c9-3 12-8 7-15-5-8 1-15 12-18 5-1 9-1 14 0" fill="none" stroke={color} strokeWidth="2.7" strokeLinecap="round" strokeDasharray="4 4"/>
+    <Path d="M14 37c-5 0-8 3-8 8 0 6 8 14 8 14s8-8 8-14c0-5-3-8-8-8z" fill={accentColor} stroke={color} strokeWidth="2"/><Circle cx="14" cy="45" r="2.5" fill={WHITE}/>
+    <Path d="M48 4c-5 0-8 3-8 8 0 6 8 14 8 14s8-8 8-14c0-5-3-8-8-8z" fill={accentColor} stroke={color} strokeWidth="2"/><Circle cx="48" cy="12" r="2.5" fill={WHITE}/>
+    <Circle cx="45" cy="48" r="12" fill="#E7F9FB" stroke={color} strokeWidth="2"/>
+    <Path d="M34 45v6M38 42v12M52 42v12M56 45v6M38 48h14" {...stroke(accentColor, 2.8)}/>
   </Svg>;
 
 export const ReferenceNutritionIcon = ({ size = 58, color = '#102B35', accentColor = '#19BFD9' }: ReferenceIconProps) =>
   <Svg width={size} height={size} viewBox="0 0 64 64">
-    <Path d="M8 33h37c-1 14-8 21-19 21S9 47 8 33z" fill={accentColor} fillOpacity=".18" stroke={color} strokeWidth="2.6" strokeLinejoin="round"/>
-    <Path d="M14 33c2-8 9-11 15-5 3-8 11-10 16-3" {...stroke(TEAL_DARK, 2.2)}/><Path d="M13 54h29" {...stroke(color, 2.5)}/>
-    <Path d="M25 25c-1-9 3-14 12-16-1 9-5 14-12 16z" fill={GREEN} stroke={GREEN_DARK} strokeWidth="1.8"/>
-    <Path d="M26 25c-4-8-10-10-17-7 3 7 8 10 17 7z" fill="#77C95A" stroke={GREEN_DARK} strokeWidth="1.8"/>
-    <Path d="M53 13v39M48 13v14M58 13v14M48 21h10" {...stroke(color, 2.6)}/>
+    <Path d="M7 34h39c-1 14-8 21-20 21S8 48 7 34z" fill={accentColor} fillOpacity=".14" stroke={color} strokeWidth="2.6" strokeLinejoin="round"/>
+    <Path d="M12 55h30" {...stroke(color, 2.5)}/>
+    <Path d="M26 29c-1-10 4-17 14-20-1 10-6 16-14 20z" fill={GREEN} stroke={GREEN_DARK} strokeWidth="1.8"/>
+    <Path d="M27 29c-7-10-14-12-21-8 5 8 11 11 21 8z" fill="#78C95B" stroke={GREEN_DARK} strokeWidth="1.8"/>
+    <Path d="M31 29c4-7 10-10 17-8-3 7-8 10-17 8z" fill="#9BDD69" stroke={GREEN_DARK} strokeWidth="1.6"/>
+    <Path d="M54 12v42M49 12v15M59 12v15M49 21h10" {...stroke(color, 2.6)}/>
   </Svg>;
 
 export const ReferenceSupplementsIcon = ({ size = 58, color = '#102B35', accentColor = '#19BFD9' }: ReferenceIconProps) =>
@@ -93,9 +127,9 @@ export const ReferenceCommunityIcon = ({ size = 58, color = '#102B35', accentCol
 
 export const ReferenceRunMetricsIcon = ({ size = 60, color = '#102B35', accentColor = '#19BFD9' }: ReferenceIconProps) =>
   <Svg width={size} height={size} viewBox="0 0 68 64">
-    <Circle cx="30" cy="10" r="5" fill={color}/><Path d="m28 18-7 11 10 6 7-12 8 7" {...stroke(color, 4)}/><Path d="m21 29-9 13M31 35l-4 15M37 23l-11-3" {...stroke(color, 4)}/>
-    <Path d="M6 50c10 5 22 4 31-2 9-6 17-6 25-2" {...stroke(accentColor, 3.5)}/><Path d="M10 55c13 4 27 2 38-4" {...stroke(accentColor, 2)}/>
-    <Circle cx="55" cy="17" r="9" fill="#E4F8FA" stroke={color} strokeWidth="2"/><Path d="M55 17v-5M55 17l4 2M52 5h6" {...stroke(color, 1.8)}/>
+    <Path d="M2 27h17M5 35h13M1 43h17" {...stroke(accentColor, 2.5)}/>
+    <Circle cx="31" cy="11" r="5" fill={color}/><Path d="m29 19-7 11 10 6 7-12 8 7" {...stroke(color, 4)}/><Path d="m22 30-9 14M32 36l-5 15M38 24l-11-3" {...stroke(color, 4)}/>
+    <Circle cx="55" cy="43" r="11" fill="#E7F9FB" stroke={color} strokeWidth="2.2"/><Path d="M55 43v-6M55 43l5 2M51 29h8" {...stroke(color, 2)}/>
   </Svg>;
 
 export const ReferenceFoodDiaryIcon = ({ size = 112, color = '#102B35', accentColor = '#19BFD9' }: ReferenceIconProps) =>
@@ -142,16 +176,20 @@ export const ReferenceWaterGlassIcon = ({ size = 36, color = '#19BFD9', filled =
   <Svg width={size} height={size} viewBox="0 0 40 50"><Path d="M5 5h30l-4 40H9z" fill={filled ? color : WHITE} fillOpacity={filled ? .28 : .5} stroke={color} strokeWidth="2.6" strokeLinejoin="round"/><Path d="M10 30c7-4 14 4 21 0" stroke={color} strokeWidth="2" strokeLinecap="round" opacity={filled ? 1 : .35}/></Svg>;
 
 export const ReferenceHomeNavIcon = ({ size = 30, color = '#102B35', accentColor = '#19BFD9', filled = false }: ReferenceIconProps) =>
-  <Svg width={size} height={size} viewBox="0 0 48 48"><Path d="m6 23 18-15 18 15v19H29V29H19v13H6z" fill={filled ? accentColor : 'none'} stroke={color} strokeWidth="2.8" strokeLinejoin="round"/><Rect x="21" y="31" width="6" height="11" rx="1" fill={filled ? WHITE : 'none'}/></Svg>;
+  <Svg width={size} height={size} viewBox="0 0 52 48">
+    <Path d="m5 22 17-14 17 14v19H27V29H17v12H5z" fill={filled ? accentColor : 'none'} fillOpacity={filled ? '.08' : '0'} stroke={color} strokeWidth="2.7" strokeLinejoin="round"/>
+    <Circle cx="39" cy="37" r="8" fill={accentColor} stroke={WHITE} strokeWidth="1.5"/>
+    <Path d="M34.5 34.5v5M37 33v8M41 33v8M43.5 34.5v5M37 37h4" stroke={WHITE} strokeWidth="1.6" strokeLinecap="round"/>
+  </Svg>;
 
 export const ReferenceFriendsNavIcon = ({ size = 30, color = '#102B35', accentColor = '#19BFD9', filled = false }: ReferenceIconProps) =>
-  <Svg width={size} height={size} viewBox="0 0 48 48"><Circle cx="17" cy="17" r="7" fill={filled ? accentColor : 'none'} stroke={color} strokeWidth="2.5"/><Circle cx="33" cy="20" r="5.5" fill={filled ? accentColor : 'none'} fillOpacity=".75" stroke={color} strokeWidth="2.3"/><Path d="M4 42c1-11 5-16 13-16s12 5 13 16M29 29c8 0 12 5 13 13" {...stroke(color, 2.5)}/></Svg>;
+  <Svg width={size} height={size} viewBox="0 0 52 48"><Circle cx="18" cy="16" r="6.5" fill={filled ? accentColor : 'none'} fillOpacity=".1" stroke={color} strokeWidth="2.5"/><Circle cx="34" cy="19" r="5.3" fill={filled ? accentColor : 'none'} fillOpacity=".1" stroke={color} strokeWidth="2.3"/><Path d="M4 41c1-10 6-15 14-15s12 5 13 15M30 28c8 0 12 4 13 13" {...stroke(color, 2.5)}/></Svg>;
 
 export const ReferenceTrainNavIcon = ({ size = 36, color = WHITE }: ReferenceIconProps) =>
   <Svg width={size} height={size} viewBox="0 0 56 40"><Path d="M4 13v14M10 8v24M16 12v16M40 12v16M46 8v24M52 13v14M16 20h24" {...stroke(color, 4)}/></Svg>;
 
 export const ReferenceFoodNavIcon = ({ size = 30, color = '#102B35', accentColor = '#19BFD9', filled = false }: ReferenceIconProps) =>
-  <Svg width={size} height={size} viewBox="0 0 48 48"><Path d="M8 6v16M13 6v16M8 14h5M10.5 22v20M37 6v36M37 6c-7 7-7 17 0 21" {...stroke(color, 2.8)}/><Path d="M22 34c3-8 8-11 14-8-1 7-5 11-12 12" fill={filled ? accentColor : 'none'} stroke={filled ? accentColor : color} strokeWidth="2.2"/></Svg>;
+  <Svg width={size} height={size} viewBox="0 0 52 48"><Path d="M5 26h29c-1 10-6 15-14 15S6 36 5 26z" fill={filled ? accentColor : 'none'} fillOpacity=".12" stroke={color} strokeWidth="2.5"/><Path d="M10 26c2-7 8-9 12-4 3-7 9-8 13-2M9 41h24" {...stroke(color, 2.3)}/><Path d="M21 19c0-7 4-11 11-13-1 7-4 11-11 13z" fill={filled ? accentColor : 'none'} stroke={filled ? accentColor : color} strokeWidth="2"/><Path d="M43 7v35M39 7v13M47 7v13M39 14h8" {...stroke(color, 2.5)}/></Svg>;
 
 export const ReferenceProfileNavIcon = ({ size = 30, color = '#102B35', accentColor = '#19BFD9', filled = false }: ReferenceIconProps) =>
-  <Svg width={size} height={size} viewBox="0 0 48 48"><Circle cx="24" cy="15" r="8" fill={filled ? accentColor : 'none'} stroke={color} strokeWidth="2.6"/><Path d="M7 43c2-12 8-18 17-18s15 6 17 18" fill={filled ? accentColor : 'none'} fillOpacity=".3" stroke={color} strokeWidth="2.6" strokeLinecap="round"/></Svg>;
+  <Svg width={size} height={size} viewBox="0 0 52 48"><Circle cx="26" cy="24" r="20" fill={filled ? accentColor : 'none'} fillOpacity=".08" stroke={color} strokeWidth="2.4"/><Circle cx="26" cy="17" r="6.2" fill={filled ? accentColor : 'none'} fillOpacity=".16" stroke={color} strokeWidth="2.3"/><Path d="M14 38c1-9 5-13 12-13s11 4 12 13" fill={filled ? accentColor : 'none'} fillOpacity=".12" stroke={color} strokeWidth="2.4" strokeLinecap="round"/></Svg>;
