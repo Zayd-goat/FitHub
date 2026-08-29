@@ -7,26 +7,31 @@ const files = {
   home: read('src/screens/tabs/DashboardTabV2.tsx'),
   food: read('src/screens/tabs/FoodTab.tsx'),
   main: read('src/screens/MainApp.tsx'),
-  icons: read('src/components/FitHubFreshIcons.tsx'),
+  icons: read('src/components/FitHubReferenceIcons.tsx'),
 };
 
 const checks = [];
 const check = (name, passed, evidence) => checks.push({ name, passed: Boolean(passed), evidence });
 
 check('Main app renders the rebuilt Home tab', /from '\.\/tabs\/DashboardTabV2'/.test(files.main), 'DashboardTabV2 import');
-check('Home uses the fresh icon system only', /FitHubFreshIcons/.test(files.home) && !/FitHubIcons'/.test(files.home), 'fresh icon import; no legacy import');
-check('Food uses the fresh icon system only', /FitHubFreshIcons/.test(files.food) && !/FitHubIcons'/.test(files.food), 'fresh icon import; no legacy import');
-check('Bottom navigation uses the fresh icon system only', /FitHubFreshIcons/.test(files.main) && !/FitHubIcons'/.test(files.main), 'fresh navigation icons');
-check('Fresh icon system is substantial', (files.icons.match(/export const Fresh[A-Za-z]+Icon/g) ?? []).length >= 30, `${(files.icons.match(/export const Fresh[A-Za-z]+Icon/g) ?? []).length} new icon components`);
+check('Home uses the locked reference icon system', /FitHubReferenceIcons/.test(files.home) && !/FitHubFreshIcons/.test(files.home), 'reference-only Home icons');
+check('Food uses the locked reference icon system for its visible diary', /ReferenceFoodDiaryIcon/.test(files.food) && /ReferenceBreakfastIcon/.test(files.food) && /ReferenceWaterBottleIcon/.test(files.food), 'reference diary, meal and hydration icons');
+check('Bottom navigation uses the locked reference icon system', /FitHubReferenceIcons/.test(files.main) && /ReferenceTrainNavIcon/.test(files.main) && !/Fresh(?:Home|Friends|Train|Food|Profile)NavIcon/.test(files.main), 'reference navigation icons');
+check('Reference icon system is substantial', (files.icons.match(/export const Reference[A-Za-z]+Icon/g) ?? []).length >= 28, `${(files.icons.match(/export const Reference[A-Za-z]+Icon/g) ?? []).length} purpose-built icon components`);
 check('Home adapts at compact phone widths', /useWindowDimensions\(\)\.width\s*<\s*390/.test(files.home), 'compact breakpoint at 390 dp');
 check('Home has protected navigation clearance', /wrap:\s*\{[^}]*paddingBottom:\s*(?:8[6-9]|9\d|1\d\d)/s.test(files.home), 'Home bottom padding >= 86 dp');
 check('Food has protected navigation clearance', /wrap:\s*\{[^}]*paddingBottom:\s*(?:9\d|1\d\d)/s.test(files.food), 'Food bottom padding >= 90 dp');
-check('Interactive Home controls use 48 dp targets', /headerIcon:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.home) && /minHeight:\s*48/.test(files.home), '48 dp header and action targets');
+check('Interactive Home controls use 48 dp targets', /headerIcon:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.home) && /primaryAction:\s*\{[^}]*minHeight:\s*50/s.test(files.home) && /hitSlop=\{3\}/.test(files.home), '48 dp header and expanded plan-action targets');
 check('Interactive Food controls use 48 dp targets', /mealToggle:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.food) && /redPlus:\s*\{[^}]*width:\s*48[^}]*height:\s*48/s.test(files.food), '48 dp meal controls');
 check('Community label is explicitly constrained', /label="Community Challenges"/.test(files.home) && /numberOfLines=\{2\}/.test(files.home), 'two-line card labels');
-check('Run Metrics is a full-width destination', /wide icon=\{<FreshRunIcon/.test(files.home) && /quickTileWide:\s*\{[^}]*width:\s*'100%'/s.test(files.home), 'full-width Run Metrics card');
-check('Food meal cards no longer use a side timeline', !/mealTimeline|timelineRail|timelineLine/.test(files.food), 'full-width meal cards');
-check('Food primary action is separated from shortcuts', /primaryFoodAction/.test(files.food) && /primaryFoodTitle/.test(files.food), 'primary add/search action');
+check('Home omits the rejected oversized HOME heading', !/<Text style=\{styles\.homeTitle\}>HOME<\/Text>/.test(files.home), 'greeting begins the approved composition');
+check('Home uses the approved Today plan equipment artwork', /todays_plan_equipment_v1\.png/.test(files.home), 'transparent bench, rack, barbell and shaker asset');
+check('Run Metrics is a full-width destination', /wide icon=\{<ReferenceRunMetricsIcon/.test(files.home) && /quickTileWide:\s*\{[^}]*width:\s*'100%'/s.test(files.home), 'full-width Run Metrics card');
+check('Food has the approved illustrated side timeline', /mealTimelineRail/.test(files.food) && /mealTimelineDot/.test(files.food), 'four timeline meal rows');
+check('Food removes the rejected extra search banner', !/primaryFoodAction|primaryFoodTitle/.test(files.food), 'four shortcuts follow the diary hero directly');
+check('Food uses the exact approved diary copy', files.food.includes('Keep your meals organised in one place'), 'locked reference subtitle');
+check('Food provides the exact four adult shortcuts', /ReferenceFoodSearchIcon/.test(files.food) && /ReferenceBarcodeIcon/.test(files.food) && /ReferenceRecentIcon/.test(files.food) && /ReferenceSavedMealsIcon/.test(files.food), 'Search, Scan, Recent, Saved Meals');
+check('Food meal rows begin collapsed like the reference', /\{breakfast:false,lunch:false,dinner:false,snacks:false\}/.test(files.food), 'all four meal rows collapsed initially');
 check('Younger profiles do not receive online nutrition search', /if\(!query\.trim\(\)\|\|locked\) return/.test(files.food) && /if\(locked\|\|scanned\)return/.test(files.food) && files.food.includes('{!locked?<Pressable onPress={()=>{setScanned(false);setScannerOpen(true)}}'), 'search and scan gated by age');
 check('Younger profiles do not receive nutrition targets', /\{!locked\?<Card style=\{styles\.nutritionCard\}/.test(files.food), 'nutrition overview gated by age');
 check('Navigation contains five primary destinations', /\['home', 'Home'\][\s\S]*\['friends', 'Friends'\][\s\S]*\['workout', 'Train'\][\s\S]*\['food', 'Food'\][\s\S]*\['profile', 'You'\]/.test(files.main), 'Home, Friends, Train, Food, You');

@@ -10,6 +10,7 @@
 - The exercise visual audit passes for 229 catalogue exercises, 472 PNG references, and 236 male/236 female visual families.
 - PNG integrity, dimensions, transparency, parity, orphan-file, duplicate, and detached-artifact checks pass for exercise, muscle-group, and Home art.
 - `app.json`, `package.json`, `package-lock.json`, and generated audit JSON reports parse successfully.
+- The TypeScript issue reported by the first connected workflow (`StyleSheet.absoluteFillObject`) has been corrected; the workflow must be rerun to confirm the connected build.
 
 See `reports/home-food-ui-audit.json`, `reports/exercise-visual-audit.json`, and `reports/png-asset-audit.json`.
 

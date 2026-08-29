@@ -29,6 +29,7 @@
 
 - Added `npm run audit:home-food-ui` with 20 release checks.
 - GitHub Actions now runs source references, exercise visuals, Home/Food safeguards, and PNG integrity before Android generation.
+- Replaced the unsupported `StyleSheet.absoluteFillObject` reference with explicit absolute positioning for React Native 0.86 TypeScript compatibility.
 - Version updated to `1.6.22`, Android version code `32`, and iOS build number `32`.
 
 ## Backend

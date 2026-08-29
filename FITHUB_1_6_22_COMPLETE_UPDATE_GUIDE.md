@@ -71,6 +71,8 @@ Do not use a Supabase service-role key as the mobile publishable key.
 
 ## 6. Build the APK
 
+If an earlier 1.6.22 run failed on `StyleSheet.absoluteFillObject`, replace `src/screens/tabs/DashboardTabV2.tsx` with the corrected file in this package before rerunning.
+
 1. Open the GitHub repository.
 2. Select **Actions**.
 3. Select **Build FitHub APK**.
