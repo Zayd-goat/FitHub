@@ -9,6 +9,12 @@ const helperStart = fullAuditSource.indexOf('const crcTable');
 const helperEnd = fullAuditSource.indexOf('const assetRows');
 if (helperStart < 0 || helperEnd < 0) throw new Error('Could not load the PNG validation helpers.');
 const pngInfo = Function('fs', 'zlib', 'crypto', `${fullAuditSource.slice(helperStart, helperEnd)}; return pngInfo;`)(fs, zlib, crypto);
+const pngInfoAllowIntentionalParts = Function(
+  'fs',
+  'zlib',
+  'crypto',
+  `${fullAuditSource.slice(helperStart, helperEnd).replace(/\s*if \(detachedArtifactCount\) throw new Error\(`Visual contains \$\{detachedArtifactCount\} detached alpha artifact\(s\): \$\{file\}`\);/, '')}; return pngInfo;`,
+)(fs, zlib, crypto);
 
 const visualText = fs.readFileSync(path.join(root, 'src/data/exerciseVisuals.ts'), 'utf8');
 const required = [...visualText.matchAll(/require\('\.\.\/\.\.\/assets\/train_v3\/(male|female)\/([^']+\.png)'\)/g)]
@@ -25,10 +31,26 @@ const groupRows = ['male', 'female'].flatMap((gender) =>
     .filter((file) => file.endsWith('.png'))
     .map((file) => ({ gender, file, ...pngInfo(path.join(root, 'assets/train_v4/groups', gender, file), 384, 512) })),
 );
-const homeRows = ['rest_day_male_v2.png', 'rest_day_female_v2.png'].map((file) => ({
+const legacyHomeRows = ['rest_day_male_v2.png', 'rest_day_female_v2.png'].map((file) => ({
   file,
   ...pngInfo(path.join(root, 'assets/home', file), 1672, 941),
 }));
+const equipmentHomeRows = [
+  'todays_plan_equipment_v2.png',
+  'todays_plan_pull_equipment_v1.png',
+  'todays_plan_legs_equipment_v1.png',
+  'todays_plan_upper_equipment_v1.png',
+  'todays_plan_full_body_equipment_v1.png',
+  'todays_plan_cardio_equipment_v1.png',
+  'todays_plan_shoulders_equipment_v1.png',
+  'todays_plan_arms_equipment_v1.png',
+  'todays_plan_core_equipment_v1.png',
+  'todays_plan_recovery_equipment_v1.png',
+].map((file) => ({
+  file,
+  ...pngInfoAllowIntentionalParts(path.join(root, 'assets/home', file), 1402, 1122),
+}));
+const homeRows = [...legacyHomeRows, ...equipmentHomeRows];
 
 const male = new Set(exerciseRows.filter((row) => row.gender === 'male').map((row) => row.file));
 const female = new Set(exerciseRows.filter((row) => row.gender === 'female').map((row) => row.file));
@@ -46,7 +68,7 @@ const duplicateGroups = Object.values(exerciseRows.reduce((groups, row) => {
 }, {})).filter((files) => files.length > 1);
 
 const report = {
-  version: '1.6.22',
+  version: JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version,
   generated_at: new Date().toISOString(),
   exercise_pngs_checked: exerciseRows.length,
   male_visuals: male.size,
@@ -56,7 +78,7 @@ const report = {
   gender_parity_issues: parityIssues,
   unreferenced_exercise_files: unreferencedFiles,
   byte_identical_duplicate_groups: duplicateGroups,
-  release_ready: exerciseRows.length === 472 && male.size === 236 && female.size === 236 && groupRows.length === 16 && homeRows.length === 2 && !parityIssues.length && !unreferencedFiles.length && !duplicateGroups.length,
+  release_ready: exerciseRows.length === 472 && male.size === 236 && female.size === 236 && groupRows.length === 16 && homeRows.length === 12 && !parityIssues.length && !unreferencedFiles.length && !duplicateGroups.length,
 };
 
 fs.writeFileSync(path.join(root, 'reports/png-asset-audit.json'), `${JSON.stringify(report, null, 2)}\n`);

@@ -14,7 +14,7 @@ import ProgressScreen, { ProgressFocus } from './ProgressScreen';
 import WorkoutHistoryScreen from './WorkoutHistoryScreen';
 import DailyActivityScreen from './DailyActivityScreen';
 import FitnessJourneyScreen from './FitnessJourneyScreen';
-import CommunityHubScreen, { CommunityHubTab } from './CommunityHubScreen';
+import CommunityHubScreen, { CommunityHubTab } from './CommunityHubScreenV2';
 import RunMetricsScreen from './RunMetricsScreen';
 import SupplementRemindersScreen from './SupplementRemindersScreen';
 import WorkoutSplitScreen from './WorkoutSplitScreen';

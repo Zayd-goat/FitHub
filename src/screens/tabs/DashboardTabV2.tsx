@@ -29,16 +29,18 @@ type Props = {
   unreadNotifications: number;
 };
 
-const groupArt = {
-  male: {
-    chest: require('../../../assets/train_v4/groups/male/chest.png'), back: require('../../../assets/train_v4/groups/male/back.png'), shoulders: require('../../../assets/train_v4/groups/male/shoulders.png'), arms: require('../../../assets/train_v4/groups/male/arms.png'), legs: require('../../../assets/train_v4/groups/male/legs.png'), core: require('../../../assets/train_v4/groups/male/core.png'), full_body: require('../../../assets/train_v4/groups/male/full_body.png'), cardio: require('../../../assets/train_v4/groups/male/cardio.png'), rest: require('../../../assets/home/rest_day_male_v2.png'),
-  },
-  female: {
-    chest: require('../../../assets/train_v4/groups/female/chest.png'), back: require('../../../assets/train_v4/groups/female/back.png'), shoulders: require('../../../assets/train_v4/groups/female/shoulders.png'), arms: require('../../../assets/train_v4/groups/female/arms.png'), legs: require('../../../assets/train_v4/groups/female/legs.png'), core: require('../../../assets/train_v4/groups/female/core.png'), full_body: require('../../../assets/train_v4/groups/female/full_body.png'), cardio: require('../../../assets/train_v4/groups/female/cardio.png'), rest: require('../../../assets/home/rest_day_female_v2.png'),
-  },
+const equipmentArt = {
+  chest: require('../../../assets/home/todays_plan_equipment_v2.png'),
+  back: require('../../../assets/home/todays_plan_pull_equipment_v1.png'),
+  shoulders: require('../../../assets/home/todays_plan_shoulders_equipment_v1.png'),
+  arms: require('../../../assets/home/todays_plan_arms_equipment_v1.png'),
+  legs: require('../../../assets/home/todays_plan_legs_equipment_v1.png'),
+  core: require('../../../assets/home/todays_plan_core_equipment_v1.png'),
+  upper: require('../../../assets/home/todays_plan_upper_equipment_v1.png'),
+  full_body: require('../../../assets/home/todays_plan_full_body_equipment_v1.png'),
+  cardio: require('../../../assets/home/todays_plan_cardio_equipment_v1.png'),
+  rest: require('../../../assets/home/todays_plan_recovery_equipment_v1.png'),
 } as const;
-
-const approvedPushEquipment = require('../../../assets/home/todays_plan_equipment_v2.png');
 
 type WeekDay = { label: string; date: Date; completed: boolean; today: boolean };
 
@@ -94,10 +96,8 @@ export default function DashboardTabV2({ profile, onStartWorkout, onViewWorkouts
   const firstName = titleCase(profile.username?.split(/[_\s]/)[0] || 'Athlete');
   const workoutTitle = todayPlan || 'Choose Today’s Workout';
   const restDay = /rest|recovery|off day/i.test(workoutTitle);
-  const gender = profile.gender === 'female' ? 'female' : 'male';
   const artKey = restDay ? 'rest' : artKeyForPlan(workoutTitle);
-  const heroImage = !restDay && artKey === 'chest' ? approvedPushEquipment : groupArt[gender][artKey];
-  const equipmentHero = heroImage === approvedPushEquipment;
+  const heroImage = equipmentArt[artKey];
   const heroMeta = useMemo(() => planMeta(workoutTitle, todayPlanDetails, restDay), [workoutTitle, todayPlanDetails, restDay]);
 
   return <View style={styles.page}>
@@ -119,7 +119,7 @@ export default function DashboardTabV2({ profile, onStartWorkout, onViewWorkouts
           <Pressable onPress={restDay ? onOpenSplit : onStartWorkout} hitSlop={3} style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]} accessibilityRole="button"><Text style={[styles.primaryActionText, { color: contrastText(colors.primary) }]}>{restDay ? 'VIEW RECOVERY' : 'START WORKOUT'}</Text><ReferenceChevronIcon size={18} color={contrastText(colors.primary)}/></Pressable>
           <Pressable onPress={onOpenSplit} hitSlop={6} style={({ pressed }) => [styles.planAction, pressed && styles.pressed]} accessibilityRole="button"><Text style={styles.planActionText}>{restDay ? 'Recovery details' : 'View plan'}</Text><ReferenceChevronIcon size={16} color={colors.primary}/></Pressable>
         </View>
-        <Image source={heroImage} style={[styles.heroImage, restDay && styles.restHeroImage, equipmentHero && styles.equipmentHeroImage]} accessibilityIgnoresInvertColors/>
+        <Image source={heroImage} style={[styles.heroImage, styles.equipmentHeroImage]} accessibilityIgnoresInvertColors/>
       </View>
 
       <Pressable onPress={() => onViewWorkouts()} style={({ pressed }) => [styles.weekCard, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel="Open workout calendar and add a past workout">
@@ -176,13 +176,13 @@ function titleCase(value: string) { return value ? value[0].toUpperCase() + valu
 function sessionTitle(summary?: string | null) { if (!summary) return 'Workout'; const names = summary.split(',').map((value) => value.trim()).filter(Boolean); return names.length > 1 ? `${names[0]} + ${names.length - 1} more` : names[0] || 'Workout'; }
 function relativeTime(value: string) { const minutes = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 60000)); if (minutes < 60) return `${minutes}m ago`; const hours = Math.floor(minutes / 60); if (hours < 24) return `${hours}h ago`; return `${Math.floor(hours / 24)}d ago`; }
 
-function artKeyForPlan(label: string): Exclude<keyof typeof groupArt.male, 'rest'> {
+function artKeyForPlan(label: string): Exclude<keyof typeof equipmentArt, 'rest'> {
   const value = label.toLowerCase();
   if (/cardio|run|walk|cycle|conditioning/.test(value)) return 'cardio';
   if (/leg|lower|glute|quad|hamstring/.test(value)) return 'legs';
   if (/pull|back|lat/.test(value)) return 'back';
   if (/push|chest|bench/.test(value)) return 'chest';
-  if (/upper/.test(value)) return 'full_body';
+  if (/upper/.test(value)) return 'upper';
   if (/shoulder|delt/.test(value)) return 'shoulders';
   if (/arm|bicep|tricep/.test(value)) return 'arms';
   if (/core|ab/.test(value)) return 'core';
@@ -229,7 +229,6 @@ const createStyles = (colors: any, isDark: boolean, compact: boolean) => StyleSh
   planActionText: { color: colors.primary, fontSize: 10, fontWeight: '900' },
   heroImage: { position: 'absolute', width: '48%', height: '91%', right: -2, bottom: -1, resizeMode: 'contain', backgroundColor: 'transparent' },
   equipmentHeroImage: { width: compact ? '60%' : '59%', height: compact ? '88%' : '90%', right: compact ? -18 : -12, bottom: -2 },
-  restHeroImage: { width: compact ? '49%' : '53%', right: compact ? -20 : -24, bottom: -4 },
   sectionHeadingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 },
   sectionHeading: { color: colors.text, fontSize: compact ? 15 : 16, fontWeight: '900', letterSpacing: .2, marginTop: 8, marginBottom: 8 },
   sectionHint: { color: colors.muted, fontSize: 8, fontWeight: '700', marginBottom: 9 },

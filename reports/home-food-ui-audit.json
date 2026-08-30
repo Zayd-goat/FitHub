@@ -1,0 +1,252 @@
+{
+  "version": "1.6.25",
+  "generated_at": "2026-08-30T13:01:11.098Z",
+  "checks": [
+    {
+      "name": "Main app renders the rebuilt Home tab",
+      "passed": true,
+      "evidence": "DashboardTabV2 import"
+    },
+    {
+      "name": "Home uses the locked reference icon system",
+      "passed": true,
+      "evidence": "reference-only Home icons"
+    },
+    {
+      "name": "Food uses the locked reference icon system for its visible diary",
+      "passed": true,
+      "evidence": "reference diary, meal and hydration icons"
+    },
+    {
+      "name": "Bottom navigation uses the locked reference icon system",
+      "passed": true,
+      "evidence": "reference navigation icons"
+    },
+    {
+      "name": "Reference icon system is substantial",
+      "passed": true,
+      "evidence": "32 purpose-built icon components"
+    },
+    {
+      "name": "Home adapts at compact phone widths",
+      "passed": true,
+      "evidence": "compact breakpoint at 390 dp"
+    },
+    {
+      "name": "Home has protected navigation clearance",
+      "passed": true,
+      "evidence": "Home bottom padding >= 86 dp"
+    },
+    {
+      "name": "Food has protected navigation clearance",
+      "passed": true,
+      "evidence": "Food bottom padding >= 90 dp"
+    },
+    {
+      "name": "Compact Home controls keep expanded touch targets",
+      "passed": true,
+      "evidence": "44 dp header controls plus expanded compact action targets"
+    },
+    {
+      "name": "Interactive Food controls use 48 dp targets",
+      "passed": true,
+      "evidence": "48 dp meal controls"
+    },
+    {
+      "name": "Community label is explicitly constrained",
+      "passed": true,
+      "evidence": "two-line card labels"
+    },
+    {
+      "name": "Home omits the rejected oversized HOME heading",
+      "passed": true,
+      "evidence": "greeting begins the approved composition"
+    },
+    {
+      "name": "Home uses the approved Today plan equipment artwork",
+      "passed": true,
+      "evidence": "transparent bench, rack, loaded barbell, shaker and towel asset"
+    },
+    {
+      "name": "Home includes dedicated pull equipment artwork",
+      "passed": true,
+      "evidence": "pull equipment scene"
+    },
+    {
+      "name": "Home includes dedicated legs equipment artwork",
+      "passed": true,
+      "evidence": "legs equipment scene"
+    },
+    {
+      "name": "Home includes dedicated upper equipment artwork",
+      "passed": true,
+      "evidence": "upper equipment scene"
+    },
+    {
+      "name": "Home includes dedicated full body equipment artwork",
+      "passed": true,
+      "evidence": "full_body equipment scene"
+    },
+    {
+      "name": "Home includes dedicated cardio equipment artwork",
+      "passed": true,
+      "evidence": "cardio equipment scene"
+    },
+    {
+      "name": "Home includes dedicated shoulders equipment artwork",
+      "passed": true,
+      "evidence": "shoulders equipment scene"
+    },
+    {
+      "name": "Home includes dedicated arms equipment artwork",
+      "passed": true,
+      "evidence": "arms equipment scene"
+    },
+    {
+      "name": "Home includes dedicated core equipment artwork",
+      "passed": true,
+      "evidence": "core equipment scene"
+    },
+    {
+      "name": "Home includes dedicated recovery equipment artwork",
+      "passed": true,
+      "evidence": "recovery equipment scene"
+    },
+    {
+      "name": "Home uses the approved gym-pattern background",
+      "passed": true,
+      "evidence": "subtle FitHub gym-pattern wash"
+    },
+    {
+      "name": "Your Week heading sits inside the progress card",
+      "passed": true,
+      "evidence": "locked compact week composition"
+    },
+    {
+      "name": "Home keeps one compact friend-feed item",
+      "passed": true,
+      "evidence": "single recent friend activity row"
+    },
+    {
+      "name": "Quick Access uses the approved compact tile proportions",
+      "passed": true,
+      "evidence": "two compact rows plus full-width Run Metrics"
+    },
+    {
+      "name": "Bottom navigation uses the approved slim raised-Train proportions",
+      "passed": true,
+      "evidence": "68 dp bar with 64 dp raised Train control"
+    },
+    {
+      "name": "Run Metrics is a full-width destination",
+      "passed": true,
+      "evidence": "full-width Run Metrics card"
+    },
+    {
+      "name": "Food has the approved illustrated side timeline",
+      "passed": true,
+      "evidence": "four timeline meal rows"
+    },
+    {
+      "name": "Food removes the rejected extra search banner",
+      "passed": true,
+      "evidence": "four shortcuts follow the diary hero directly"
+    },
+    {
+      "name": "Food uses the exact approved diary copy",
+      "passed": true,
+      "evidence": "locked reference subtitle"
+    },
+    {
+      "name": "Food provides the exact four adult shortcuts",
+      "passed": true,
+      "evidence": "Search, Scan, Recent, Saved Meals"
+    },
+    {
+      "name": "Food meal rows begin collapsed like the reference",
+      "passed": true,
+      "evidence": "all four meal rows collapsed initially"
+    },
+    {
+      "name": "Younger profiles do not receive online nutrition search",
+      "passed": true,
+      "evidence": "search and scan gated by age"
+    },
+    {
+      "name": "Younger profiles do not receive nutrition targets",
+      "passed": true,
+      "evidence": "nutrition overview gated by age"
+    },
+    {
+      "name": "Navigation contains five primary destinations",
+      "passed": true,
+      "evidence": "Home, Friends, Train, Food, You"
+    },
+    {
+      "name": "Main app renders the redesigned Community hub",
+      "passed": true,
+      "evidence": "CommunityHubScreenV2 import"
+    },
+    {
+      "name": "Community has Challenges and Clubs as top-level tabs",
+      "passed": true,
+      "evidence": "Challenges followed by Clubs"
+    },
+    {
+      "name": "Community challenge creation uses three guided steps",
+      "passed": true,
+      "evidence": "Details, Goal and Invite steps"
+    },
+    {
+      "name": "Community supports Explore, Active, Invites and Completed filters",
+      "passed": true,
+      "evidence": "four challenge filters"
+    },
+    {
+      "name": "Challenge progress still comes from completed workout history",
+      "passed": true,
+      "evidence": "session and set history"
+    },
+    {
+      "name": "Challenge invite accept and decline actions remain available",
+      "passed": true,
+      "evidence": "visible invite actions"
+    },
+    {
+      "name": "Clubs still refresh and backfill from workout history",
+      "passed": true,
+      "evidence": "club refresh RPCs"
+    },
+    {
+      "name": "Club cards compare personal best with the active club mark",
+      "passed": true,
+      "evidence": "side-by-side comparison"
+    },
+    {
+      "name": "Load-based Clubs remain hidden for under-18 accounts",
+      "passed": true,
+      "evidence": "age-aware club gate"
+    },
+    {
+      "name": "home style references resolve",
+      "passed": true,
+      "evidence": "69 references resolved"
+    },
+    {
+      "name": "food style references resolve",
+      "passed": true,
+      "evidence": "128 references resolved"
+    },
+    {
+      "name": "main style references resolve",
+      "passed": true,
+      "evidence": "21 references resolved"
+    },
+    {
+      "name": "community style references resolve",
+      "passed": true,
+      "evidence": "186 references resolved"
+    }
+  ],
+  "passed": true
+}

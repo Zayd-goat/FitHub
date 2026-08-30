@@ -254,7 +254,7 @@ const duplicateGroups = Object.values(hashes).filter((files) => new Set(files).s
 const pendingDedicated = runtimeRows.filter((row) => !row.exact);
 
 const report = {
-  version: '1.6.22',
+  version: JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version,
   generated_at: new Date().toISOString(),
   catalogue_exercises: exercises.length,
   runtime_resolved_exercises: runtimeRows.length,
