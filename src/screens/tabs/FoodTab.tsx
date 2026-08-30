@@ -13,12 +13,13 @@ import {
   FreshSavedIcon, FreshSearchIcon,
 } from '../../components/FitHubFreshIcons';
 import {
-  ReferenceBarcodeIcon, ReferenceBreakfastIcon, ReferenceCalendarIcon,
-  ReferenceChevronIcon, ReferenceDinnerIcon, ReferenceFoodDiaryIcon,
-  ReferenceFoodSearchIcon, ReferenceLunchIcon, ReferencePlusIcon,
-  ReferenceRecentIcon, ReferenceSavedMealsIcon, ReferenceSnacksIcon,
-  ReferenceWaterBottleIcon, ReferenceWaterDropIcon, ReferenceWaterGlassIcon,
-} from '../../components/FitHubReferenceIcons';
+  FoodBreakfastPlateIcon, FoodCalendarIcon, FoodChevronIcon,
+  FoodDiarySceneIcon, FoodDinnerClocheIcon, FoodLunchBentoIcon,
+  FoodPlusIcon, FoodRecentTrayIcon, FoodSavedRecipeIcon,
+  FoodScanFrameIcon, FoodScreenBackdrop, FoodSearchDiscoveryIcon,
+  FoodSnacksPouchIcon, FoodWaterBottleIcon, FoodWaterDropIcon,
+  FoodWaterGlassIcon,
+} from '../../components/FitHubFoodIcons';
 import { profileAge } from '../../lib/profileAge';
 
 const localKey = (value: string | Date) => {
@@ -284,7 +285,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
         {!locked?<View style={styles.finderActions}><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={()=>onlineSearch(0)} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></View>:null}
       </Card>
       <View style={styles.finderShortcutRow}>
-        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><ReferenceRecentIcon color={colors.text} accentColor={colors.primary}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><FoodRecentTrayIcon color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
         <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><FreshSavedIcon color={colors.text} accentColor={colors.primary}/><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
         <Pressable onPress={()=>setManualOpen(!manualOpen)} style={styles.finderShortcut}><FreshPlusIcon size={28} color={colors.text}/><Text style={styles.finderShortcutText}>Custom food</Text></Pressable>
       </View>
@@ -307,6 +308,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
   </KeyboardAvoidingView>;
 
   return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>
+    <View pointerEvents="none" style={styles.foodBackdrop}><FoodScreenBackdrop color={colors.primary}/></View>
     {providerDetailModal}
     <Modal visible={scannerOpen} animationType="slide" onRequestClose={()=>setScannerOpen(false)}>
       <View style={{flex:1,backgroundColor:'#000'}}>
@@ -317,18 +319,18 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
     <RefreshableScrollView onRefresh={load} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
       <View style={styles.headerRow}>
         <Text style={styles.title}>FOOD</Text>
-        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.todayButton} accessibilityRole="button" accessibilityLabel="Open food history"><ReferenceCalendarIcon size={25} color={colors.primary}/><Text style={styles.todayTitle}>Today</Text><ReferenceChevronIcon size={17} color={colors.primary} direction="down"/></Pressable>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.todayButton} accessibilityRole="button" accessibilityLabel="Open food history"><FoodCalendarIcon size={27} color={colors.primary} accentColor={colors.primary}/><Text style={styles.todayTitle}>Today</Text><FoodChevronIcon size={17} color={colors.primary} direction="down"/></Pressable>
       </View>
 
       <View style={styles.weekStrip}>{[-2,-1,0,1,2,3,4].map((offset)=>{const d=new Date();d.setDate(d.getDate()+offset);const active=offset===0;return <View key={offset} style={[styles.weekDay,active&&styles.weekDayOn]}><Text style={[styles.weekName,active&&styles.weekNameOn]}>{d.toLocaleDateString(undefined,{weekday:'short'}).toUpperCase()}</Text><Text style={[styles.weekNumber,active&&styles.weekNameOn]}>{d.getDate()}</Text></View>})}</View>
 
-      <Card style={styles.diaryHero}><View style={styles.diaryIllustration}><ReferenceFoodDiaryIcon size={112} color={colors.text} accentColor={colors.primary}/></View><View style={styles.diaryCopy}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Keep your meals organised in one place</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View></Card>
+      <Card style={styles.diaryHero}><View style={styles.diaryIllustration}><FoodDiarySceneIcon size={124} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View><View style={styles.diaryCopy}><Text style={styles.diaryEyebrow}>TODAY'S DIARY</Text><Text style={styles.diarySub}>Plan your meals and hydration</Text><Text style={styles.diaryCount}>{new Set(todayLogs.map(x=>x.meal_type)).size} of 4 meals logged</Text><View style={styles.diaryTrack}><View style={[styles.diaryFill,{width:`${Math.min(100,new Set(todayLogs.map(x=>x.meal_type)).size/4*100)}%`}]}/></View></View></Card>
 
       <View style={styles.quickActions}>
-        <Pressable onPress={()=>setFinderOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Search foods"><View style={styles.quickIconCircle}><ReferenceFoodSearchIcon size={50} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Search</Text></Pressable>
-        {!locked?<Pressable onPress={()=>{setScanned(false);setScannerOpen(true)}} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Scan food barcode"><View style={styles.quickIconCircle}><ReferenceBarcodeIcon size={50} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Scan</Text></Pressable>:null}
-        <Pressable onPress={()=>setHistoryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Open recent meals"><View style={styles.quickIconCircle}><ReferenceRecentIcon size={50} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Recent</Text></Pressable>
-        <Pressable onPress={()=>setLibraryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Open saved meals"><View style={styles.quickIconCircle}><ReferenceSavedMealsIcon size={50} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Saved Meals</Text></Pressable>
+        <Pressable onPress={()=>setFinderOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Search foods"><View style={styles.quickIconCircle}><FoodSearchDiscoveryIcon size={51} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View><Text style={styles.quickLabel}>Search</Text></Pressable>
+        {!locked?<Pressable onPress={()=>{setScanned(false);setScannerOpen(true)}} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Scan food barcode"><View style={styles.quickIconCircle}><FoodScanFrameIcon size={51} color={colors.text} accentColor={colors.primary}/></View><Text style={styles.quickLabel}>Scan</Text></Pressable>:null}
+        <Pressable onPress={()=>setHistoryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Open recent meals"><View style={styles.quickIconCircle}><FoodRecentTrayIcon size={51} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View><Text style={styles.quickLabel}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setLibraryOpen(true)} style={({pressed})=>[styles.quickAction,pressed&&styles.quickActionPressed]} accessibilityRole="button" accessibilityLabel="Open saved meals"><View style={styles.quickIconCircle}><FoodSavedRecipeIcon size={51} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View><Text style={styles.quickLabel}>Saved Meals</Text></Pressable>
       </View>
 
       <View style={styles.mealTimeline}>
@@ -336,7 +338,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
         {(['breakfast','lunch','dinner','snacks'] as const).map((type)=><View key={type} style={styles.mealTimelineRow}><View style={styles.mealTimelineLane}><View style={styles.mealTimelineDot}/></View><View style={styles.mealTimelineCard}><MealDiaryCard type={type} rows={todayLogs.filter(x=>(x.meal_type??'breakfast')===type)} expanded={expandedMeals[type]} locked={locked} onToggle={()=>setExpandedMeals({...expandedMeals,[type]:!expandedMeals[type]})} onAdd={()=>{setMealType(type);setFinderOpen(true)}} onRemove={removeLog} onCopy={()=>copyPreviousMeal(type)} onSave={()=>saveCurrentMeal(type)}/></View></View>)}
       </View>
 
-      <Card style={styles.waterCard}><View style={styles.waterTop}><View style={styles.waterHeading}><ReferenceWaterDropIcon size={25} color={colors.text} accentColor={colors.primary}/><View><Text style={styles.waterTitle}>WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View></View><Pressable onPress={()=>addWater(250)} style={styles.waterPlus} accessibilityRole="button" accessibilityLabel="Add 250 millilitres of water"><ReferencePlusIcon size={27} color="#FFFFFF"/></Pressable></View><View style={styles.waterHydrationRow}><View style={styles.waterBottleStage}><ReferenceWaterBottleIcon size={61} color={colors.text} accentColor={colors.primary}/></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><ReferenceWaterGlassIcon key={i} size={34} color={colors.primary} filled={i<Math.min(6,Math.floor(waterTotal/250))}/>)}</View></View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])} style={styles.undoButton}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
+      <Card style={styles.waterCard}><View style={styles.waterTop}><View style={styles.waterHeading}><FoodWaterDropIcon size={25} color={colors.text} accentColor={colors.primary}/><View><Text style={styles.waterTitle}>WATER</Text><Text style={styles.waterSub}>{waterTotal.toLocaleString()} ml today</Text></View></View><Pressable onPress={()=>addWater(250)} style={styles.waterPlus} accessibilityRole="button" accessibilityLabel="Add 250 millilitres of water"><FoodPlusIcon size={27} color="#FFFFFF"/></Pressable></View><View style={styles.waterHydrationRow}><View style={styles.waterBottleStage}><FoodWaterBottleIcon size={61} color={colors.text} accentColor={colors.primary}/></View><View style={styles.waterGlasses}>{Array.from({length:6}).map((_,i)=><FoodWaterGlassIcon key={i} size={34} color={colors.primary} filled={i<Math.min(6,Math.floor(waterTotal/250))}/>)}</View></View>{todayWater.length?<Pressable onPress={()=>removeWater(todayWater[0])} style={styles.undoButton}><Text style={styles.undo}>Undo last entry</Text></Pressable>:null}</Card>
 
       {!locked?<Card style={styles.nutritionCard}><Pressable onPress={()=>setNutritionOpen(!nutritionOpen)} style={styles.nutritionHeader} accessibilityRole="button"><View style={styles.nutritionHeading}><View style={styles.nutritionIconStage}><FreshNutritionIcon size={30} color={colors.text} accentColor={colors.primary}/></View><View><Text style={styles.nutritionTitle}>Nutrition overview</Text><Text style={styles.foodMeta}>View nutrients and serving details</Text></View></View><FreshChevronIcon size={21} color={colors.muted} direction={nutritionOpen?'up':'down'}/></Pressable>{nutritionOpen?<View style={styles.ringRow}><RingMetric label="Calories" value={Math.round(totals.calories)} target={caloriesTarget} unit="kcal" color={colors.gold}/><RingMetric label="Protein" value={Math.round(totals.protein)} target={proteinTarget} unit="g" color={colors.green}/><RingMetric label="Carbs" value={Math.round(totals.carbs)} target={carbsTarget} unit="g" color={colors.blue}/><RingMetric label="Fat" value={Math.round(totals.fat)} target={fatTarget} unit="g" color={colors.gold}/></View>:null}</Card>:<Card><SectionTitle title="Meal journal" subtitle="You can record meals and review your routine. Nutrition targets are not shown for younger accounts."/></Card>}
 
@@ -395,14 +397,14 @@ function ProviderFoodDetailModal({food,selectedServingId,servingCount,mealType,o
 function MealDiaryCard({type,rows,expanded,locked,onToggle,onAdd,onRemove,onCopy,onSave}:{type:'breakfast'|'lunch'|'dinner'|'snacks';rows:any[];expanded:boolean;locked:boolean;onToggle:()=>void;onAdd:()=>void;onRemove:(row:any)=>void;onCopy:()=>void;onSave:()=>void}){
   const {colors}=useTheme();
   const s=createStyles(colors);
-  const icon=type==='breakfast'?<ReferenceBreakfastIcon size={57} color={colors.text} accentColor={colors.primary}/>:type==='lunch'?<ReferenceLunchIcon size={57} color={colors.text} accentColor={colors.primary}/>:type==='dinner'?<ReferenceDinnerIcon size={57} color={colors.text} accentColor={colors.primary}/>:<ReferenceSnacksIcon size={57} color={colors.text} accentColor={colors.primary}/>;
+  const icon=type==='breakfast'?<FoodBreakfastPlateIcon size={60} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/>:type==='lunch'?<FoodLunchBentoIcon size={60} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/>:type==='dinner'?<FoodDinnerClocheIcon size={60} color={colors.text} accentColor={colors.primary}/>:<FoodSnacksPouchIcon size={60} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/>;
   const title=type[0].toUpperCase()+type.slice(1);
   return <Card style={s.mealCard}>
     <View style={s.mealHead}>
       <View style={s.mealIconCircle}>{icon}</View>
       <Pressable onPress={onToggle} style={s.mealHeadText} accessibilityRole="button" accessibilityLabel={`${title}, ${rows.length} items, ${expanded?'collapse':'expand'}`}><Text style={s.mealTitle}>{title}</Text><Text style={s.foodMeta}>{rows.length?`${rows.length} item${rows.length===1?'':'s'} logged`:'Nothing logged yet'}</Text></Pressable>
-      <Pressable onPress={onToggle} style={s.mealToggle} accessibilityRole="button" accessibilityLabel={expanded?'Collapse meal':'Expand meal'}><ReferenceChevronIcon size={22} color={colors.muted} direction={expanded?'up':'down'}/></Pressable>
-      <Pressable onPress={onAdd} style={s.redPlus} accessibilityRole="button" accessibilityLabel={`Add to ${title}`}><ReferencePlusIcon size={27} color="#FFFFFF"/></Pressable>
+      <Pressable onPress={onToggle} style={s.mealToggle} accessibilityRole="button" accessibilityLabel={expanded?'Collapse meal':'Expand meal'}><FoodChevronIcon size={22} color={colors.muted} direction={expanded?'up':'down'}/></Pressable>
+      <Pressable onPress={onAdd} style={s.redPlus} accessibilityRole="button" accessibilityLabel={`Add to ${title}`}><FoodPlusIcon size={27} color="#FFFFFF"/></Pressable>
     </View>
     {expanded?rows.map(row=><View key={row.id} style={s.mealFood}><View style={s.foodThumb}><FreshMealBowlIcon size={31} color={colors.text} accentColor={colors.primary}/></View><View style={{flex:1,minWidth:0}}><Text style={s.foodName} numberOfLines={1}>{row.food_name}</Text><Text style={s.foodMeta} numberOfLines={1}>{row.serving}</Text></View>{!locked?<Text style={s.kcal}>{Math.round(Number(row.calories??0))}</Text>:null}<Pressable onPress={()=>onRemove(row)} style={s.moreTarget} accessibilityRole="button" accessibilityLabel={`Options for ${row.food_name}`}><FreshMoreIcon size={22} color={colors.muted}/></Pressable></View>):null}
     {expanded&&rows.length?<View style={s.mealFooter}><Pressable onPress={onCopy} style={s.mealFooterAction}><FreshCopyIcon size={19} color={colors.text} accentColor={colors.primary}/><Text style={s.mealFooterText}>Copy yesterday</Text></Pressable><View style={s.mealFooterDivider}/><Pressable onPress={onSave} style={s.mealFooterAction}><FreshSavedIcon size={19} color={colors.text} accentColor={colors.primary}/><Text style={s.mealFooterText}>Save meal</Text></Pressable></View>:null}
@@ -497,42 +499,43 @@ function TopBack({title,onBack}:{title:string;onBack:()=>void}){
 }
 
 const createStyles=(colors:any)=>StyleSheet.create({
-  wrap:{paddingHorizontal:16,paddingTop:15,paddingBottom:112},
-  headerRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:22},
-  title:{color:colors.text,fontSize:31,fontWeight:'900',letterSpacing:-.7},
-  todayButton:{minHeight:48,flexDirection:'row',alignItems:'center',gap:5,paddingLeft:12,paddingRight:0},
-  todayTitle:{color:colors.primary,fontSize:16,fontWeight:'900'},todayChevron:{color:colors.primary,fontSize:16},
-  weekStrip:{flexDirection:'row',justifyContent:'space-between',marginBottom:20},
-  weekDay:{flex:1,minWidth:0,alignItems:'center',justifyContent:'center',minHeight:64,paddingVertical:8,borderRadius:16},
+  foodBackdrop:{...StyleSheet.absoluteFillObject,overflow:'hidden'},
+  wrap:{paddingHorizontal:16,paddingTop:14,paddingBottom:118},
+  headerRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:10},
+  title:{color:colors.text,fontSize:32,fontWeight:'900',letterSpacing:-.8},
+  todayButton:{minHeight:48,flexDirection:'row',alignItems:'center',gap:6,paddingLeft:12,paddingRight:2},
+  todayTitle:{color:colors.text,fontSize:16,fontWeight:'900'},todayChevron:{color:colors.primary,fontSize:16},
+  weekStrip:{flexDirection:'row',justifyContent:'space-between',marginBottom:14},
+  weekDay:{flex:1,minWidth:0,alignItems:'center',justifyContent:'center',minHeight:62,paddingVertical:8,borderRadius:17},
   weekDayOn:{backgroundColor:colors.primary},
   weekName:{color:colors.muted,fontSize:9,fontWeight:'900'},
   weekNameOn:{color:'#FFFFFF'},
   weekNumber:{color:colors.text,fontSize:17,fontWeight:'900',marginTop:4},
-  diaryHero:{flexDirection:'row',alignItems:'center',minHeight:150,paddingHorizontal:13,paddingVertical:16,borderRadius:23,marginBottom:13,shadowColor:colors.shadow,shadowOpacity:.1,shadowRadius:10,shadowOffset:{width:0,height:4},elevation:3},
-  diaryIllustration:{width:112,height:112,alignItems:'center',justifyContent:'center',marginRight:9},
+  diaryHero:{flexDirection:'row',alignItems:'center',minHeight:154,paddingHorizontal:13,paddingVertical:16,borderRadius:24,marginBottom:14,shadowColor:colors.shadow,shadowOpacity:.11,shadowRadius:11,shadowOffset:{width:0,height:4},elevation:3},
+  diaryIllustration:{width:124,height:112,alignItems:'center',justifyContent:'center',marginRight:10},
   diaryCopy:{flex:1},
-  diaryEyebrow:{color:colors.text,fontSize:19,fontWeight:'900'},
+  diaryEyebrow:{color:colors.text,fontSize:20,fontWeight:'900',letterSpacing:-.25},
   diarySub:{color:colors.muted,fontSize:11,marginTop:6,lineHeight:16},
-  diaryCount:{color:colors.text,fontSize:13,marginTop:15},
-  diaryTrack:{height:7,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:10},
+  diaryCount:{color:colors.text,fontSize:13,fontWeight:'600',marginTop:15},
+  diaryTrack:{height:8,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:10},
   diaryFill:{height:'100%',backgroundColor:colors.primary,borderRadius:99},
-  quickActions:{flexDirection:'row',alignItems:'stretch',gap:8,marginBottom:14},
-  quickAction:{flex:1,minWidth:0,minHeight:96,alignItems:'center',justifyContent:'center',paddingHorizontal:3,borderRadius:18,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,shadowColor:colors.shadow,shadowOpacity:.08,shadowRadius:7,shadowOffset:{width:0,height:3},elevation:2},quickActionPressed:{opacity:.68,transform:[{scale:.98}]},
-  quickIconCircle:{width:54,height:54,alignItems:'center',justifyContent:'center'},
-  quickLabel:{color:colors.text,fontSize:10,fontWeight:'800',marginTop:4,textAlign:'center'},
-  mealTimeline:{position:'relative',marginBottom:3},
-  mealTimelineRail:{position:'absolute',left:18,top:50,bottom:50,width:2,backgroundColor:colors.primary,borderRadius:2,opacity:.25},
+  quickActions:{flexDirection:'row',alignItems:'stretch',gap:8,marginBottom:15},
+  quickAction:{flex:1,minWidth:0,minHeight:104,alignItems:'center',justifyContent:'center',paddingHorizontal:3,borderRadius:20,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,shadowColor:colors.shadow,shadowOpacity:.09,shadowRadius:8,shadowOffset:{width:0,height:3},elevation:2},quickActionPressed:{opacity:.68,transform:[{scale:.98}]},
+  quickIconCircle:{width:56,height:56,alignItems:'center',justifyContent:'center'},
+  quickLabel:{color:colors.text,fontSize:10,fontWeight:'900',marginTop:4,textAlign:'center'},
+  mealTimeline:{position:'relative',marginBottom:4},
+  mealTimelineRail:{position:'absolute',left:18,top:52,bottom:52,width:2,backgroundColor:colors.primary,borderRadius:2,opacity:.28},
   mealTimelineRow:{flexDirection:'row',alignItems:'center',marginBottom:10},
   mealTimelineLane:{width:37,alignSelf:'stretch',alignItems:'center',justifyContent:'center'},
-  mealTimelineDot:{width:13,height:13,borderRadius:7,backgroundColor:colors.primary,borderWidth:3,borderColor:colors.bg,shadowColor:colors.primary,shadowOpacity:.3,shadowRadius:4,elevation:2},
+  mealTimelineDot:{width:14,height:14,borderRadius:7,backgroundColor:colors.primary,borderWidth:3,borderColor:colors.bg,shadowColor:colors.primary,shadowOpacity:.34,shadowRadius:5,elevation:2},
   mealTimelineCard:{flex:1,minWidth:0},
-  mealIconCircle:{width:61,height:68,alignItems:'center',justifyContent:'center'},
-  mealCard:{padding:0,overflow:'hidden',marginBottom:0,minHeight:96,borderRadius:20},
-  mealHead:{minHeight:96,flexDirection:'row',alignItems:'center',paddingLeft:6,paddingRight:8,gap:5},
+  mealIconCircle:{width:68,height:72,alignItems:'center',justifyContent:'center'},
+  mealCard:{padding:0,overflow:'hidden',marginBottom:0,minHeight:102,borderRadius:22,shadowColor:colors.shadow,shadowOpacity:.08,shadowRadius:8,shadowOffset:{width:0,height:3},elevation:2},
+  mealHead:{minHeight:102,flexDirection:'row',alignItems:'center',paddingLeft:7,paddingRight:9,gap:5},
   mealHeadText:{flex:1,minWidth:0,justifyContent:'center',alignSelf:'stretch'},
   mealToggle:{width:48,height:48,borderRadius:16,alignItems:'center',justifyContent:'center'},
-  mealTitle:{color:colors.text,fontSize:18,fontWeight:'900'},
-  redPlus:{width:48,height:48,borderRadius:24,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
+  mealTitle:{color:colors.text,fontSize:19,fontWeight:'900',letterSpacing:-.2},
+  redPlus:{width:50,height:50,borderRadius:25,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.24,shadowRadius:7,shadowOffset:{width:0,height:3},elevation:3},
   mealFood:{flexDirection:'row',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:colors.border,padding:11},
   mealFooter:{flexDirection:'row',alignItems:'center',borderTopWidth:1,borderTopColor:colors.border,minHeight:48},
   mealFooterAction:{flex:1,minHeight:48,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8},
@@ -540,9 +543,9 @@ const createStyles=(colors:any)=>StyleSheet.create({
   mealFooterText:{color:colors.text,fontSize:11,fontWeight:'700'},
   foodThumb:{width:48,height:44,borderRadius:14,backgroundColor:colors.panel2,alignItems:'center',justifyContent:'center'},
   moreTarget:{width:48,height:48,borderRadius:15,alignItems:'center',justifyContent:'center'},
-  waterCard:{minHeight:180,padding:16,backgroundColor:colors.panel,borderColor:colors.border,borderRadius:22,marginTop:2,shadowColor:colors.shadow,shadowOpacity:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:2},waterTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},waterHeading:{flexDirection:'row',alignItems:'center',gap:10},waterTitle:{color:colors.text,fontSize:19,fontWeight:'900'},waterSub:{color:colors.muted,fontSize:12,marginTop:3},waterPlus:{width:48,height:48,borderRadius:24,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.22,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:3},
-  waterHydrationRow:{flexDirection:'row',alignItems:'flex-end',marginTop:10},
-  waterBottleStage:{width:67,height:72,alignItems:'center',justifyContent:'flex-end',marginRight:6},
+  waterCard:{minHeight:188,padding:16,backgroundColor:colors.panel,borderColor:colors.border,borderRadius:23,marginTop:3,shadowColor:colors.shadow,shadowOpacity:.1,shadowRadius:10,shadowOffset:{width:0,height:4},elevation:2},waterTop:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},waterHeading:{flexDirection:'row',alignItems:'center',gap:10},waterTitle:{color:colors.text,fontSize:20,fontWeight:'900'},waterSub:{color:colors.muted,fontSize:12,marginTop:3},waterPlus:{width:50,height:50,borderRadius:25,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',shadowColor:colors.primary,shadowOpacity:.24,shadowRadius:7,shadowOffset:{width:0,height:3},elevation:3},
+  waterHydrationRow:{flexDirection:'row',alignItems:'flex-end',marginTop:11},
+  waterBottleStage:{width:69,height:76,alignItems:'center',justifyContent:'flex-end',marginRight:6},
   waterGlasses:{flex:1,flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',paddingBottom:4},
   undoButton:{minHeight:48,alignSelf:'flex-start',justifyContent:'center'},undo:{color:colors.muted,fontSize:10,textDecorationLine:'underline'},
   nutritionCard:{padding:12},
