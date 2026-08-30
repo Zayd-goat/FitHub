@@ -1,6 +1,6 @@
 {
-  "version": "1.6.25",
-  "generated_at": "2026-08-30T13:01:11.098Z",
+  "version": "1.6.26",
+  "generated_at": "2026-08-30T20:18:45.571Z",
   "checks": [
     {
       "name": "Main app renders the rebuilt Home tab",
@@ -13,9 +13,14 @@
       "evidence": "reference-only Home icons"
     },
     {
-      "name": "Food uses the locked reference icon system for its visible diary",
+      "name": "Food uses its new purpose-built icon system",
       "passed": true,
-      "evidence": "reference diary, meal and hydration icons"
+      "evidence": "new diary, meal and hydration icons"
+    },
+    {
+      "name": "Food no longer uses the superseded reference Food icons",
+      "passed": true,
+      "evidence": "visible Food icons come only from FitHubFoodIcons"
     },
     {
       "name": "Bottom navigation uses the locked reference icon system",
@@ -26,6 +31,11 @@
       "name": "Reference icon system is substantial",
       "passed": true,
       "evidence": "32 purpose-built icon components"
+    },
+    {
+      "name": "New Food icon system is substantial",
+      "passed": true,
+      "evidence": "15 original Food icon components"
     },
     {
       "name": "Home adapts at compact phone widths",
@@ -48,9 +58,9 @@
       "evidence": "44 dp header controls plus expanded compact action targets"
     },
     {
-      "name": "Interactive Food controls use 48 dp targets",
+      "name": "Interactive Food controls use at least 48 dp targets",
       "passed": true,
-      "evidence": "48 dp meal controls"
+      "evidence": "48–50 dp meal and water controls"
     },
     {
       "name": "Community label is explicitly constrained",
@@ -148,6 +158,11 @@
       "evidence": "four timeline meal rows"
     },
     {
+      "name": "Food uses the approved subtle gym-pattern backdrop",
+      "passed": true,
+      "evidence": "theme-aware Food background wash"
+    },
+    {
       "name": "Food removes the rejected extra search banner",
       "passed": true,
       "evidence": "four shortcuts follow the diary hero directly"
@@ -155,7 +170,7 @@
     {
       "name": "Food uses the exact approved diary copy",
       "passed": true,
-      "evidence": "locked reference subtitle"
+      "evidence": "approved preview subtitle"
     },
     {
       "name": "Food provides the exact four adult shortcuts",
@@ -235,7 +250,7 @@
     {
       "name": "food style references resolve",
       "passed": true,
-      "evidence": "128 references resolved"
+      "evidence": "129 references resolved"
     },
     {
       "name": "main style references resolve",

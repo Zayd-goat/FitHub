@@ -1,0 +1,17 @@
+.github/workflows/build-apk.yml
+CHANGELOG_1_6_26.md
+FITHUB_1_6_26_COMPLETE_UPDATE_GUIDE.md
+FITHUB_1_6_26_VALIDATION_REPORT.md
+PATCH_FILES_1_6_26.txt
+README.md
+SOURCE_MANIFEST_SHA256.txt
+START_HERE_FITHUB_1_6_26.md
+app.json
+package-lock.json
+package.json
+reports/exercise-visual-audit.json
+reports/home-food-ui-audit.json
+reports/png-asset-audit.json
+scripts/audit-home-food-ui.mjs
+src/components/FitHubFoodIcons.tsx
+src/screens/tabs/FoodTab.tsx
