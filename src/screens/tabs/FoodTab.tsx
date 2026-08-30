@@ -499,7 +499,7 @@ function TopBack({title,onBack}:{title:string;onBack:()=>void}){
 }
 
 const createStyles=(colors:any)=>StyleSheet.create({
-  foodBackdrop:{...StyleSheet.absoluteFillObject,overflow:'hidden'},
+  foodBackdrop:{...StyleSheet.absoluteFill,overflow:'hidden'},
   wrap:{paddingHorizontal:16,paddingTop:14,paddingBottom:118},
   headerRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginBottom:10},
   title:{color:colors.text,fontSize:32,fontWeight:'900',letterSpacing:-.8},
