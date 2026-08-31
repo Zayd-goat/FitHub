@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
 const outputName = 'SOURCE_MANIFEST_SHA256.txt';
-const excludedDirectories = new Set(['.git', 'node_modules']);
+const excludedDirectories = new Set(['.expo', '.git', 'dist-android', 'node_modules']);
 
 const files = [];
 const visit = (directory) => {
