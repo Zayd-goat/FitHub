@@ -24,9 +24,9 @@ import NotificationsScreen from './NotificationsScreen';
 import { SharedWorkoutLaunch } from '../lib/sharedGym';
 import { FreshChevronIcon } from '../components/FitHubFreshIcons';
 import {
-  ReferenceFoodNavIcon, ReferenceFriendsNavIcon, ReferenceHomeNavIcon,
-  ReferenceProfileNavIcon, ReferenceTrainNavIcon,
-} from '../components/FitHubReferenceIcons';
+  FitHubFoodNavIcon, FitHubFriendsNavIcon, FitHubHomeNavIcon,
+  FitHubProfileNavIcon, FitHubTrainNavIcon,
+} from '../components/FitHubNavIcons';
 import {
   cancelSameDaySupplementReschedule,
   GYM_INVITE_ACCEPT_ACTION,
@@ -277,6 +277,7 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
       const active = page === 'main' && tab === key;
       const primary = key === 'workout';
       return <Pressable key={key} onPress={() => chooseTab(key)} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label} style={({pressed})=>[styles.navItem,pressed&&styles.navPressed]}>
+        {active && !primary ? <View pointerEvents="none" style={styles.activeTabLine}/> : null}
         <View style={[styles.iconWrap, active && !primary && styles.activeIndicator, primary && styles.trainButton, primary && active && styles.trainButtonActive]}>
           <BottomNavIcon tab={key} active={active} color={primary ? '#FFFFFF' : active ? colors.primary : colors.muted} accent={primary ? colors.primarySoft : colors.primary}/>
           {key === 'friends' && friendsBadge > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{friendsBadge > 9 ? '9+' : friendsBadge}</Text></View> : null}
@@ -298,25 +299,26 @@ const createStyles = (colors: any) => StyleSheet.create({
   floatingWorkoutTime:{color:colors.text,fontSize:13,fontWeight:'900'},
   floatingWorkoutResumeRow:{flexDirection:'row',alignItems:'center',marginTop:3},
   floatingWorkoutResume:{color:colors.primary,fontSize:8,fontWeight:'900'},
-  nav: { minHeight: 68, flexDirection: 'row', marginHorizontal: 10, marginBottom: 1, borderWidth: 1, borderColor: colors.border, borderRadius: 24, backgroundColor: colors.nav, paddingBottom: 4, paddingTop: 4, overflow: 'visible', shadowColor:'#000',shadowOpacity:.14,shadowRadius:13,shadowOffset:{width:0,height:5},elevation:12 },
+  nav: { minHeight: 70, flexDirection: 'row', marginHorizontal: 10, marginBottom: 2, borderWidth: 1, borderColor: colors.border, borderRadius: 25, backgroundColor: colors.nav, paddingBottom: 5, paddingTop: 5, overflow: 'visible', shadowColor:'#000',shadowOpacity:.14,shadowRadius:13,shadowOffset:{width:0,height:5},elevation:12 },
   navItem: { flex: 1, minHeight: 58, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   navPressed: { opacity: 0.68 },
-  iconWrap: { width: 48, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  activeTabLine: { position: 'absolute', top: -5, width: 28, height: 3, borderRadius: 3, backgroundColor: colors.primary },
+  iconWrap: { width: 48, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   activeIndicator: { backgroundColor: 'transparent' },
-  trainButton: { width: 64, height: 64, borderRadius: 32, marginTop: -25, backgroundColor: colors.primary, borderWidth: 5, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.25,shadowRadius:10,shadowOffset:{width:0,height:5},elevation:10 },
-  trainButtonActive: { transform: [{ scale: 1.04 }] },
-  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 2 },
+  trainButton: { width: 66, height: 66, borderRadius: 33, marginTop: -26, backgroundColor: colors.primary, borderWidth: 5, borderColor: colors.nav, shadowColor:'#000',shadowOpacity:.24,shadowRadius:10,shadowOffset:{width:0,height:5},elevation:10 },
+  trainButtonActive: { transform: [{ scale: 1.035 }] },
+  navLabel: { color: colors.muted, fontSize: 10, fontWeight: '800', marginTop: 1 },
   trainLabel: { marginTop: 0, color: colors.text, fontWeight: '900' },
   badge: { position: 'absolute', right: 0, top: -3, minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 9, backgroundColor: colors.primary, borderWidth: 2, borderColor: colors.nav, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#FFFFFF', fontSize: 8, fontWeight: '900' },
 });
 
 function BottomNavIcon({tab,active,color,accent}:{tab:Tab;active:boolean;color:string;accent:string}){
-  if(tab==='home')return <ReferenceHomeNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='friends')return <ReferenceFriendsNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
-  if(tab==='workout')return <ReferenceTrainNavIcon size={34} color={color}/>;
-  if(tab==='food')return <ReferenceFoodNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
-  return <ReferenceProfileNavIcon size={30} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='home')return <FitHubHomeNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='friends')return <FitHubFriendsNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
+  if(tab==='workout')return <FitHubTrainNavIcon size={35} color={color}/>;
+  if(tab==='food')return <FitHubFoodNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
+  return <FitHubProfileNavIcon size={29} color={color} accentColor={accent} filled={active}/>;
 }
 
 const formatElapsed=(seconds:number)=>{
