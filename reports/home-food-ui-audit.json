@@ -1,6 +1,6 @@
 {
-  "version": "1.6.26",
-  "generated_at": "2026-08-30T20:18:45.571Z",
+  "version": "1.6.27",
+  "generated_at": "2026-08-30T22:52:35.131Z",
   "checks": [
     {
       "name": "Main app renders the rebuilt Home tab",
@@ -8,14 +8,14 @@
       "evidence": "DashboardTabV2 import"
     },
     {
-      "name": "Home uses the locked reference icon system",
+      "name": "Home uses production mini-scene artwork without flattening the interface",
       "passed": true,
-      "evidence": "reference-only Home icons"
+      "evidence": "native cards with transparent cropped artwork"
     },
     {
-      "name": "Food uses its new purpose-built icon system",
+      "name": "Food uses production mini-scene artwork without flattening the interface",
       "passed": true,
-      "evidence": "new diary, meal and hydration icons"
+      "evidence": "native diary, shortcut, meal and hydration cards"
     },
     {
       "name": "Food no longer uses the superseded reference Food icons",
@@ -23,9 +23,9 @@
       "evidence": "visible Food icons come only from FitHubFoodIcons"
     },
     {
-      "name": "Bottom navigation uses the locked reference icon system",
+      "name": "Bottom navigation uses the new consistent icon family",
       "passed": true,
-      "evidence": "reference navigation icons"
+      "evidence": "new FitHub navigation icons"
     },
     {
       "name": "Reference icon system is substantial",
@@ -36,6 +36,41 @@
       "name": "New Food icon system is substantial",
       "passed": true,
       "evidence": "15 original Food icon components"
+    },
+    {
+      "name": "New navigation icon system covers all five destinations",
+      "passed": true,
+      "evidence": "Home, Friends, Train, Food and You icons"
+    },
+    {
+      "name": "Sprite renderer performs a true native crop",
+      "passed": true,
+      "evidence": "single transparent sheet, four native cells"
+    },
+    {
+      "name": "Artwork is square transparent PNG: home_quick_sprites.png",
+      "passed": true,
+      "evidence": "1254x1254, PNG color type 6"
+    },
+    {
+      "name": "Artwork is square transparent PNG: home_week_run_sprites.png",
+      "passed": true,
+      "evidence": "1254x1254, PNG color type 6"
+    },
+    {
+      "name": "Artwork is square transparent PNG: food_shortcut_sprites.png",
+      "passed": true,
+      "evidence": "1254x1254, PNG color type 6"
+    },
+    {
+      "name": "Artwork is square transparent PNG: food_meal_sprites.png",
+      "passed": true,
+      "evidence": "1254x1254, PNG color type 6"
+    },
+    {
+      "name": "Artwork is square transparent PNG: food_hero_water_sprites.png",
+      "passed": true,
+      "evidence": "1254x1254, PNG color type 6"
     },
     {
       "name": "Home adapts at compact phone widths",
@@ -138,14 +173,14 @@
       "evidence": "single recent friend activity row"
     },
     {
-      "name": "Quick Access uses the approved compact tile proportions",
+      "name": "Quick Access uses the approved image-led tile proportions",
       "passed": true,
-      "evidence": "two compact rows plus full-width Run Metrics"
+      "evidence": "four image-led cards plus full-width Run Metrics"
     },
     {
-      "name": "Bottom navigation uses the approved slim raised-Train proportions",
+      "name": "Bottom navigation uses the improved old-style raised-Train proportions",
       "passed": true,
-      "evidence": "68 dp bar with 64 dp raised Train control"
+      "evidence": "70 dp bar, 66 dp Train control and short active line"
     },
     {
       "name": "Run Metrics is a full-width destination",
@@ -176,6 +211,11 @@
       "name": "Food provides the exact four adult shortcuts",
       "passed": true,
       "evidence": "Search, Scan, Recent, Saved Meals"
+    },
+    {
+      "name": "Food replaces the failing absolute-fill style",
+      "passed": true,
+      "evidence": "explicit absolute bounds compile on React Native 0.86"
     },
     {
       "name": "Food meal rows begin collapsed like the reference",
@@ -245,7 +285,7 @@
     {
       "name": "home style references resolve",
       "passed": true,
-      "evidence": "69 references resolved"
+      "evidence": "72 references resolved"
     },
     {
       "name": "food style references resolve",
@@ -255,7 +295,7 @@
     {
       "name": "main style references resolve",
       "passed": true,
-      "evidence": "21 references resolved"
+      "evidence": "22 references resolved"
     },
     {
       "name": "community style references resolve",
