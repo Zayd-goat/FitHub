@@ -5,6 +5,8 @@ import { Profile } from '../lib/types';
 import { supabase } from '../lib/supabase';
 import { cancelSupplementReminder, scheduleDailySupplementReminder, scheduleOneTimeSupplementReminder } from '../lib/notifications';
 import { profileAge } from '../lib/profileAge';
+import { CalendarCheckIcon, ReminderClockIcon, SupplementTrackerSceneIcon } from '../components/FitHubTrackerIcons';
+import { FreshChevronIcon, FreshPlusIcon } from '../components/FitHubFreshIcons';
 
 type Reminder = { id: string; supplement_name: string; reminder_hour: number; reminder_minute: number; enabled: boolean; notification_id?: string | null; color_hex?: string | null };
 type CheckinStatus = 'taken' | 'missed' | 'skipped';
@@ -16,8 +18,8 @@ const localDate = (date = new Date()) => `${date.getFullYear()}-${String(date.ge
 const parseTime = (value: string) => { const match = value.trim().match(/^(\d{1,2}):(\d{2})$/); if (!match) return null; const hour = Number(match[1]), minute = Number(match[2]); return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 ? { hour, minute } : null; };
 
 export default function SupplementRemindersScreen({ profile, onBack }: { profile: Profile; onBack: () => void }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
   const [rows, setRows] = useState<Reminder[]>([]);
   const [name, setName] = useState('');
   const [time, setTime] = useState('08:00');
@@ -27,6 +29,7 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
   const [month, setMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(localDate());
   const [recordTimes, setRecordTimes] = useState<Record<string, string>>({});
+  const [showAddForm,setShowAddForm]=useState(false);
   const adult = (profileAge(profile) ?? 0) >= 18;
 
   const load = async () => {
@@ -115,17 +118,23 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
   const recorded = checkins.filter((item) => item.status === 'taken').length;
   const decided = checkins.filter((item) => ['taken','missed','skipped'].includes(item.status)).length;
   const adherence = decided ? Math.round((recorded / decided) * 100) : 0;
+  const todayChecks = checkins.filter((item)=>item.local_date===localDate()&&['taken','missed','skipped'].includes(item.status));
+  const nextReminder = rows.filter((row)=>row.enabled).sort((a,b)=>(a.reminder_hour*60+a.reminder_minute)-(b.reminder_hour*60+b.reminder_minute))[0];
 
-  return <RefreshableScrollView onRefresh={load} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
-    <View style={styles.header}><Pressable onPress={onBack}><Text style={styles.back}>‹</Text></Pressable><View><Text style={styles.title}>Supplement tracker</Text><Text style={styles.sub}>Calendar reminders and editable past-day records.</Text></View></View>
+  return <RefreshableScrollView onRefresh={load} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <View style={styles.header}><Pressable onPress={onBack} style={styles.backTarget} accessibilityRole="button"><FreshChevronIcon size={27} color={colors.text} direction="left"/></Pressable><View style={{flex:1}}><Text style={styles.title}>Supplement tracker</Text><Text style={styles.sub}>Reminders, calendar and editable records.</Text></View><Pressable onPress={()=>setShowAddForm(!showAddForm)} style={styles.headerAdd} accessibilityRole="button"><FreshPlusIcon size={22} color="#FFFFFF"/></Pressable></View>
 
-    {!adult ? <Card><SectionTitle title="For younger users" subtitle="FitHub does not recommend supplements or doses. Only track something already managed with a parent/guardian or qualified clinician." /></Card> : null}
-    {adult ? <Card><SectionTitle title="Quick add" subtitle="Labels only — FitHub does not recommend a dose or tell you to take these." /><View style={styles.chips}>{quickAdds.map((item) => <Chip key={item} label={item} onPress={() => setName(item)} active={name === item} />)}</View></Card> : null}
+    <Card style={styles.heroCard}><View style={styles.heroArt}><SupplementTrackerSceneIcon size={112} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View><View style={styles.heroCopy}><Text style={styles.heroEyebrow}>TODAY'S ROUTINE</Text><Text style={styles.heroTitle}>{todayChecks.length} of {rows.length} recorded</Text><Text style={styles.heroSub}>{nextReminder?`Next reminder · ${nextReminder.supplement_name} at ${timeText(nextReminder.reminder_hour,nextReminder.reminder_minute)}`:'Add a reminder to start your calendar.'}</Text><View style={styles.heroTrack}><View style={[styles.heroFill,{width:`${rows.length?Math.min(100,todayChecks.length/rows.length*100):0}%`}]}/></View></View></Card>
 
-    <Card><SectionTitle title="New reminder" subtitle="Choose the item, local notification time and calendar colour." /><Input value={name} onChangeText={setName} placeholder="Supplement name" /><Input value={time} onChangeText={setTime} placeholder="08:00" autoCapitalize="none" /><Text style={styles.time}>Calendar colour</Text><View style={styles.colorRow}>{supplementColors.map((color) => <Pressable key={color} onPress={() => setSelectedColor(color)} style={[styles.colorDot, { backgroundColor: color }, selectedColor === color && styles.colorSelected]} />)}</View><Button title={busy ? 'ADDING…' : 'ADD DAILY REMINDER'} onPress={() => add()} disabled={busy} /></Card>
+    {!adult?<View style={styles.guardianCard}><Text style={styles.guardianTitle}>TRACK WITH SUPPORT</Text><Text style={styles.guardianText}>FitHub does not recommend supplements or doses. Only track something already managed with a parent, guardian or qualified clinician.</Text></View>:null}
+
+    {showAddForm?<Card style={styles.addCard}><View style={styles.addHeading}><View style={styles.addIcon}><ReminderClockIcon size={31} color={colors.text} accentColor={colors.primary}/></View><View style={{flex:1}}><Text style={styles.sectionTitle}>New reminder</Text><Text style={styles.sectionSub}>Choose a label, local time and calendar colour.</Text></View></View>{adult?<><Text style={styles.formLabel}>QUICK LABELS</Text><View style={styles.chips}>{quickAdds.map((item)=><Chip key={item} label={item} onPress={()=>setName(item)} active={name===item}/>)}</View><Text style={styles.noDose}>Labels only — FitHub does not recommend a dose or tell you what to take.</Text></>:null}<Input value={name} onChangeText={setName} placeholder="Reminder label"/><Input value={time} onChangeText={setTime} placeholder="08:00" autoCapitalize="none"/><Text style={styles.formLabel}>CALENDAR COLOUR</Text><View style={styles.colorRow}>{supplementColors.map((color)=><Pressable key={color} onPress={()=>setSelectedColor(color)} style={[styles.colorDot,{backgroundColor:color},selectedColor===color&&styles.colorSelected]} accessibilityRole="button"/>)}</View><Button title={busy?'ADDING…':'ADD DAILY REMINDER'} onPress={()=>add()} disabled={busy}/></Card>:null}
+
+    <View style={styles.sectionHead}><View><Text style={styles.sectionEyebrow}>HISTORY</Text><Text style={styles.sectionTitle}>Calendar</Text><Text style={styles.sectionSub}>Pick today or a past date to review a record.</Text></View><CalendarCheckIcon size={34} color={colors.text} accentColor={colors.primary}/></View>
 
     <SupplementCalendar month={month} rows={rows} checkins={checkins} selectedDate={selectedDate} onMonth={setMonth} onPick={setSelectedDate} />
 
+    <View style={styles.sectionHead}><View><Text style={styles.sectionEyebrow}>SELECTED DAY</Text><Text style={styles.sectionTitle}>Daily check-in</Text><Text style={styles.sectionSub}>Record, revise or clear each status.</Text></View><ReminderClockIcon size={34} color={colors.text} accentColor={colors.primary}/></View>
     <Card style={styles.agendaCard}>
       <View style={styles.agendaHead}><View><Text style={styles.agendaDate}>{new Date(`${selectedDate}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</Text><Text style={styles.sub}>Set Taken, Missed or Skipped. You can revise or clear it later.</Text></View><View style={styles.adherence}><Text style={styles.adherenceValue}>{adherence}%</Text><Text style={styles.adherenceLabel}>recorded adherence</Text></View></View>
       {rows.length ? rows.map((row) => {
@@ -134,7 +143,7 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
       }) : <Text style={styles.sub}>Add a reminder before recording calendar statuses.</Text>}
     </Card>
 
-    <SectionTitle title="Your reminders" subtitle="Switch notifications off without deleting tracking history." />
+    <View style={styles.sectionHead}><View><Text style={styles.sectionEyebrow}>REMINDERS</Text><Text style={styles.sectionTitle}>Your schedule</Text><Text style={styles.sectionSub}>Pause a notification without deleting its history.</Text></View></View>
     {rows.length ? rows.map((row) => {
       const todayCheck = checkins.find((item) => item.reminder_id === row.id && item.local_date === localDate());
       return <Card key={row.id} style={styles.reminderRow}><View style={[styles.eventBar, { backgroundColor: row.color_hex ?? supplementColors[0] }]} /><View style={{ flex: 1 }}><Text style={styles.name}>{row.supplement_name}</Text><Text style={styles.time}>Daily • {timeText(row.reminder_hour, row.reminder_minute)}{todayCheck ? ` • ${String(todayCheck.status).toUpperCase()}` : ''}</Text></View><View style={styles.actions}><OutlineButton compact title="LATER" onPress={() => reschedule(row)} /><OutlineButton compact title={row.enabled ? 'ON' : 'OFF'} onPress={() => toggle(row)} /><Pressable onPress={() => remove(row)}><Text style={styles.delete}>Delete</Text></Pressable></View></Card>;
@@ -143,14 +152,41 @@ export default function SupplementRemindersScreen({ profile, onBack }: { profile
 }
 
 function SupplementCalendar({ month, rows, checkins, selectedDate, onMonth, onPick }: { month: Date; rows: Reminder[]; checkins: any[]; selectedDate: string; onMonth: (d: Date) => void; onPick: (key: string) => void }) {
-  const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors, isDark);
   const year = month.getFullYear(), monthIndex = month.getMonth(), first = new Date(year, monthIndex, 1).getDay(), days = new Date(year, monthIndex + 1, 0).getDate(), today = localDate();
   return <Card><View style={styles.calHead}><Pressable onPress={() => onMonth(new Date(year, monthIndex - 1, 1))}><Text style={styles.calArrow}>‹</Text></Pressable><View><Text style={styles.calTitle}>{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</Text><Text style={styles.calSub}>Tap a past day to add or edit records</Text></View><Pressable onPress={() => onMonth(new Date(year, monthIndex + 1, 1))} disabled={localDate(new Date(year, monthIndex + 1, 1)) > today}><Text style={styles.calArrow}>›</Text></Pressable></View><View style={styles.legend}>{rows.map((row) => <View key={row.id} style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: row.color_hex ?? supplementColors[0] }]} /><Text style={styles.time}>{row.supplement_name}</Text></View>)}</View><View style={styles.calGrid}>{['S','M','T','W','T','F','S'].map((label, index) => <Text key={index} style={styles.week}>{label}</Text>)}{Array.from({ length: first }).map((_, index) => <View key={`blank-${index}`} style={styles.day} />)}{Array.from({ length: days }).map((_, index) => { const date = new Date(year, monthIndex, index + 1), key = localDate(date), dayChecks = checkins.filter((item) => item.local_date === key), future = key > today; return <Pressable key={key} disabled={future} onPress={() => onPick(key)} style={[styles.day, selectedDate === key && styles.selectedDay, future && styles.futureDay]}><Text style={styles.dayText}>{index + 1}</Text><View style={styles.dayDots}>{dayChecks.slice(0, 4).map((check: any) => <View key={check.id} style={[styles.checkDot, { backgroundColor: check.status === 'missed' ? colors.danger : check.status === 'skipped' ? colors.muted : rows.find((row) => row.id === check.reminder_id)?.color_hex ?? supplementColors[0] }]} />)}</View></Pressable>; })}</View></Card>;
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
-  wrap: { padding: 16, paddingBottom: 40 }, header: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 16 }, back: { color: colors.text, fontSize: 38, width: 28 }, title: { color: colors.text, fontSize: 25, fontWeight: '900' }, sub: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 }, chips: { flexDirection: 'row', flexWrap: 'wrap' }, colorRow: { flexDirection: 'row', gap: 10, marginVertical: 10 }, colorDot: { width: 28, height: 28, borderRadius: 14 }, colorSelected: { borderWidth: 3, borderColor: colors.text },
+const createStyles = (colors: any, isDark = false) => StyleSheet.create({
+  wrap: { padding: 16, paddingBottom: 108 },
+  header: { flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 16 },
+  backTarget: { width: 48, height: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border },
+  back: { color: colors.text, fontSize: 38, width: 28 },
+  title: { color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -.5 },
+  sub: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 },
+  headerAdd: { width: 48, height: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: isDark ? .15 : .28, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  heroCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderColor: colors.primary, backgroundColor: isDark ? colors.panel : colors.panel2 },
+  heroArt: { width: 116, height: 116, borderRadius: 30, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  heroCopy: { flex: 1 },
+  heroEyebrow: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
+  heroTitle: { color: colors.text, fontSize: 23, fontWeight: '900', marginTop: 5, lineHeight: 27 },
+  heroSub: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 5 },
+  heroTrack: { height: 7, borderRadius: 999, backgroundColor: colors.border, marginTop: 12, overflow: 'hidden' },
+  heroFill: { height: '100%', borderRadius: 999, backgroundColor: colors.primary },
+  guardianCard: { borderRadius: 18, padding: 14, marginBottom: 12, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primary },
+  guardianTitle: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
+  guardianText: { color: colors.text, fontSize: 11, lineHeight: 17, marginTop: 5, fontWeight: '700' },
+  addCard: { borderColor: colors.primary, marginBottom: 16 },
+  addHeading: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  addIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 20, marginBottom: 9, paddingHorizontal: 2 },
+  sectionEyebrow: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  sectionTitle: { color: colors.text, fontSize: 20, lineHeight: 24, fontWeight: '900', marginTop: 2 },
+  sectionSub: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 2 },
+  formLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: 1.1, marginTop: 5, marginBottom: 6 },
+  noDose: { color: colors.muted, fontSize: 9, lineHeight: 14, marginBottom: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap' }, colorRow: { flexDirection: 'row', gap: 10, marginVertical: 10 }, colorDot: { width: 32, height: 32, borderRadius: 16 }, colorSelected: { borderWidth: 3, borderColor: colors.text },
   reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, eventBar: { width: 5, alignSelf: 'stretch', minHeight: 52, borderRadius: 999 }, name: { color: colors.text, fontWeight: '900', fontSize: 15 }, time: { color: colors.muted, fontSize: 10, marginTop: 3 }, actions: { alignItems: 'center', gap: 6 }, delete: { color: colors.danger, fontSize: 10, fontWeight: '900' },
   agendaCard: { borderColor: colors.primary }, agendaHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 10 }, agendaDate: { color: colors.text, fontSize: 18, fontWeight: '900' }, adherence: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: 12, padding: 8 }, adherenceValue: { color: colors.primary, fontSize: 17, fontWeight: '900' }, adherenceLabel: { color: colors.muted, fontSize: 7 }, agendaRow: { flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border }, statusRow: { flexDirection: 'row', gap: 6, marginTop: 9 }, statusChip: { flex: 1, minHeight: 32, borderRadius: 9, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel2 }, statusActive: { backgroundColor: colors.greenSoft, borderColor: colors.green }, statusMissed: { backgroundColor: `${colors.danger}20`, borderColor: colors.danger }, statusSkipped: { backgroundColor: colors.panel2, borderColor: colors.muted }, statusText: { color: colors.muted, fontSize: 8, fontWeight: '900' }, statusTextActive: { color: colors.text }, timeEdit: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }, recordTime: { width: 94, minHeight: 38, marginBottom: 0 }, clear: { color: colors.danger, fontSize: 9, fontWeight: '900' },
   calHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, calArrow: { color: colors.primary, fontSize: 30, padding: 8 }, calTitle: { color: colors.text, fontWeight: '900', textAlign: 'center' }, calSub: { color: colors.muted, fontSize: 8, marginTop: 2 }, legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 9 }, legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 }, legendDot: { width: 8, height: 8, borderRadius: 4 }, calGrid: { flexDirection: 'row', flexWrap: 'wrap' }, week: { width: '14.285%', textAlign: 'center', color: colors.muted, fontSize: 9, fontWeight: '900', padding: 5 }, day: { width: '14.285%', height: 45, alignItems: 'center', justifyContent: 'center', borderRadius: 9 }, selectedDay: { borderWidth: 2, borderColor: colors.primary, backgroundColor: colors.primarySoft }, futureDay: { opacity: .3 }, dayText: { color: colors.text, fontSize: 10, fontWeight: '800' }, dayDots: { height: 9, flexDirection: 'row', gap: 2 }, checkDot: { width: 6, height: 6, borderRadius: 3 },

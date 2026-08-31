@@ -1,6 +1,6 @@
 {
-  "version": "1.6.27",
-  "generated_at": "2026-08-30T22:52:35.131Z",
+  "version": "1.6.29",
+  "generated_at": "2026-08-31T19:49:12.276Z",
   "checks": [
     {
       "name": "Main app renders the rebuilt Home tab",
@@ -290,7 +290,7 @@
     {
       "name": "food style references resolve",
       "passed": true,
-      "evidence": "129 references resolved"
+      "evidence": "151 references resolved"
     },
     {
       "name": "main style references resolve",

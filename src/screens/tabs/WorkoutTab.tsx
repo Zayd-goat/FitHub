@@ -38,6 +38,7 @@ import {
 } from '../../data/exerciseLibrary';
 import { imageForExercise } from '../../data/exerciseVisuals';
 import { profileAge } from '../../lib/profileAge';
+import { WorkoutBuilderSceneIcon } from '../../components/FitHubTrackerIcons';
 
 type StrengthSet = { id: string; weight: string; reps: string; done: boolean };
 type BuilderItem = {
@@ -1474,17 +1475,30 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
     <>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pullRefresh} colors={[colors.primary]} tintColor={colors.primary} progressBackgroundColor={colors.panel}/>} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
-        <View style={styles.browseHeader}>
-          <View>
-            <Text style={styles.browseTitle}>{activeStartedAt ? 'WORKOUT RUNNING' : editingTemplateId ? 'EDIT SAVED WORKOUT' : muscleFilter === 'All' && searchMode ? 'ALL EXERCISES' : muscleFilter === 'All' ? 'TRAIN' : `${muscleFilter.toUpperCase()} EXERCISES`}</Text>
-            <Text style={styles.browseSub}>
-              {activeStartedAt ? `${formatTime(elapsed)} elapsed • ${builder.length} exercise${builder.length === 1 ? '' : 's'}` : muscleFilter === 'All' && searchMode ? 'Search the complete exercise catalogue' : muscleFilter === 'All' ? 'Choose a muscle group' : `Select ${muscleFilter.toLowerCase()} exercises for your workout`}
-            </Text>
-          </View>
+        <View style={styles.workoutPageHeader}>
+          <View style={{flex:1}}><Text style={styles.pageEyebrow}>FITHUB TRAINING</Text><Text style={styles.pageTitle}>Workout</Text><Text style={styles.pageSub}>Build, preview and run your session.</Text></View>
           <View style={styles.headerActions}>
             <Pressable onPress={()=>{setMuscleFilter('All');setSearchMode(true);}} style={styles.iconButton} accessibilityLabel="Search all exercises"><SearchIcon size={22} color={colors.text}/></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Saved workouts" onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.savedHeaderButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={17} color={showSavedWorkouts ? contrastText(colors.primary) : colors.text}/><Text style={[styles.savedHeaderText,showSavedWorkouts&&{color:contrastText(colors.primary)}]}>Saved Workouts</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Saved workouts" onPress={()=>setShowSavedWorkouts(!showSavedWorkouts)} style={[styles.iconButton,styles.savedIconButton,showSavedWorkouts&&styles.savedHeaderButtonOn]}><BookmarkIcon size={19} color={showSavedWorkouts ? contrastText(colors.primary) : colors.text}/></Pressable>
           </View>
+        </View>
+
+        <Card style={styles.workoutHero}>
+          <View style={styles.workoutHeroArt}><WorkoutBuilderSceneIcon size={122} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View>
+          <View style={styles.workoutHeroCopy}>
+            <Text style={styles.workoutHeroEyebrow}>{activeStartedAt ? 'KEEP GOING' : editingTemplateId ? 'EDIT YOUR PLAN' : builder.length ? 'SESSION READY' : 'BUILD YOUR SESSION'}</Text>
+            <Text style={styles.workoutHeroTitle}>{activeStartedAt ? templateName || 'Active workout' : builder.length ? `${builder.length} exercise${builder.length===1?'':'s'} selected` : 'Train your way'}</Text>
+            <Text style={styles.workoutHeroSub}>{activeStartedAt ? `${formatTime(elapsed)} elapsed · ${builder[activeExerciseIndex]?.exercise.name ?? 'In progress'}` : builder.length ? 'Review the order, configure your sets, then start.' : 'Choose a focus and add exercises from the full library.'}</Text>
+            {activeStartedAt?<Pressable onPress={()=>setScreen('active')} style={styles.workoutHeroButton}><Text style={[styles.workoutHeroButtonText,{color:contrastText(colors.primary)}]}>RESUME WORKOUT</Text></Pressable>:null}
+          </View>
+        </Card>
+
+        <View style={styles.buildRail}>
+          <BuildStep number="1" label="Choose" active={!builder.length} complete={Boolean(builder.length)}/>
+          <View style={styles.buildRailLine}/>
+          <BuildStep number="2" label="Configure" active={Boolean(builder.length&&!activeStartedAt)} complete={Boolean(activeStartedAt)}/>
+          <View style={styles.buildRailLine}/>
+          <BuildStep number="3" label="Start" active={Boolean(activeStartedAt)} complete={false}/>
         </View>
 
         {activeStartedAt ? <Card style={styles.activeResumeCard}>
@@ -1517,9 +1531,10 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
           </View>
         ) : null}
 
-        {muscleFilter === 'All' && !searchMode && !query ? <View style={styles.muscleGrid}>{[
+        {muscleFilter === 'All' && !searchMode && !query ? <><View style={styles.workoutSectionHead}><Text style={styles.sectionEyebrow}>STEP 1</Text><Text style={styles.sectionHeading}>Choose your focus</Text><Text style={styles.sectionHint}>Pick a training area to browse matching movements.</Text></View><View style={styles.muscleGrid}>{[
           {label:'Chest',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].chest},{label:'Back',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].back},{label:'Shoulders',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].shoulders},{label:'Arms',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].arms},{label:'Legs',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].legs},{label:'Core',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].core},{label:'Full Body',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].fullBody},{label:'Cardio',image:muscleGridImages[profile.gender === 'female' ? 'female' : 'male'].cardio},
-        ].map(muscle=>{const count=exerciseLibrary.filter(ex=>muscle.label==='Arms'?['Biceps','Triceps','Forearms','Arms'].includes(ex.targetArea):ex.targetArea===muscle.label).length;return <Pressable key={muscle.label} accessibilityRole="button" accessibilityLabel={`${muscle.label}, ${count} exercises`} onPress={()=>{setSearchMode(false);setMuscleFilter(muscle.label);}} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage} accessibilityIgnoresInvertColors/><View style={styles.muscleGridCopy}><Text style={styles.muscleGridLabel}>{muscle.label}</Text><Text style={styles.muscleGridCount}>{count} exercises</Text><Text style={styles.muscleGridArrow}>›</Text></View></Pressable>})}</View> : <>
+        ].map(muscle=>{const count=exerciseLibrary.filter(ex=>muscle.label==='Arms'?['Biceps','Triceps','Forearms','Arms'].includes(ex.targetArea):ex.targetArea===muscle.label).length;return <Pressable key={muscle.label} accessibilityRole="button" accessibilityLabel={`${muscle.label}, ${count} exercises`} onPress={()=>{setSearchMode(false);setMuscleFilter(muscle.label);}} style={({pressed})=>[styles.muscleGridCard,pressed&&{opacity:.7}]}><Image source={muscle.image} style={muscle.label==='Cardio'?styles.muscleGridCardio:styles.muscleGridImage} accessibilityIgnoresInvertColors/><View style={styles.muscleGridCopy}><Text style={styles.muscleGridLabel}>{muscle.label}</Text><Text style={styles.muscleGridCount}>{count} exercises</Text><Text style={styles.muscleGridArrow}>›</Text></View></Pressable>})}</View></> : <>
+          <View style={styles.workoutSectionHead}><Text style={styles.sectionEyebrow}>STEP 2</Text><Text style={styles.sectionHeading}>Select exercises</Text><Text style={styles.sectionHint}>Tap + to add a movement. Open it to configure sets and details.</Text></View>
           <View style={styles.exerciseBrowseTop}><Pressable onPress={()=>{setMuscleFilter('All');setSearchMode(false);setQuery('')}}><Text style={styles.exerciseBack}>‹ Muscle groups</Text></Pressable><Text style={styles.exerciseCount}>{filtered.length} exercises</Text></View>
           <Input value={query} onChangeText={setQuery} placeholder={muscleFilter === 'All' ? 'Search all exercises…' : `Search ${muscleFilter.toLowerCase()} exercises…`} style={styles.exerciseSearch} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.equipmentFilters}>{['All','Barbell','Dumbbell','Machine','Bodyweight'].map(x=><Pressable key={x} accessibilityRole="button" accessibilityLabel={`Filter by ${x}`} onPress={()=>setEquipmentFilter(x)} style={[styles.equipmentChip,x===equipmentFilter&&styles.equipmentChipOn]}><Text style={[styles.equipmentChipText,x===equipmentFilter&&styles.equipmentChipTextOn]}>{x}</Text></Pressable>)}</ScrollView>
@@ -1611,6 +1626,12 @@ const WorkoutTab = forwardRef<WorkoutTabHandle, {
 });
 
 export default WorkoutTab;
+
+function BuildStep({number,label,active,complete}:{number:string;label:string;active:boolean;complete:boolean}){
+  const {colors,isDark}=useTheme();
+  const styles=createStyles(colors,isDark);
+  return <View style={styles.buildStep}><View style={[styles.buildStepDot,(active||complete)&&styles.buildStepDotOn]}><Text style={[styles.buildStepNumber,(active||complete)&&{color:contrastText(colors.primary)}]}>{complete?'✓':number}</Text></View><Text style={[styles.buildStepLabel,active&&styles.buildStepLabelOn]}>{label}</Text></View>;
+}
 
 function DraggableOrderRow({item,index,count,isCurrent,disabled,onMove,onMoveNext,onMoveEnd}:{item:BuilderItem;index:number;count:number;isCurrent:boolean;disabled:boolean;onMove:(from:number,to:number)=>void;onMoveNext:()=>void;onMoveEnd:()=>void}){
   const {colors,isDark}=useTheme();
@@ -1739,6 +1760,31 @@ function CardioInputs({ item, onChange }: { item: BuilderItem; onChange: (patch:
 
 const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   wrap: { padding: 16, paddingTop: 10, paddingBottom: 128, backgroundColor: colors.bg, flexGrow: 1 },
+  workoutPageHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  pageEyebrow: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 },
+  pageTitle: { color: colors.text, fontSize: 30, lineHeight: 34, fontWeight: '900', letterSpacing: -.7 },
+  pageSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  savedIconButton: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel },
+  workoutHero: { flexDirection: 'row', alignItems: 'center', gap: 13, padding: 14, borderColor: colors.primary, backgroundColor: isDark ? colors.panel : colors.panel2 },
+  workoutHeroArt: { width: 126, height: 126, borderRadius: 31, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  workoutHeroCopy: { flex: 1 },
+  workoutHeroEyebrow: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  workoutHeroTitle: { color: colors.text, fontSize: 21, lineHeight: 25, fontWeight: '900', marginTop: 4 },
+  workoutHeroSub: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 4 },
+  workoutHeroButton: { minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: 10, paddingHorizontal: 12 },
+  workoutHeroButtonText: { fontSize: 9, fontWeight: '900', letterSpacing: .4 },
+  buildRail: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 18, paddingHorizontal: 7 },
+  buildRailLine: { flex: 1, height: 2, backgroundColor: colors.border, marginTop: 17 },
+  buildStep: { width: 68, alignItems: 'center' },
+  buildStepDot: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center' },
+  buildStepDotOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  buildStepNumber: { color: colors.muted, fontSize: 11, fontWeight: '900' },
+  buildStepLabel: { color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 5 },
+  buildStepLabelOn: { color: colors.primary },
+  workoutSectionHead: { marginTop: 2, marginBottom: 12 },
+  sectionEyebrow: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  sectionHeading: { color: colors.text, fontSize: 21, lineHeight: 25, fontWeight: '900', marginTop: 2 },
+  sectionHint: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 2 },
   browseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   browseTitle: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: .3 },
   browseSub: { color: colors.muted, fontSize: 12, marginTop: 2 },

@@ -6,6 +6,7 @@ import { profileAge } from '../lib/profileAge';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
 import { formatDistance, formatPace, formatWeight } from '../lib/units';
+import { JourneyProgressSceneIcon } from '../components/FitHubTrackerIcons';
 
 type Period = 'week' | 'month';
 type TrendFocus = 'workouts' | 'minutes' | 'sets' | 'distance';
@@ -58,6 +59,9 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
   const previousLabel = period === 'week' ? 'previous week' : 'previous 30 days';
   const topLifts = Array.from(current.bestByExercise.entries()).slice(0, 5);
   const exerciseHighlights = Array.from(current.exerciseSets.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const workoutDelta = current.sessions.length - previous.sessions.length;
+  const periodTarget = Math.max(1, Number(profile.workout_days_target ?? 3)) * (period === 'month' ? 4 : 1);
+  const completionProgress = Math.min(100, current.sessions.length / periodTarget * 100);
 
   const recommendations = useMemo(() => {
     if (!current.sessions.length) return ['No completed workouts are recorded for this period yet. Your report will build automatically as sessions are completed.'];
@@ -75,6 +79,11 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
       <View style={s.headerCopy}><Text style={s.title}>My Fitness Journey</Text><Text style={s.sub}>Private reports from your completed workouts and activity history.</Text></View>
     </View>
 
+    <Card style={s.journeyHero}>
+      <View style={s.heroArt}><JourneyProgressSceneIcon size={112} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View>
+      <View style={s.heroCopy}><Text style={s.heroEyebrow}>{period === 'week' ? 'YOUR CURRENT WEEK' : 'YOUR CURRENT MONTH'}</Text><Text style={s.heroTitle}>{current.sessions.length} workout{current.sessions.length === 1 ? '' : 's'}</Text><Text style={s.heroSub}>{formatMinutes(current.duration)} training time · {current.activeDays} active day{current.activeDays === 1 ? '' : 's'}</Text><View style={s.heroTrack}><View style={[s.heroFill,{width:`${completionProgress}%`}]}/></View><Text style={s.heroCompare}>{workoutDelta === 0 ? 'Same number of workouts as the previous period' : `${workoutDelta > 0 ? '+' : ''}${workoutDelta} workout${Math.abs(workoutDelta) === 1 ? '' : 's'} vs previous`}</Text></View>
+    </Card>
+
     <View style={s.periodSwitch}>
       <PeriodButton label="Weekly report" active={period === 'week'} onPress={() => setPeriod('week')}/>
       <PeriodButton label="Monthly report" active={period === 'month'} onPress={() => setPeriod('month')}/>
@@ -86,6 +95,7 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
       <Text style={s.privatePill}>Only you</Text>
     </View>
 
+    <View style={s.sectionHeading}><View><Text style={s.sectionEyebrow}>PROGRESS AT A GLANCE</Text><Text style={s.sectionTitle}>Your key numbers</Text></View><Text style={s.sectionHint}>Tap a card to chart it</Text></View>
     <View style={s.metricsGrid}>
       <MetricCard label="Workouts" value={String(current.sessions.length)} comparison={comparisonText(current.sessions.length, previous.sessions.length)} icon={<DumbbellIcon size={27} color={colors.text}/>} active={trendFocus === 'workouts'} onPress={() => setTrendFocus('workouts')}/>
       <MetricCard label="Active days" value={String(current.activeDays)} comparison={comparisonText(current.activeDays, previous.activeDays)} icon={<CalendarIcon size={27} color={colors.text} accentColor={colors.primary}/>} />
@@ -227,6 +237,8 @@ function prLabel(pr: any, weightUnit: 'kg' | 'lb', distanceUnit: 'km' | 'mi') {
 
 const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 52 },
+  journeyHero:{minHeight:154,flexDirection:'row',alignItems:'center',borderRadius:23,padding:12,marginBottom:13,shadowColor:colors.shadow,shadowOpacity:isDark?.18:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:3},heroArt:{width:116,height:116,alignItems:'center',justifyContent:'center',marginRight:3},heroCopy:{flex:1,minWidth:0},heroEyebrow:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.8},heroTitle:{color:colors.text,fontSize:22,fontWeight:'900',letterSpacing:-.35,marginTop:5},heroSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:5},heroTrack:{height:7,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:11},heroFill:{height:'100%',borderRadius:99,backgroundColor:colors.primary},heroCompare:{color:colors.muted,fontSize:8,fontWeight:'700',lineHeight:12,marginTop:6},
+  sectionHeading:{flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',marginTop:4,marginBottom:9},sectionEyebrow:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.8},sectionTitle:{color:colors.text,fontSize:19,fontWeight:'900',marginTop:3},sectionHint:{color:colors.muted,fontSize:8,fontWeight:'700'},
   header: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 17 },
   backButton: { width: 38, height: 46, alignItems: 'center', justifyContent: 'center' }, back: { color: colors.text, fontSize: 40, lineHeight: 42, fontWeight: '300' }, headerCopy: { flex: 1 }, title: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -.45 }, sub: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
   periodSwitch: { flexDirection: 'row', gap: 9, marginBottom: 12 }, periodButton: { flex: 1, minHeight: 48, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center' }, periodButtonActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, periodButtonText: { color: colors.muted, fontSize: 12, fontWeight: '800' }, periodButtonTextActive: { color: colors.primary, fontWeight: '900' },

@@ -271,6 +271,7 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
   }
 
   if(finderOpen)return <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}>
+    <View pointerEvents="none" style={styles.foodBackdrop}><FoodScreenBackdrop color={colors.primary}/></View>
     {providerDetailModal}
     <Modal visible={scannerOpen} animationType="slide" onRequestClose={()=>setScannerOpen(false)}>
       <View style={{flex:1,backgroundColor:'#000'}}>
@@ -279,31 +280,35 @@ const FoodTab = forwardRef<FoodTabHandle, { profile: Profile }>(function FoodTab
       </View>
     </Modal>
     <RefreshableScrollView onRefresh={load} contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
-      <TopBack title={`Add to ${mealType}`} onBack={closeFinder}/>
-      <Text style={styles.finderSubtitle}>{locked?'Search your foods or add a simple meal description.':`Search verified foods, recent items and saved foods for ${mealType}.`}</Text>
-      <View style={styles.mealTabs}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.mealTab,mealType===x&&styles.mealTabActive]}><Text style={[styles.mealTabText,mealType===x&&styles.mealTabTextActive]}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
+      <TopBack title="Add food" onBack={closeFinder}/>
+      <Card style={styles.finderHero}><View style={styles.finderHeroArt}><FitHubSpriteArt source={foodMealSprites} quadrant={mealArtQuadrants[mealType]} size={104}/></View><View style={styles.finderHeroCopy}><Text style={styles.finderEyebrow}>ADDING TO</Text><Text style={styles.finderHeroTitle}>{mealType[0].toUpperCase()+mealType.slice(1)}</Text><Text style={styles.finderHeroSub}>{locked?'Build a simple meal journal using saved, recent or custom entries.':'Search verified foods, reuse a meal or create your own entry.'}</Text></View></Card>
+      <Text style={styles.finderLabel}>CHOOSE MEAL</Text>
+      <View style={styles.mealTabs}>{(['breakfast','lunch','dinner','snacks'] as const).map(x=><Pressable key={x} onPress={()=>setMealType(x)} style={[styles.mealTab,mealType===x&&styles.mealTabActive]}><View style={styles.mealTabIcon}><FitHubSpriteArt source={foodMealSprites} quadrant={mealArtQuadrants[x]} size={42}/></View><Text style={[styles.mealTabText,mealType===x&&styles.mealTabTextActive]}>{x[0].toUpperCase()+x.slice(1)}</Text></Pressable>)}</View>
+      <Text style={styles.finderLabel}>{locked?'FIND AN ENTRY':'SEARCH FOOD'}</Text>
       <Card style={styles.searchPanel}>
         <View style={styles.searchField}><FreshSearchIcon size={23} color={colors.muted} accentColor={colors.primary}/><Input style={styles.searchInput} value={query} onChangeText={updateQuery} placeholder={locked?'Search saved and common foods…':'Search foods or brands…'}/></View>
-        {!locked?<View style={styles.finderActions}><OutlineButton title={searching?'Searching…':'Search verified foods'} onPress={()=>onlineSearch(0)} disabled={searching}/><OutlineButton title="Scan barcode" onPress={()=>{setScanned(false);setScannerOpen(true)}}/></View>:null}
+        {!locked?<View style={styles.finderActions}><Pressable onPress={()=>onlineSearch(0)} disabled={searching} style={styles.finderPrimary}><Text style={styles.finderPrimaryText}>{searching?'SEARCHING…':'SEARCH VERIFIED FOODS'}</Text></Pressable><Pressable onPress={()=>{setScanned(false);setScannerOpen(true)}} style={styles.finderScan}><FitHubSpriteArt source={foodShortcutSprites} quadrant={1} size={45}/><Text style={styles.finderScanText}>SCAN BARCODE</Text></Pressable></View>:null}
       </Card>
+      <Text style={styles.finderLabel}>QUICK ADD</Text>
       <View style={styles.finderShortcutRow}>
-        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><FoodRecentTrayIcon color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
-        <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><FreshSavedIcon color={colors.text} accentColor={colors.primary}/><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
-        <Pressable onPress={()=>setManualOpen(!manualOpen)} style={styles.finderShortcut}><FreshPlusIcon size={28} color={colors.text}/><Text style={styles.finderShortcutText}>Custom food</Text></Pressable>
+        <Pressable onPress={()=>setHistoryOpen(true)} style={styles.finderShortcut}><View style={styles.finderShortcutIcon}><FitHubSpriteArt source={foodShortcutSprites} quadrant={2} size={55}/></View><Text style={styles.finderShortcutText}>Recent</Text></Pressable>
+        <Pressable onPress={()=>setLibraryOpen(true)} style={styles.finderShortcut}><View style={styles.finderShortcutIcon}><FitHubSpriteArt source={foodShortcutSprites} quadrant={3} size={55}/></View><Text style={styles.finderShortcutText}>Saved meals</Text></Pressable>
+        <Pressable onPress={()=>setManualOpen(!manualOpen)} style={[styles.finderShortcut,manualOpen&&styles.finderShortcutActive]}><View style={styles.finderShortcutIcon}><FreshPlusIcon size={27} color={manualOpen?'#FFFFFF':colors.text}/></View><Text style={[styles.finderShortcutText,manualOpen&&{color:'#FFFFFF'}]}>Custom food</Text></Pressable>
       </View>
       {manualOpen?<Card style={styles.customFoodCard}>
-        <SectionTitle title="Create a custom food" subtitle="Add a name and household serving to your private meal journal."/>
+        <View style={styles.customHeading}><View style={styles.customHeadingIcon}><FreshMealBowlIcon size={32} color={colors.text} accentColor={colors.primary}/></View><View style={{flex:1}}><Text style={styles.customTitle}>Create a custom food</Text><Text style={styles.customSub}>Save it privately and add it to {mealType}.</Text></View></View>
         <Input value={manual.name} onChangeText={v=>setManual({...manual,name:v})} placeholder="Food or meal name"/>
         <Input value={manual.serving} onChangeText={v=>setManual({...manual,serving:v})} placeholder="Serving, e.g. 1 bowl"/>
-        <OutlineButton title="Save and add to meal" onPress={saveManual}/>
+        {!locked?<><View style={styles.two}><Input style={{flex:1}} value={manual.calories} onChangeText={v=>setManual({...manual,calories:v})} keyboardType="decimal-pad" placeholder="Calories"/><Input style={{flex:1}} value={manual.protein} onChangeText={v=>setManual({...manual,protein:v})} keyboardType="decimal-pad" placeholder="Protein g"/></View><View style={styles.two}><Input style={{flex:1}} value={manual.carbs} onChangeText={v=>setManual({...manual,carbs:v})} keyboardType="decimal-pad" placeholder="Carbs g"/><Input style={{flex:1}} value={manual.fat} onChangeText={v=>setManual({...manual,fat:v})} keyboardType="decimal-pad" placeholder="Fat g"/></View></>:null}
+        <Pressable onPress={saveManual} style={styles.customAddButton}><Text style={styles.customAddText}>SAVE & ADD TO {mealType.toUpperCase()}</Text></Pressable>
       </Card>:null}
       {!locked&&providerFoods.length?<>
-        <SectionTitle title="Verified database results" subtitle={`Showing ${providerFoods.length}${providerTotal?` of ${providerTotal.toLocaleString()}`:''} matches • ${providerMarket==='ZA'?'South Africa':'default market'}`}/>
+        <View style={styles.resultsHeading}><Text style={styles.finderLabel}>VERIFIED RESULTS</Text><Text style={styles.resultsCount}>{providerFoods.length}{providerTotal?` of ${providerTotal.toLocaleString()}`:''}</Text></View>
         {providerFoods.map((food)=><ProviderFoodRow key={food.provider_food_id} food={food} loading={detailLoadingId===food.provider_food_id} onOpen={()=>openProviderFood(food)}/>)}
         {providerHasMore?<OutlineButton title={searching?'LOADING…':`LOAD MORE RESULTS · PAGE ${providerPage+2}`} onPress={()=>onlineSearch(providerPage+1)} disabled={searching}/>:null}
       </>:null}
       {!locked&&providerQuery&&providerFoods.length===0&&!searching?<Card><Text style={styles.sub}>No verified matches were returned for “{providerQuery}”. Try a broader food or brand name.</Text></Card>:null}
-      <SectionTitle title={query?'Saved & common matches':'Suggested foods'} subtitle={query?`Local matches for “${query}”`:'Common foods and foods you created'}/>
+      <View style={styles.resultsHeading}><View><Text style={styles.finderLabel}>{query?'LOCAL MATCHES':'SUGGESTED FOODS'}</Text><Text style={styles.resultsSub}>{query?`Saved and common matches for “${query}”`:'Common foods and entries you created'}</Text></View></View>
       {filtered.map((food,i)=><FoodRow key={`${food.source}-${food.id??food.name}-${i}`} food={food} onAdd={()=>addLog(food)} hideNutrition={locked}/>)}
       {!locked?<Pressable onPress={()=>Linking.openURL('https://platform.fatsecret.com')}><Text style={[styles.sub,{textAlign:'center',color:colors.blue,textDecorationLine:'underline'}]}>Nutrition information powered by fatsecret Platform API</Text></Pressable>:null}
     </RefreshableScrollView>
@@ -576,19 +581,42 @@ const createStyles=(colors:any)=>StyleSheet.create({
   sectionHeader:{flexDirection:'row',alignItems:'flex-start',justifyContent:'space-between',gap:8},
   manualBox:{marginTop:10,borderTopWidth:1,borderTopColor:colors.border,paddingTop:12},
   finderSubtitle:{color:colors.muted,fontSize:12,lineHeight:18,marginBottom:12},
+  finderHero:{flexDirection:'row',alignItems:'center',gap:9,minHeight:132,padding:12,borderRadius:23,borderColor:colors.primary,backgroundColor:colors.panel,marginBottom:16},
+  finderHeroArt:{width:112,height:108,borderRadius:27,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center',overflow:'hidden'},
+  finderHeroCopy:{flex:1,paddingRight:4},
+  finderEyebrow:{color:colors.primary,fontSize:9,fontWeight:'900',letterSpacing:1.2},
+  finderHeroTitle:{color:colors.text,fontSize:23,fontWeight:'900',marginTop:3,letterSpacing:-.35},
+  finderHeroSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:4},
+  finderLabel:{color:colors.primary,fontSize:9,fontWeight:'900',letterSpacing:1.2,marginBottom:7},
   mealTabs:{flexDirection:'row',gap:7,marginBottom:12},
-  mealTab:{flex:1,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,borderRadius:10,paddingVertical:9,alignItems:'center'},
+  mealTab:{flex:1,minHeight:77,borderWidth:1,borderColor:colors.border,backgroundColor:colors.panel,borderRadius:15,paddingVertical:7,alignItems:'center',justifyContent:'center'},
   mealTabActive:{borderColor:colors.primary,backgroundColor:colors.primarySoft},
   mealTabText:{color:colors.muted,fontSize:9,fontWeight:'800'},
   mealTabTextActive:{color:colors.primary},
-  searchPanel:{padding:12},
+  mealTabIcon:{width:44,height:40,alignItems:'center',justifyContent:'center'},
+  searchPanel:{padding:12,borderRadius:20},
   searchField:{flexDirection:'row',alignItems:'center',gap:8},
   searchInput:{flex:1,marginBottom:0},
-  finderActions:{gap:8,marginTop:8},
+  finderActions:{flexDirection:'row',gap:8,marginTop:10},
+  finderPrimary:{flex:1,minHeight:48,borderRadius:13,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',paddingHorizontal:8},
+  finderPrimaryText:{color:'#FFFFFF',fontSize:9,fontWeight:'900',textAlign:'center'},
+  finderScan:{width:110,minHeight:48,borderRadius:13,borderWidth:1,borderColor:colors.primary,backgroundColor:colors.primarySoft,flexDirection:'row',alignItems:'center',justifyContent:'center',paddingRight:8},
+  finderScanText:{color:colors.primary,fontSize:8,fontWeight:'900',flexShrink:1},
   finderShortcutRow:{flexDirection:'row',gap:8,marginBottom:14},
-  finderShortcut:{flex:1,minHeight:72,borderWidth:1,borderColor:colors.border,borderRadius:13,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},
-  finderShortcutText:{color:colors.text,fontWeight:'800',fontSize:10,marginTop:5},
-  customFoodCard:{marginBottom:14},
+  finderShortcut:{flex:1,minHeight:92,borderWidth:1,borderColor:colors.border,borderRadius:17,backgroundColor:colors.panel,alignItems:'center',justifyContent:'center'},
+  finderShortcutActive:{backgroundColor:colors.primary,borderColor:colors.primary},
+  finderShortcutIcon:{width:55,height:48,alignItems:'center',justifyContent:'center'},
+  finderShortcutText:{color:colors.text,fontWeight:'800',fontSize:9,marginTop:4,textAlign:'center'},
+  customFoodCard:{marginBottom:14,borderColor:colors.primary,borderRadius:20},
+  customHeading:{flexDirection:'row',alignItems:'center',gap:10,marginBottom:12},
+  customHeadingIcon:{width:50,height:50,borderRadius:16,backgroundColor:colors.primarySoft,alignItems:'center',justifyContent:'center'},
+  customTitle:{color:colors.text,fontSize:18,fontWeight:'900'},
+  customSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:2},
+  customAddButton:{minHeight:48,borderRadius:13,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center',marginTop:2},
+  customAddText:{color:'#FFFFFF',fontSize:9,fontWeight:'900',letterSpacing:.4},
+  resultsHeading:{flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',gap:10,marginTop:12,marginBottom:8},
+  resultsCount:{color:colors.muted,fontSize:9,fontWeight:'800',marginBottom:7},
+  resultsSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:-3},
   two:{flexDirection:'row',gap:8},
   foodRow:{flexDirection:'row',alignItems:'center',backgroundColor:colors.panel,borderWidth:1,borderColor:colors.border,borderRadius:14,padding:13,marginBottom:8},
   foodName:{color:colors.text,fontWeight:'900'},

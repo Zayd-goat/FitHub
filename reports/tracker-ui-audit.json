@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-08-31T19:49:12.092Z",
+  "version": "1.6.29",
+  "passed": 15,
+  "total": 15,
+  "checks": [
+    {
+      "label": "Tracker icon family contains the five primary scenes",
+      "pass": true
+    },
+    {
+      "label": "You tab has profile dashboard, snapshots and quick access",
+      "pass": true
+    },
+    {
+      "label": "You tab retains editable profile and sign out",
+      "pass": true
+    },
+    {
+      "label": "Workout has guided choose, configure and start flow",
+      "pass": true
+    },
+    {
+      "label": "Workout retains saved plans, preview, active recovery and reordering",
+      "pass": true
+    },
+    {
+      "label": "Workout retains movement guidance and Android Back handling",
+      "pass": true
+    },
+    {
+      "label": "Journey has period hero, progress and prior-period comparison",
+      "pass": true
+    },
+    {
+      "label": "Journey retains weekly/monthly reporting and pull to refresh",
+      "pass": true
+    },
+    {
+      "label": "Supplements has routine, calendar, daily check-in and schedule",
+      "pass": true
+    },
+    {
+      "label": "Supplements retains reminder and status actions",
+      "pass": true
+    },
+    {
+      "label": "Supplements includes younger-account support wording and no dose recommendations",
+      "pass": true
+    },
+    {
+      "label": "Add Meal matches Food visuals and offers meal, search and quick-add steps",
+      "pass": true
+    },
+    {
+      "label": "Add Meal retains recent, saved, custom, barcode and verified paths",
+      "pass": true
+    },
+    {
+      "label": "Younger Food accounts remain a neutral journal without nutrition search or targets",
+      "pass": true
+    },
+    {
+      "label": "Food retains pull to refresh and hardware/software Back support",
+      "pass": true
+    }
+  ]
+}
