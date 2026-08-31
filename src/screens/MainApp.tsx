@@ -264,7 +264,7 @@ export default function MainApp({ profile, onProfileChanged }: { profile: Profil
         {tab === 'home' && <DashboardTab profile={profile} unreadNotifications={unreadNotifications} onOpenNotifications={()=>setPage('notifications')} onStartWorkout={() => chooseTab('workout')} onViewWorkouts={openHistory} onOpenJourney={openJourney} onOpenSupplements={()=>setPage('supplements')} onOpenFood={()=>chooseTab('food')} onOpenFriends={()=>chooseTab('friends')} onOpenSettings={()=>setPage('customize')} onOpenSplit={()=>setPage('split')} onOpenChallenges={()=>{setCommunityTab('challenges');setPage('community');}} onOpenRunMetrics={()=>setPage('runMetrics')} />}
         {tab === 'food' && <FoodTab ref={foodRef} profile={profile} />}
         {tab === 'workout' && <WorkoutTab ref={workoutRef} profile={profile} onProfileChanged={onProfileChanged} sharedLaunch={sharedWorkoutLaunch} onSharedLaunchConsumed={()=>setSharedWorkoutLaunch(null)} />}
-        {tab === 'friends' && <FriendsTab ref={friendsRef} profile={profile} />}
+        {tab === 'friends' && <FriendsTab ref={friendsRef} profile={profile} onCreatePost={() => chooseTab('workout')} onViewProfile={() => chooseTab('profile')} />}
         {tab === 'profile' && <ProfileTab ref={profileRef} profile={profile} onProfileChanged={onProfileChanged} onOpenCustomization={() => setPage('customize')} onOpenSupplements={() => setPage('supplements')} onOpenSplit={() => setPage('split')} onOpenClubs={() => {setCommunityTab('clubs');setPage('community');}} onOpenJourney={openJourney} onOpenSharedGym={()=>setPage('sharedGym')} />}
       </>}
     </View>
