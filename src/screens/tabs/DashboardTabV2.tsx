@@ -2,11 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { contrastText, RefreshableScrollView, useTheme } from '../../components/UI';
 import {
-  ReferenceBellIcon, ReferenceChevronIcon, ReferenceCommunityIcon,
-  ReferenceHomeBackdrop, ReferenceJourneyIcon, ReferenceNutritionIcon,
-  ReferenceRunMetricsIcon, ReferenceSettingsIcon, ReferenceSupplementsIcon,
-  ReferenceWeekActiveIcon, ReferenceWeekWorkoutsIcon,
+  ReferenceBellIcon, ReferenceChevronIcon, ReferenceHomeBackdrop,
+  ReferenceSettingsIcon, ReferenceWeekWorkoutsIcon,
 } from '../../components/FitHubReferenceIcons';
+import { FitHubSpriteArt } from '../../components/FitHubSpriteArt';
 import { Profile } from '../../lib/types';
 import { supabase } from '../../lib/supabase';
 
@@ -41,6 +40,9 @@ const equipmentArt = {
   cardio: require('../../../assets/home/todays_plan_cardio_equipment_v1.png'),
   rest: require('../../../assets/home/todays_plan_recovery_equipment_v1.png'),
 } as const;
+
+const homeQuickSprites = require('../../../assets/home_ui_v4/home_quick_sprites.png');
+const homeWeekRunSprites = require('../../../assets/home_ui_v4/home_week_run_sprites.png');
 
 type WeekDay = { label: string; date: Date; completed: boolean; today: boolean };
 
@@ -126,18 +128,18 @@ export default function DashboardTabV2({ profile, onStartWorkout, onViewWorkouts
         <Text style={styles.weekCardHeading}>YOUR WEEK</Text>
         <View style={styles.weekCalendar}>{weekDays.map((day) => <View key={day.label} style={styles.weekCell}><View style={[styles.weekCellInner, day.today && styles.weekCellToday]}><Text style={[styles.weekDay, day.today && styles.weekDayToday]}>{day.label}</Text><Text style={[styles.weekDate, day.today && styles.weekDateToday]}>{day.date.getDate()}</Text><View style={[styles.weekRing, day.completed && styles.weekRingDone, day.today && !day.completed && styles.weekRingToday]}><Text style={[styles.weekMark, day.completed && styles.weekMarkDone]}>{day.completed ? '✓' : day.today ? '•' : ''}</Text></View></View></View>)}</View>
         <View style={styles.weekProgressRow}>
-          <WeekMetric compact={compact} divider value={`${weekWorkouts}`} label="workouts" icon={<ReferenceWeekWorkoutsIcon size={38} color={colors.text} accentColor={colors.primary}/>}/>
-          <WeekMetric compact={compact} value={`${weekMinutes}`} label="active min" icon={<ReferenceWeekActiveIcon size={38} color={colors.text} accentColor={colors.primary}/>}/>
+          <WeekMetric compact={compact} divider value={`${weekWorkouts}`} label="workouts" icon={<FitHubSpriteArt source={homeWeekRunSprites} quadrant={0} size={compact ? 57 : 63}/>}/>
+          <WeekMetric compact={compact} value={`${weekMinutes}`} label="active min" icon={<FitHubSpriteArt source={homeWeekRunSprites} quadrant={1} size={compact ? 57 : 63}/>}/>
         </View>
       </Pressable>
 
       <Text style={styles.sectionHeading}>QUICK ACCESS</Text>
       <View style={styles.quickGrid}>
-        {!hiddenFeatures.includes('journey') ? <QuickTile compact={compact} icon={<ReferenceJourneyIcon size={46} color={colors.text} accentColor={colors.primary}/>} label="Journey" onPress={() => onOpenJourney('week')}/> : null}
-        {!hiddenFeatures.includes('food') ? <QuickTile compact={compact} icon={<ReferenceNutritionIcon size={46} color={colors.text} accentColor={colors.primary}/>} label="Nutrition" onPress={onOpenFood}/> : null}
-        {!hiddenFeatures.includes('supplements') ? <QuickTile compact={compact} icon={<ReferenceSupplementsIcon size={46} color={colors.text} accentColor={colors.primary}/>} label="Supplements" onPress={onOpenSupplements}/> : null}
-        <QuickTile compact={compact} icon={<ReferenceCommunityIcon size={46} color={colors.text} accentColor={colors.primary}/>} label="Community Challenges" onPress={onOpenChallenges}/>
-        <QuickTile compact={compact} wide icon={<ReferenceRunMetricsIcon size={48} color={colors.text} accentColor={colors.primary}/>} label="Run Metrics" onPress={onOpenRunMetrics}/>
+        {!hiddenFeatures.includes('journey') ? <QuickTile compact={compact} icon={<FitHubSpriteArt source={homeQuickSprites} quadrant={0} size={compact ? 88 : 98}/>} label="Journey" onPress={() => onOpenJourney('week')}/> : null}
+        {!hiddenFeatures.includes('food') ? <QuickTile compact={compact} icon={<FitHubSpriteArt source={homeQuickSprites} quadrant={1} size={compact ? 88 : 98}/>} label="Nutrition" onPress={onOpenFood}/> : null}
+        {!hiddenFeatures.includes('supplements') ? <QuickTile compact={compact} icon={<FitHubSpriteArt source={homeQuickSprites} quadrant={2} size={compact ? 88 : 98}/>} label="Supplements" onPress={onOpenSupplements}/> : null}
+        <QuickTile compact={compact} icon={<FitHubSpriteArt source={homeQuickSprites} quadrant={3} size={compact ? 88 : 98}/>} label="Community Challenges" onPress={onOpenChallenges}/>
+        <QuickTile compact={compact} wide icon={<FitHubSpriteArt source={homeWeekRunSprites} quadrant={2} size={compact ? 92 : 104}/>} label="Run Metrics" onPress={onOpenRunMetrics}/>
       </View>
 
       <View style={styles.sectionHeadingRow}><Text style={styles.sectionHeading}>FRIEND FEED</Text><Text style={styles.sectionHint}>RECENT ACTIVITY</Text></View>
@@ -158,7 +160,7 @@ function WeekMetric({ compact, value, label, icon, divider = false }: { compact:
 function QuickTile({ compact, icon, label, onPress, wide = false }: { compact: boolean; icon: React.ReactNode; label: string; onPress: () => void; wide?: boolean }) {
   const { colors, isDark } = useTheme();
   const styles = createStyles(colors, isDark, compact);
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.quickTile, wide && styles.quickTileWide, pressed && styles.pressed]}><View style={styles.quickIconStage}>{icon}</View><View style={styles.quickCopy}><Text style={styles.quickLabel} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82}>{label}</Text></View><View style={styles.quickArrow}><ReferenceChevronIcon size={18} color={colors.muted}/></View></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.quickTile, wide && styles.quickTileWide, pressed && styles.pressed]}><View style={[styles.quickIconStage, wide && styles.quickIconStageWide]}>{icon}</View><View style={[styles.quickCopy, wide && styles.quickCopyWide]}><Text style={[styles.quickLabel, wide && styles.quickLabelWide]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82}>{label}</Text></View><View style={styles.quickArrow}><ReferenceChevronIcon size={18} color={colors.muted}/></View></Pressable>;
 }
 
 function ActivityRow({ item, showDivider = false }: { item: any; showDivider?: boolean }) {
@@ -232,7 +234,7 @@ const createStyles = (colors: any, isDark: boolean, compact: boolean) => StyleSh
   sectionHeadingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 },
   sectionHeading: { color: colors.text, fontSize: compact ? 15 : 16, fontWeight: '900', letterSpacing: .2, marginTop: 8, marginBottom: 8 },
   sectionHint: { color: colors.muted, fontSize: 8, fontWeight: '700', marginBottom: 9 },
-  weekCard: { borderRadius: 22, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: compact ? 11 : 14, paddingTop: 11, paddingBottom: 7, marginBottom: 12, shadowColor: colors.shadow, shadowOpacity: isDark ? .27 : .11, shadowRadius: 11, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  weekCard: { borderRadius: 22, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: compact ? 11 : 14, paddingTop: 12, paddingBottom: 10, marginBottom: 12, shadowColor: colors.shadow, shadowOpacity: isDark ? .27 : .11, shadowRadius: 11, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
   weekCardHeading: { color: colors.text, fontSize: compact ? 15 : 16, fontWeight: '900', letterSpacing: .2, marginBottom: 5, paddingLeft: 2 },
   weekCalendar: { flexDirection: 'row', justifyContent: 'space-between', gap: 1 },
   weekCell: { flex: 1, minWidth: 0, minHeight: 67, alignItems: 'center' },
@@ -247,18 +249,21 @@ const createStyles = (colors: any, isDark: boolean, compact: boolean) => StyleSh
   weekRingToday: { borderColor: colors.primary, borderWidth: 2 },
   weekMark: { color: colors.primary, fontSize: 14, fontWeight: '900' },
   weekMarkDone: { color: contrastText(colors.primary) },
-  weekProgressRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8, paddingTop: 8, paddingBottom: 2 },
-  weekMetric: { flex: 1, minWidth: 0, minHeight: 48, flexDirection: 'row', alignItems: 'center', paddingHorizontal: compact ? 5 : 10 },
+  weekProgressRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 9, paddingTop: 8, paddingBottom: 2 },
+  weekMetric: { flex: 1, minWidth: 0, minHeight: 66, flexDirection: 'row', alignItems: 'center', paddingHorizontal: compact ? 2 : 7 },
   weekMetricDivider: { borderRightWidth: 1, borderRightColor: colors.border },
-  weekMetricIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', marginRight: compact ? 4 : 8 },
-  weekMetricValue: { color: colors.text, fontSize: compact ? 20 : 22, fontWeight: '900', marginRight: 5 },
-  weekMetricLabel: { color: colors.muted, fontSize: compact ? 8 : 9, fontWeight: '800', flex: 1 },
+  weekMetricIcon: { width: compact ? 61 : 67, height: 64, alignItems: 'center', justifyContent: 'center', marginRight: compact ? 1 : 4 },
+  weekMetricValue: { color: colors.text, fontSize: compact ? 21 : 24, fontWeight: '900', marginRight: 5 },
+  weekMetricLabel: { color: colors.muted, fontSize: compact ? 8 : 9, lineHeight: 12, fontWeight: '800', flex: 1 },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 11 },
-  quickTile: { width: compact ? '48.7%' : '48.8%', minHeight: 70, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: compact ? 8 : 10, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', shadowColor: colors.shadow, shadowOpacity: isDark ? .2 : .09, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  quickTileWide: { width: '100%', minHeight: 58 },
-  quickIconStage: { width: compact ? 54 : 58, height: 56, alignItems: 'center', justifyContent: 'center' },
-  quickCopy: { flex: 1, minWidth: 0 },
-  quickLabel: { color: colors.text, fontSize: compact ? 11 : 12, lineHeight: 15, fontWeight: '900', paddingRight: 18 },
+  quickTile: { width: compact ? '48.7%' : '48.8%', minHeight: compact ? 139 : 148, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: compact ? 8 : 10, paddingTop: 8, paddingBottom: 11, alignItems: 'center', justifyContent: 'space-between', shadowColor: colors.shadow, shadowOpacity: isDark ? .2 : .09, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  quickTileWide: { width: '100%', minHeight: compact ? 100 : 110, flexDirection: 'row', paddingVertical: 5, justifyContent: 'flex-start' },
+  quickIconStage: { width: '100%', height: compact ? 96 : 105, alignItems: 'center', justifyContent: 'center' },
+  quickIconStageWide: { width: compact ? 116 : 132, height: compact ? 88 : 98 },
+  quickCopy: { width: '100%', minWidth: 0, alignItems: 'center' },
+  quickCopyWide: { flex: 1, width: 'auto', alignItems: 'flex-start', justifyContent: 'center' },
+  quickLabel: { color: colors.text, fontSize: compact ? 11 : 12, lineHeight: 15, fontWeight: '900', textAlign: 'center', paddingHorizontal: 14 },
+  quickLabelWide: { fontSize: compact ? 12 : 13, textAlign: 'left', paddingHorizontal: 0, paddingRight: 27 },
   quickArrow: { position: 'absolute', right: 4, top: 0, bottom: 0, width: 28, alignItems: 'center', justifyContent: 'center' },
   feedCard: { minHeight: 62, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: 12, paddingVertical: 3, marginBottom: 7, shadowColor: colors.shadow, shadowOpacity: isDark ? .2 : .1, shadowRadius: 8, elevation: 3 },
   activityRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
