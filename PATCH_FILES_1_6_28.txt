@@ -1,0 +1,16 @@
+.github/workflows/build-apk.yml
+CHANGELOG_1_6_28.md
+FITHUB_1_6_28_COMPLETE_UPDATE_GUIDE.md
+FITHUB_1_6_28_VALIDATION_REPORT.md
+PATCH_FILES_1_6_28.txt
+README.md
+SOURCE_MANIFEST_SHA256.txt
+START_HERE_FITHUB_1_6_28.md
+app.json
+assets/train_v3/male/ab_wheel_rollout_v2.png
+package-lock.json
+package.json
+scripts/audit-friends-ui.mjs
+src/components/FitHubSocialIcons.tsx
+src/screens/MainApp.tsx
+src/screens/tabs/FriendsTab.tsx

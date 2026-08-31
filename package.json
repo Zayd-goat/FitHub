@@ -1,6 +1,6 @@
 {
   "name": "fithub",
-  "version": "1.6.27",
+  "version": "1.6.28",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "audit:png-assets": "node scripts/audit-png-assets.mjs",
     "audit:references": "node scripts/audit-source-references.mjs",
     "audit:home-food-ui": "node scripts/audit-home-food-ui.mjs",
+    "audit:friends-ui": "node scripts/audit-friends-ui.mjs",
     "manifest": "node scripts/generate-source-manifest.mjs"
   },
   "dependencies": {

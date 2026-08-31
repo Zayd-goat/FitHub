@@ -1,29 +1,29 @@
-# FitHub 1.6.27
+# FitHub 1.6.28
 
 FitHub is an Expo/React Native training, nutrition, progress, and social-fitness app backed by Supabase.
 
-Start with [START_HERE_FITHUB_1_6_27.md](START_HERE_FITHUB_1_6_27.md), then follow [FITHUB_1_6_27_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_27_COMPLETE_UPDATE_GUIDE.md).
+Start with [START_HERE_FITHUB_1_6_28.md](START_HERE_FITHUB_1_6_28.md), then follow [FITHUB_1_6_28_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_28_COMPLETE_UPDATE_GUIDE.md).
 
-## 1.6.27 highlights
+## 1.6.28 highlights
 
-- Rebuilds the Home `Your Week` and `Quick Access` sections with the approved realistic FitHub mini-scenes.
-- Rebuilds the Food hero, shortcuts, meal cards and hydration section with matching transparent artwork.
-- Adds a fresh, consistent five-icon bottom-navigation family while retaining the familiar raised Train control.
-- Keeps week data, meal state, water progress, routes, touch targets, themes and accessibility labels native and interactive.
-- Fixes the React Native `StyleSheet.absoluteFillObject` typecheck failure reported by the 1.6.26 Android build.
-- Preserves the Community Challenges/Clubs redesign and all earlier workout, social and notification updates.
+- Rebuilds Friends as a four-view social hub: Feed, Following, Invites and My Posts.
+- Adds an isolated My Posts library with search, filters, grid/list views and post-management actions.
+- Reorganises gym invitations and friend requests into clear, action-first cards.
+- Adds a purpose-built social icon family matching the approved FitHub previews.
+- Preserves reactions, comments, post editing, count privacy, sharing, friend alerts and gym-session reminders.
+- Requires no database migration or Edge Function redeployment.
 
 ## Release identity
 
-- App: `1.6.27`
-- Android version code: `37`
-- iOS build number: `37`
-- APK artifact: `FitHub-1.6.27-APK`
-- New SQL or Edge Function for 1.6.27: none
+- App: `1.6.28`
+- Android version code: `38`
+- iOS build number: `38`
+- APK artifact: `FitHub-1.6.28-APK`
+- New SQL or Edge Function for 1.6.28: none
 
 ## Deployment boundary
 
-If the complete FitHub 1.6.26 release is already in GitHub, apply the 1.6.27 patch and build a new APK. Use the complete package if the repository is older or uncertain.
+If the complete FitHub 1.6.27 release is already in GitHub, apply the 1.6.28 patch and build a new APK. Use the complete package if the repository is older or uncertain.
 
 Do not rerun an older migration or redeploy an Edge Function solely for this UI release. Never upload `.expo`, `node_modules`, `.env`, `google-services.json`, Android signing files, secrets or tokens.
 
