@@ -1,0 +1,16 @@
+.github/workflows/build-apk.yml
+CHANGELOG_1_6_30.md
+FITHUB_1_6_30_COMPLETE_UPDATE_GUIDE.md
+FITHUB_1_6_30_VALIDATION_REPORT.md
+PATCH_FILES_1_6_30.txt
+README.md
+SOURCE_MANIFEST_SHA256.txt
+START_HERE_FITHUB_1_6_30.md
+app.json
+package-lock.json
+package.json
+reports/tracker-ui-audit.json
+scripts/audit-tracker-ui.mjs
+src/components/FitHubTrackerIcons.tsx
+src/screens/tabs/ProfileTab.tsx
+src/screens/tabs/WorkoutTab.tsx

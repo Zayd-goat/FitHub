@@ -12,10 +12,12 @@ const icons = read('src/components/FitHubTrackerIcons.tsx');
 
 const hasAll = (source, values) => values.every((value) => source.includes(value));
 const checks = [
-  ['Tracker icon family contains the five primary scenes', hasAll(icons, ['ProfileSceneIcon', 'WorkoutBuilderSceneIcon', 'JourneyProgressSceneIcon', 'SupplementTrackerSceneIcon', 'PersonalDetailsIcon'])],
+  ['Tracker icon family contains the primary and account scenes', hasAll(icons, ['ProfileSceneIcon', 'WorkoutBuilderSceneIcon', 'JourneyProgressSceneIcon', 'SupplementTrackerSceneIcon', 'CustomizePhoneSceneIcon', 'WeeklySplitSceneIcon', 'ClubsSceneIcon', 'ProfileIdSceneIcon', 'ProfileDetailIcon'])],
   ['You tab has profile dashboard, snapshots and quick access', hasAll(profile, ['YOUR FITHUB', 'Quick access', 'Snapshot', 'ActionTile', 'App & account'])],
+  ['You tab uses illustrated account cards and grouped personal details', hasAll(profile, ['AccountArtCard', 'DetailGroup', 'PROFILE', 'TRAINING', 'PREFERENCES', 'ProfileIdSceneIcon'])],
   ['You tab retains editable profile and sign out', hasAll(profile, ['uploadAvatar', 'save', 'Sign out'])],
-  ['Workout has guided choose, configure and start flow', hasAll(workout, ['BUILD YOUR SESSION', 'BuildStep', 'Choose your focus', 'Select exercises'])],
+  ['Workout opens directly on the muscle-group grid', hasAll(workout, ['muscleGridFirst', "{label:'Chest'", "{label:'Back'"])],
+  ['Workout removes the extra hero, progress rail and Step 1 introduction', !['BUILD YOUR SESSION', 'BuildStep', 'Choose your focus'].some((value) => workout.includes(value))],
   ['Workout retains saved plans, preview, active recovery and reordering', hasAll(workout, ['savedWorkouts', 'showWorkoutPreview', 'activeStartedAt', 'DraggableOrderRow'])],
   ['Workout retains movement guidance and Android Back handling', hasAll(workout, ['showExerciseGuide', 'MOVEMENT GUIDE', 'useImperativeHandle'])],
   ['Journey has period hero, progress and prior-period comparison', hasAll(journey, ['JourneyProgressSceneIcon', 'completionProgress', 'workoutDelta', 'vs previous'])],
@@ -33,7 +35,7 @@ const results = checks.map(([label, pass]) => ({ label, pass: Boolean(pass) }));
 for (const result of results) console.log(`${result.pass ? 'PASS' : 'FAIL'}  ${result.label}`);
 const report = {
   generated_at: new Date().toISOString(),
-  version: '1.6.29',
+  version: '1.6.30',
   passed: results.filter((result) => result.pass).length,
   total: results.length,
   checks: results,

@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-08-31T19:49:12.092Z",
-  "version": "1.6.29",
-  "passed": 15,
-  "total": 15,
+  "generated_at": "2026-09-01T00:23:13.555Z",
+  "version": "1.6.30",
+  "passed": 17,
+  "total": 17,
   "checks": [
     {
-      "label": "Tracker icon family contains the five primary scenes",
+      "label": "Tracker icon family contains the primary and account scenes",
       "pass": true
     },
     {
@@ -13,11 +13,19 @@
       "pass": true
     },
     {
+      "label": "You tab uses illustrated account cards and grouped personal details",
+      "pass": true
+    },
+    {
       "label": "You tab retains editable profile and sign out",
       "pass": true
     },
     {
-      "label": "Workout has guided choose, configure and start flow",
+      "label": "Workout opens directly on the muscle-group grid",
+      "pass": true
+    },
+    {
+      "label": "Workout removes the extra hero, progress rail and Step 1 introduction",
       "pass": true
     },
     {
