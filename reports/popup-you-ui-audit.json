@@ -1,0 +1,156 @@
+{
+  "generated_at": "2026-09-01T12:35:33.282Z",
+  "version": "1.6.31",
+  "passed": 12,
+  "total": 12,
+  "assets": [
+    {
+      "file": "journey.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.753743,
+      "transparentCorners": true,
+      "alphaComponentCount": 27,
+      "detachedArtifactCount": 26,
+      "chunkCount": 30,
+      "sha256": "c2c49f9bbee7a90a88c7377c7634caf01c132ee903162b0e8ffba0b40c222cd7"
+    },
+    {
+      "file": "supplements.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.495053,
+      "transparentCorners": true,
+      "alphaComponentCount": 5,
+      "detachedArtifactCount": 4,
+      "chunkCount": 28,
+      "sha256": "11726a4859796ace347417e9ccb4cc381da3e258d2f0927e8bce6b0aaf5bffd3"
+    },
+    {
+      "file": "workout_split.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.570981,
+      "transparentCorners": true,
+      "alphaComponentCount": 13,
+      "detachedArtifactCount": 12,
+      "chunkCount": 30,
+      "sha256": "42d5f285f0e3c9c5c6ecc4b7a8535ed541a40f0640a9c7d11274cc7d3116ad9f"
+    },
+    {
+      "file": "gym_together.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.695468,
+      "transparentCorners": true,
+      "alphaComponentCount": 20,
+      "detachedArtifactCount": 19,
+      "chunkCount": 33,
+      "sha256": "968cafa4a21f8f5714fcee76145a418413ecf7fa216e88f968e886771de9a1ec"
+    },
+    {
+      "file": "customize.png",
+      "width": 1219,
+      "height": 1290,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.626118,
+      "transparentCorners": true,
+      "alphaComponentCount": 6,
+      "detachedArtifactCount": 5,
+      "chunkCount": 16,
+      "sha256": "24265ef836e6d268d0d20d2f4ae82e2b8e363ca67dc9ecb280efbc087cc1c374"
+    },
+    {
+      "file": "weekly_split.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.56794,
+      "transparentCorners": true,
+      "alphaComponentCount": 5,
+      "detachedArtifactCount": 4,
+      "chunkCount": 28,
+      "sha256": "b1a264c1799f14a56c07c33885cfa6dfe49eef83083a482ec9b639421fd4254b"
+    },
+    {
+      "file": "clubs.png",
+      "width": 1536,
+      "height": 1024,
+      "bitDepth": 8,
+      "colorType": 6,
+      "hasAlphaChannel": true,
+      "transparentPixelRatio": 0.600828,
+      "transparentCorners": true,
+      "alphaComponentCount": 20,
+      "detachedArtifactCount": 4,
+      "chunkCount": 34,
+      "sha256": "0f759c2e654fa39278c4ad9bf12ed8385959f67f433cb3c60d86337007ad3306"
+    }
+  ],
+  "checks": [
+    {
+      "label": "App installs the FitHub alert renderer inside the active theme",
+      "pass": true
+    },
+    {
+      "label": "Alert renderer replaces Alert.alert without screen-by-screen feature loss",
+      "pass": true
+    },
+    {
+      "label": "Every popup supports Android Back and explicit close dismissal",
+      "pass": true
+    },
+    {
+      "label": "Every popup supports tap-outside dismissal",
+      "pass": true
+    },
+    {
+      "label": "Popup actions support default, cancel and destructive states",
+      "pass": true
+    },
+    {
+      "label": "Long action lists remain scrollable and fully visible",
+      "pass": true
+    },
+    {
+      "label": "Post controls expose editing, count controls, Delete post and Cancel",
+      "pass": true
+    },
+    {
+      "label": "Post deletion remains owner-scoped and keeps the private workout",
+      "pass": true
+    },
+    {
+      "label": "You page uses every realistic production artwork destination",
+      "pass": true
+    },
+    {
+      "label": "You page no longer renders the previous flat scene icons in these cards",
+      "pass": true
+    },
+    {
+      "label": "Artwork component maps all seven local transparent PNGs",
+      "pass": true
+    },
+    {
+      "label": "All seven production assets passed PNG structure and transparency validation",
+      "pass": true
+    }
+  ]
+}

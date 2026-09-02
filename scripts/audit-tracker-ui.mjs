@@ -35,7 +35,7 @@ const results = checks.map(([label, pass]) => ({ label, pass: Boolean(pass) }));
 for (const result of results) console.log(`${result.pass ? 'PASS' : 'FAIL'}  ${result.label}`);
 const report = {
   generated_at: new Date().toISOString(),
-  version: '1.6.30',
+  version: JSON.parse(read('package.json')).version,
   passed: results.filter((result) => result.pass).length,
   total: results.length,
   checks: results,
