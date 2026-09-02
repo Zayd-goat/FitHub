@@ -1,8 +1,16 @@
-# FitHub 1.6.32
+# FitHub 1.6.33
 
 FitHub is an Expo/React Native training, nutrition, progress, and social-fitness app backed by Supabase.
 
-Start with [START_HERE_FITHUB_1_6_32.md](START_HERE_FITHUB_1_6_32.md), then follow [FITHUB_1_6_32_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_32_COMPLETE_UPDATE_GUIDE.md).
+This release builds on the complete 1.6.32 update. The existing 1.6.32 deployment guide and SQL migration remain valid.
+
+## 1.6.33 highlights
+
+- Fully rebuilds Fitness Journey in the same image-led visual language as Home and Food.
+- Replaces the repetitive six-card layout with a consolidated performance overview.
+- Adds an interactive activity trend chart for workouts, minutes, sets and cardio distance.
+- Adds clearer current-versus-previous comparison bars and simplified report navigation.
+- Keeps weekly/monthly reports, private data, PR history, units, themes and younger-account safeguards intact.
 
 ## 1.6.32 highlights
 
@@ -15,16 +23,16 @@ Start with [START_HERE_FITHUB_1_6_32.md](START_HERE_FITHUB_1_6_32.md), then foll
 
 ## Release identity
 
-- App: `1.6.32`
-- Android version code: `42`
-- iOS build number: `42`
-- APK artifact: `FitHub-1.6.32-APK`
+- App: `1.6.33`
+- Android version code: `43`
+- iOS build number: `43`
+- APK artifact: `FitHub-1.6.33-APK`
 - New SQL: `supabase/UPDATE_2026_09_02_FITHUB_1_6_32_ADDITIVE.sql`
 - Edge Function code is unchanged; keep the existing `friend-notifications` deployment active.
 
 ## Deployment boundary
 
-If the complete FitHub 1.6.31 release is already in GitHub, apply the 1.6.32 patch and build a new APK. Use the complete package if the repository is older or uncertain.
+If FitHub 1.6.32 is already in GitHub, apply the 1.6.33 Journey patch and build a new APK. Use the complete package if the repository is older or uncertain.
 
 Run the 1.6.32 additive SQL once before testing Gym Together or removing a supplement reminder. Never upload `.expo`, `node_modules`, `.env`, `google-services.json`, Android signing files, secrets or tokens.
 

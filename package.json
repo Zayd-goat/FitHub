@@ -1,6 +1,6 @@
 {
   "name": "fithub",
-  "version": "1.6.32",
+  "version": "1.6.33",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "audit:tracker-ui": "node scripts/audit-tracker-ui.mjs",
     "audit:popup-you-ui": "node scripts/audit-popup-you-ui.mjs",
     "audit:1-6-32": "node scripts/audit-1-6-32.mjs",
+    "audit:1-6-33": "node scripts/audit-1-6-33.mjs",
     "manifest": "node scripts/generate-source-manifest.mjs"
   },
   "dependencies": {
