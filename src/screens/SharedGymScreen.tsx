@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, BackHandler, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Input, OutlineButton, RefreshableScrollView, SectionTitle, useTheme } from '../components/UI';
+import { FreshChevronIcon } from '../components/FitHubFreshIcons';
+import { YouCardArtwork } from '../components/YouCardArtwork';
 import { exerciseLibrary, LibraryExercise } from '../data/exerciseLibrary';
 import { imageForExercise } from '../data/exerciseVisuals';
 import { normalizeSharedPlan, SharedWorkoutLaunch, SharedWorkoutPlanItem } from '../lib/sharedGym';
@@ -9,6 +11,7 @@ import { Profile } from '../lib/types';
 
 type SessionRow = {
   id: string;
+  gym_invite_id: string | null;
   creator_id: string;
   leader_id: string | null;
   title: string;
@@ -16,6 +19,12 @@ type SessionRow = {
   status: string;
   started_at: string | null;
   plan_revision: number | null;
+};
+
+type FriendRow = {
+  user_id: string;
+  username: string;
+  avatar_url?: string | null;
 };
 
 type ParticipantRow = {
@@ -35,6 +44,18 @@ type Props = {
   onStartIndividualWorkout: () => void;
 };
 
+const localDateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const tomorrowKey = () => { const date = new Date(); date.setDate(date.getDate() + 1); return localDateKey(date); };
+const weekendKey = () => { const date = new Date(); const distance = (6 - date.getDay() + 7) % 7 || 7; date.setDate(date.getDate() + distance); return localDateKey(date); };
+const parseLocalDateTime = (dateValue: string, timeValue: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue) || !/^\d{1,2}:\d{2}$/.test(timeValue)) return null;
+  const [year, month, day] = dateValue.split('-').map(Number);
+  const [hour, minute] = timeValue.split(':').map(Number);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  const value = new Date(year, month - 1, day, hour, minute, 0, 0);
+  return Number.isFinite(value.getTime()) && value.getFullYear() === year && value.getMonth() === month - 1 && value.getDate() === day ? value : null;
+};
+
 export default function SharedGymScreen({
   profile,
   onBack,
@@ -50,7 +71,12 @@ export default function SharedGymScreen({
   const [plan, setPlan] = useState<SharedWorkoutPlanItem[]>([]);
   const [planRevision, setPlanRevision] = useState(0);
   const [title, setTitle] = useState('Gym session');
-  const [username, setUsername] = useState('');
+  const [friends, setFriends] = useState<FriendRow[]>([]);
+  const [inviteFriendId, setInviteFriendId] = useState('');
+  const [inviteDate, setInviteDate] = useState(tomorrowKey());
+  const [inviteTime, setInviteTime] = useState('17:00');
+  const [gymName, setGymName] = useState('');
+  const [inviteNote, setInviteNote] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,6 +84,7 @@ export default function SharedGymScreen({
   const mine = participants.find((item) => item.user_id === profile.id);
   const isLeader = !!selected && (selected.leader_id ?? selected.creator_id) === profile.id;
   const accepted = mine?.invite_status === 'accepted' || selected?.creator_id === profile.id;
+  const availableFriends = useMemo(() => friends.filter((friend) => !participants.some((person) => person.user_id === friend.user_id)), [friends, participants]);
 
   const pickerExercises = useMemo(() => {
     const search = pickerQuery.trim().toLowerCase();
@@ -70,7 +97,7 @@ export default function SharedGymScreen({
   const loadSessions = async () => {
     const { data, error } = await supabase
       .from('shared_gym_sessions')
-      .select('id,creator_id,leader_id,title,planned_for,status,started_at,plan_revision')
+      .select('id,gym_invite_id,creator_id,leader_id,title,planned_for,status,started_at,plan_revision')
       .order('created_at', { ascending: false });
     if (error) {
       Alert.alert('Shared gym sessions', error.message);
@@ -83,8 +110,30 @@ export default function SharedGymScreen({
     }
   };
 
+  const loadFriends = async () => {
+    const { data, error } = await supabase.rpc('get_my_friends');
+    if (error) {
+      Alert.alert('Training friends', error.message);
+      return;
+    }
+    setFriends(((data ?? []) as any[]).map((friend) => ({
+      user_id: String(friend.user_id),
+      username: String(friend.username ?? 'Friend'),
+      avatar_url: friend.avatar_url ?? null,
+    })));
+  };
+
+  const refreshAll = async () => { await Promise.all([loadSessions(), loadFriends()]); };
+
   const openSession = async (session: SessionRow) => {
     setSelected(session);
+    setTitle(session.title || 'Gym session');
+    if (session.planned_for) {
+      const planned = new Date(session.planned_for);
+      setInviteDate(localDateKey(planned));
+      setInviteTime(`${String(planned.getHours()).padStart(2, '0')}:${String(planned.getMinutes()).padStart(2, '0')}`);
+    }
+    setInviteFriendId('');
     const [{ data: participantData, error: participantError }, { data: planData, error: planError }] = await Promise.all([
       supabase
         .from('shared_gym_participants')
@@ -112,7 +161,16 @@ export default function SharedGymScreen({
     setPlanRevision(Number(planData?.revision ?? session.plan_revision ?? 0));
   };
 
-  useEffect(() => { loadSessions(); }, [profile.id]);
+  useEffect(() => { refreshAll(); }, [profile.id]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!selected) return false;
+      setSelected(null);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [selected?.id]);
 
   useEffect(() => {
     if (!selected) return;
@@ -125,62 +183,65 @@ export default function SharedGymScreen({
     return () => { supabase.removeChannel(channel); };
   }, [selected?.id]);
 
-  const createSession = async () => {
+  const sendInvite = async (targetSession?: SessionRow) => {
+    if (!inviteFriendId) return Alert.alert('Choose a friend', 'Select who you want to train with.');
+    const sessionAt = targetSession
+      ? targetSession.planned_for && new Date(targetSession.planned_for).getTime() > Date.now()
+        ? new Date(targetSession.planned_for)
+        : new Date(Date.now() + 5 * 60000)
+      : parseLocalDateTime(inviteDate, inviteTime);
+    if (!sessionAt || sessionAt.getTime() <= Date.now()) return Alert.alert('Check the session time', 'Choose a future date and time.');
+    const cleanTitle = (targetSession?.title ?? title).trim() || 'Gym session';
     setBusy(true);
-    const cleanTitle = title.trim() || 'Gym session';
-    const { data, error } = await supabase
-      .from('shared_gym_sessions')
-      .insert({ creator_id: profile.id, leader_id: profile.id, title: cleanTitle, status: 'ready' })
-      .select('id,creator_id,leader_id,title,planned_for,status,started_at,plan_revision')
-      .single();
-    if (!error && data) {
-      const { error: participantError } = await supabase.from('shared_gym_participants').insert({
-        shared_session_id: data.id,
-        user_id: profile.id,
-        invite_status: 'accepted',
-        workout_mode: 'undecided',
-        publish_consent: false,
-      });
-      if (participantError) Alert.alert('Shared gym session', participantError.message);
-      await loadSessions();
-      await openSession(data as SessionRow);
-    } else if (error) Alert.alert('Shared gym session', error.message);
-    setBusy(false);
-  };
-
-  const invite = async () => {
-    if (!selected) return;
-    const clean = username.trim().replace(/^@/, '');
-    if (!clean) return;
-    const { data: user } = await supabase.from('public_profiles').select('user_id').eq('username', clean).maybeSingle();
-    if (!user) {
-      Alert.alert('Friend not found', 'Enter the exact FitHub username, or send a scheduled gym invite from the Friends page.');
-      return;
-    }
-    const { error } = await supabase.from('shared_gym_participants').insert({
-      shared_session_id: selected.id,
-      user_id: user.user_id,
-      invite_status: 'pending',
-      workout_mode: 'undecided',
-      publish_consent: false,
-    });
-    if (error) Alert.alert('Gym invite', error.message);
-    else {
-      setUsername('');
-      await openSession(selected);
-      Alert.alert('Invite ready', 'The invitation is listed in FitHub. For a push notification, use the Gym invite option on the Friends page.');
+    try {
+      const { data, error } = await supabase.from('gym_invites').insert({
+        sender_id: profile.id,
+        recipient_id: inviteFriendId,
+        session_at: sessionAt.toISOString(),
+        gym_name: gymName.trim() || null,
+        workout_name: cleanTitle,
+        note: inviteNote.trim() || null,
+        shared_session_id: targetSession?.id ?? null,
+      }).select('id').single();
+      if (error) throw error;
+      await supabase.functions.invoke('friend-notifications', { body: { invite_id: data.id } }).catch(() => null);
+      setInviteFriendId('');
+      setInviteNote('');
+      await refreshAll();
+      if (targetSession) await openSession(targetSession);
+      else {
+        const { data: linked } = await supabase
+          .from('shared_gym_sessions')
+          .select('id,gym_invite_id,creator_id,leader_id,title,planned_for,status,started_at,plan_revision')
+          .eq('gym_invite_id', data.id)
+          .maybeSingle();
+        if (linked) await openSession(linked as SessionRow);
+      }
+      Alert.alert('Gym invite sent', 'Your friend has been notified. This shared workout will update when they respond.');
+    } catch (error: any) {
+      Alert.alert('Could not send invite', error?.message ?? 'Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
 
   const reply = async (status: 'accepted' | 'declined') => {
     if (!selected) return;
-    const { error } = await supabase
-      .from('shared_gym_participants')
-      .update({ invite_status: status })
-      .eq('shared_session_id', selected.id)
-      .eq('user_id', profile.id);
-    if (error) Alert.alert('Gym invitation', error.message);
-    else await openSession(selected);
+    let query = supabase.from('gym_invites').select('id').eq('recipient_id', profile.id).eq('status', 'pending');
+    query = selected.gym_invite_id
+      ? query.or(`id.eq.${selected.gym_invite_id},shared_session_id.eq.${selected.id}`)
+      : query.eq('shared_session_id', selected.id);
+    const { data: inviteRow, error: inviteLookupError } = await query.limit(1).maybeSingle();
+    if (inviteLookupError) return Alert.alert('Gym invitation', inviteLookupError.message);
+    if (inviteRow?.id) {
+      const { error } = await supabase.from('gym_invites').update({ status, updated_at: new Date().toISOString() }).eq('id', inviteRow.id).eq('recipient_id', profile.id);
+      if (error) return Alert.alert('Gym invitation', error.message);
+      await supabase.functions.invoke('friend-notifications', { body: { invite_id: inviteRow.id, notification_kind: 'response' } }).catch(() => null);
+    } else {
+      const { error } = await supabase.from('shared_gym_participants').update({ invite_status: status }).eq('shared_session_id', selected.id).eq('user_id', profile.id);
+      if (error) return Alert.alert('Gym invitation', error.message);
+    }
+    await openSession(selected);
   };
 
   const savePlan = async (nextPlan: SharedWorkoutPlanItem[]) => {
@@ -283,7 +344,8 @@ export default function SharedGymScreen({
 
   const publish = async () => {
     if (!selected) return;
-    const blocked = participants.some((person) => person.invite_status !== 'accepted' || !person.publish_consent);
+    const included = participants.filter((person) => person.invite_status !== 'declined');
+    const blocked = included.some((person) => person.invite_status !== 'accepted' || !person.publish_consent);
     if (blocked) {
       Alert.alert('Consent required', 'Every included participant must accept the session and approve the joint post.');
       return;
@@ -298,34 +360,67 @@ export default function SharedGymScreen({
   };
 
   if (!selected) {
-    return <RefreshableScrollView onRefresh={loadSessions} contentContainerStyle={styles.wrap}>
-      <OutlineButton title="‹ Back" onPress={onBack} />
-      <Text style={styles.title}>Shared gym sessions</Text>
-      <Text style={styles.subtitle}>Train together with one synced exercise plan, or let each person build their own workout.</Text>
-      <Card>
-        <SectionTitle title="Create a session" subtitle="You become the workout leader. Control can be transferred later." />
-        <Input value={title} onChangeText={setTitle} placeholder="Gym session name" />
-        <Button title={busy ? 'Creating…' : 'Create shared session'} onPress={createSession} disabled={busy} />
-        <OutlineButton title="Open scheduled gym invites" onPress={onOpenFriends} />
+    return <RefreshableScrollView onRefresh={refreshAll} contentContainerStyle={styles.wrap} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <View style={styles.topHeader}>
+        <Pressable onPress={onBack} style={styles.backTarget} accessibilityRole="button" accessibilityLabel="Back"><FreshChevronIcon size={27} color={colors.text} direction="left"/></Pressable>
+        <View style={{ flex: 1 }}><Text style={styles.title}>Gym together</Text><Text style={styles.subtitle}>Invite a friend and build one shared workout.</Text></View>
+      </View>
+
+      <Card style={styles.heroCard}>
+        <View style={styles.heroArtwork}><YouCardArtwork kind="gymTogether" width={142} height={104}/></View>
+        <View style={styles.heroCopy}><Text style={styles.eyebrow}>SHARED TRAINING</Text><Text style={styles.heroTitle}>Plan it together</Text><Text style={styles.heroText}>Send the real gym invite here. Your friend receives the notification and can accept or decline.</Text></View>
       </Card>
-      {sessions.map((session) => <Pressable key={session.id} onPress={() => openSession(session)}>
-        <Card>
-          <View style={styles.sessionRow}>
-            <View style={{ flex: 1 }}><Text style={styles.sessionTitle}>{session.title}</Text><Text style={styles.muted}>{session.status === 'active' ? 'In progress' : 'Open session'} · tap for workout options</Text></View>
+
+      <Card style={styles.inviteCard}>
+        <View style={styles.stepHeading}><View style={styles.stepNumber}><Text style={styles.stepNumberText}>1</Text></View><View style={{ flex: 1 }}><Text style={styles.formTitle}>Choose a training friend</Text><Text style={styles.subtitle}>Only confirmed FitHub friends are shown.</Text></View></View>
+        {friends.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.friendStrip}>
+          {friends.map((friend) => {
+            const active = inviteFriendId === friend.user_id;
+            return <Pressable key={friend.user_id} onPress={() => setInviteFriendId(friend.user_id)} style={[styles.friendChoice, active && styles.friendChoiceActive]}>
+              {friend.avatar_url ? <Image source={{ uri: friend.avatar_url }} style={styles.friendAvatar}/> : <View style={styles.friendInitial}><Text style={styles.friendInitialText}>{friend.username.slice(0, 1).toUpperCase()}</Text></View>}
+              <Text numberOfLines={1} style={[styles.friendName, active && styles.friendNameActive]}>@{friend.username}</Text>
+              <View style={[styles.choiceDot, active && styles.choiceDotActive]}>{active ? <Text style={styles.choiceTick}>✓</Text> : null}</View>
+            </Pressable>;
+          })}
+        </ScrollView> : <View style={styles.emptyFriends}><Text style={styles.emptyTitle}>Add a training friend first</Text><Text style={styles.muted}>Once a friend request is accepted, they will appear here.</Text><OutlineButton title="OPEN FRIENDS" onPress={onOpenFriends}/></View>}
+
+        <View style={styles.divider}/>
+        <View style={styles.stepHeading}><View style={styles.stepNumber}><Text style={styles.stepNumberText}>2</Text></View><View style={{ flex: 1 }}><Text style={styles.formTitle}>Set the session details</Text><Text style={styles.subtitle}>Your friend sees these details in the invite.</Text></View></View>
+        <Text style={styles.fieldLabel}>WORKOUT NAME</Text>
+        <Input value={title} onChangeText={setTitle} placeholder="For example: Push Day" maxLength={80}/>
+        <View style={styles.inputRow}><View style={{ flex: 1 }}><Text style={styles.fieldLabel}>DATE</Text><Input value={inviteDate} onChangeText={setInviteDate} placeholder="YYYY-MM-DD" autoCapitalize="none"/></View><View style={{ width: 112 }}><Text style={styles.fieldLabel}>TIME</Text><Input value={inviteTime} onChangeText={setInviteTime} placeholder="17:00" autoCapitalize="none"/></View></View>
+        <View style={styles.quickRow}><Pressable onPress={() => setInviteDate(tomorrowKey())} style={[styles.quickChoice, inviteDate === tomorrowKey() && styles.quickChoiceActive]}><Text style={[styles.quickChoiceText, inviteDate === tomorrowKey() && styles.quickChoiceTextActive]}>Tomorrow</Text></Pressable><Pressable onPress={() => setInviteDate(weekendKey())} style={[styles.quickChoice, inviteDate === weekendKey() && styles.quickChoiceActive]}><Text style={[styles.quickChoiceText, inviteDate === weekendKey() && styles.quickChoiceTextActive]}>This weekend</Text></Pressable>{['17:00','18:00','19:00'].map((value) => <Pressable key={value} onPress={() => setInviteTime(value)} style={[styles.quickTime, inviteTime === value && styles.quickChoiceActive]}><Text style={[styles.quickChoiceText, inviteTime === value && styles.quickChoiceTextActive]}>{value}</Text></Pressable>)}</View>
+        <Text style={styles.fieldLabel}>GYM OR MEETING PLACE <Text style={styles.optional}>OPTIONAL</Text></Text>
+        <Input value={gymName} onChangeText={setGymName} placeholder="Where are you training?" maxLength={120}/>
+        <Text style={styles.fieldLabel}>MESSAGE <Text style={styles.optional}>OPTIONAL</Text></Text>
+        <Input value={inviteNote} onChangeText={setInviteNote} placeholder="Add a short note" maxLength={240} multiline/>
+        <Button title={busy ? 'SENDING INVITE…' : 'SEND GYM INVITE'} onPress={() => sendInvite()} disabled={busy || !friends.length}/>
+        <Text style={styles.privacyNote}>Only the invited friend can see this session. Personal weights and completed sets remain private.</Text>
+      </Card>
+
+      <View style={styles.listHeading}><View><Text style={styles.eyebrow}>YOUR SESSIONS</Text><Text style={styles.listTitle}>Open and upcoming</Text></View><View style={styles.countPill}><Text style={styles.countText}>{sessions.length}</Text></View></View>
+      {sessions.length ? sessions.map((session) => {
+        const planned = session.planned_for ? new Date(session.planned_for) : null;
+        return <Pressable key={session.id} onPress={() => openSession(session)} style={({ pressed }) => pressed && { opacity: .76 }}>
+          <Card style={styles.sessionCard}>
+            <View style={styles.sessionBadge}><Text style={styles.sessionBadgeText}>{session.status === 'active' ? 'LIVE' : session.status.toUpperCase()}</Text></View>
+            <View style={{ flex: 1 }}><Text style={styles.sessionTitle}>{session.title}</Text><Text style={styles.muted}>{planned ? planned.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + planned.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Date not set'} · Tap to open</Text></View>
             <Text style={styles.arrow}>›</Text>
-          </View>
-        </Card>
-      </Pressable>)}
+          </Card>
+        </Pressable>;
+      }) : <Card style={styles.emptySession}><Text style={styles.emptyTitle}>No shared sessions yet</Text><Text style={styles.muted}>Choose a friend above and send your first gym invite.</Text></Card>}
     </RefreshableScrollView>;
   }
 
   return <>
     <RefreshableScrollView onRefresh={() => openSession(selected)} contentContainerStyle={styles.wrap}>
-      <OutlineButton title="‹ Shared sessions" onPress={() => setSelected(null)} />
-      <View style={styles.headingRow}>
+      <View style={styles.topHeader}>
+        <Pressable onPress={() => setSelected(null)} style={styles.backTarget} accessibilityRole="button" accessibilityLabel="Shared sessions"><FreshChevronIcon size={27} color={colors.text} direction="left"/></Pressable>
         <View style={{ flex: 1 }}><Text style={styles.title}>{selected.title}</Text><Text style={styles.subtitle}>{selected.status === 'active' ? 'Session in progress' : 'Plan the session together'}</Text></View>
         <View style={styles.statusPill}><Text style={styles.statusText}>{selected.status.toUpperCase()}</Text></View>
       </View>
+
+      <Card style={styles.roomSummary}><View style={styles.roomArt}><YouCardArtwork kind="gymTogether" width={116} height={78}/></View><View style={{ flex: 1 }}><Text style={styles.eyebrow}>SHARED WORKOUT ROOM</Text><Text style={styles.roomTitle}>{participants.filter((person) => person.invite_status === 'accepted').length} accepted · {plan.length} exercise{plan.length === 1 ? '' : 's'}</Text><Text style={styles.muted}>{selected.planned_for ? new Date(selected.planned_for).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Session time not set'}</Text></View></Card>
 
       {mine?.invite_status === 'pending' ? <Card>
         <SectionTitle title="Gym invitation" subtitle="Accept to choose a synced or individual workout when the session starts." />
@@ -380,7 +475,20 @@ export default function SharedGymScreen({
           <View style={{ flex: 1 }}><Text style={styles.participantName}>@{person.username}{person.user_id === (selected.leader_id ?? selected.creator_id) ? ' · LEADER' : ''}</Text><Text style={styles.muted}>{person.invite_status} · {person.workout_mode === 'undecided' ? 'mode not selected' : person.workout_mode}</Text></View>
           {isLeader && person.user_id !== profile.id && person.invite_status === 'accepted' ? <Pressable onPress={() => transferLeader(person)} style={styles.transfer}><Text style={styles.transferText}>Make leader</Text></Pressable> : null}
         </View>)}
-        {isLeader ? <><Input value={username} onChangeText={setUsername} placeholder="@username" autoCapitalize="none" /><OutlineButton title="Invite by username" onPress={invite} /></> : null}
+        {isLeader ? <View style={styles.addPeople}>
+          <Text style={styles.fieldLabel}>INVITE ANOTHER FRIEND</Text>
+          {availableFriends.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.friendStrip}>
+            {availableFriends.map((friend) => {
+              const active = inviteFriendId === friend.user_id;
+              return <Pressable key={friend.user_id} onPress={() => setInviteFriendId(friend.user_id)} style={[styles.friendChoice, active && styles.friendChoiceActive]}>
+                {friend.avatar_url ? <Image source={{ uri: friend.avatar_url }} style={styles.friendAvatar}/> : <View style={styles.friendInitial}><Text style={styles.friendInitialText}>{friend.username.slice(0, 1).toUpperCase()}</Text></View>}
+                <Text numberOfLines={1} style={[styles.friendName, active && styles.friendNameActive]}>@{friend.username}</Text>
+                <View style={[styles.choiceDot, active && styles.choiceDotActive]}>{active ? <Text style={styles.choiceTick}>✓</Text> : null}</View>
+              </Pressable>;
+            })}
+          </ScrollView> : <Text style={styles.muted}>Every available friend is already included in this session.</Text>}
+          <OutlineButton title={busy ? 'SENDING…' : 'SEND GYM INVITE'} onPress={() => sendInvite(selected)} disabled={busy || !inviteFriendId}/>
+        </View> : null}
       </Card>
 
       {accepted ? <Card>
@@ -413,9 +521,58 @@ export default function SharedGymScreen({
 
 const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 120, gap: 10, backgroundColor: colors.bg },
+  topHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 5 },
+  backTarget: { width: 48, height: 48, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.border },
   title: { color: colors.text, fontSize: 27, fontWeight: '900' },
   subtitle: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 },
   muted: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 3 },
+  eyebrow: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: .9 },
+  heroCard: { minHeight: 150, flexDirection: 'row', alignItems: 'center', padding: 12, overflow: 'hidden', backgroundColor: isDark ? colors.panel : colors.panel2, borderColor: colors.primary },
+  heroArtwork: { width: 145, height: 116, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B0D0F' },
+  heroCopy: { flex: 1, paddingLeft: 9 },
+  heroTitle: { color: colors.text, fontSize: 21, fontWeight: '900', marginTop: 4 },
+  heroText: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 5 },
+  inviteCard: { borderRadius: 24, padding: 15 },
+  stepHeading: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  stepNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  stepNumberText: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
+  formTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
+  friendStrip: { gap: 9, paddingVertical: 3, paddingRight: 6 },
+  friendChoice: { width: 104, minHeight: 118, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2, padding: 9, alignItems: 'center', justifyContent: 'center' },
+  friendChoiceActive: { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primarySoft },
+  friendAvatar: { width: 50, height: 50, borderRadius: 25, marginBottom: 7 },
+  friendInitial: { width: 50, height: 50, borderRadius: 25, marginBottom: 7, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  friendInitialText: { color: colors.primary, fontSize: 20, fontWeight: '900' },
+  friendName: { color: colors.text, fontSize: 10, fontWeight: '800', maxWidth: 84 },
+  friendNameActive: { color: colors.primary },
+  choiceDot: { width: 20, height: 20, borderRadius: 10, marginTop: 7, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  choiceDotActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  choiceTick: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  emptyFriends: { borderRadius: 17, padding: 13, backgroundColor: colors.panel2 },
+  emptyTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 15 },
+  fieldLabel: { color: colors.muted, fontSize: 9, fontWeight: '900', letterSpacing: .5, marginTop: 8, marginBottom: 4 },
+  optional: { color: colors.primary, fontSize: 8 },
+  inputRow: { flexDirection: 'row', gap: 9 },
+  quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: -2, marginBottom: 4 },
+  quickChoice: { minHeight: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2, paddingHorizontal: 11, alignItems: 'center', justifyContent: 'center' },
+  quickTime: { minWidth: 54, minHeight: 38, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel2, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' },
+  quickChoiceActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  quickChoiceText: { color: colors.muted, fontSize: 9, fontWeight: '900' },
+  quickChoiceTextActive: { color: colors.primary },
+  privacyNote: { color: colors.muted, fontSize: 9, lineHeight: 14, textAlign: 'center', marginTop: 8 },
+  listHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 8, marginBottom: 1 },
+  listTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 3 },
+  countPill: { minWidth: 34, height: 34, borderRadius: 17, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  countText: { color: colors.primary, fontSize: 12, fontWeight: '900' },
+  sessionCard: { minHeight: 90, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 20 },
+  sessionBadge: { minWidth: 54, height: 54, borderRadius: 17, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  sessionBadgeText: { color: colors.primary, fontSize: 8, fontWeight: '900' },
+  emptySession: { alignItems: 'center', paddingVertical: 25, borderRadius: 20 },
+  roomSummary: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: isDark ? colors.panel : colors.panel2, borderColor: colors.primary },
+  roomArt: { width: 118, height: 80, borderRadius: 17, overflow: 'hidden', backgroundColor: '#0B0D0F', alignItems: 'center', justifyContent: 'center' },
+  roomTitle: { color: colors.text, fontSize: 13, fontWeight: '900', marginTop: 4 },
+  addPeople: { marginTop: 14, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   empty: { color: colors.muted, textAlign: 'center', paddingVertical: 18, fontSize: 11 },
   headingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusPill: { borderWidth: 1, borderColor: colors.primary, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.primarySoft },

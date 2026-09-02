@@ -6,7 +6,8 @@ import { profileAge } from '../lib/profileAge';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
 import { formatDistance, formatPace, formatWeight } from '../lib/units';
-import { JourneyProgressSceneIcon } from '../components/FitHubTrackerIcons';
+import { YouCardArtwork } from '../components/YouCardArtwork';
+import { FreshChevronIcon } from '../components/FitHubFreshIcons';
 
 type Period = 'week' | 'month';
 type TrendFocus = 'workouts' | 'minutes' | 'sets' | 'distance';
@@ -27,16 +28,19 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
   const { colors, weightUnit, distanceUnit, isDark } = useTheme();
   const s = styles(colors, isDark);
   const [period, setPeriod] = useState<Period>(initialPeriod);
+  const [rangeOffset, setRangeOffset] = useState(0);
   const [trendFocus, setTrendFocus] = useState<TrendFocus>('workouts');
   const [sessions, setSessions] = useState<any[]>([]);
   const [sets, setSets] = useState<any[]>([]);
   const [prs, setPrs] = useState<any[]>([]);
 
-  useEffect(() => { setPeriod(initialPeriod); }, [initialPeriod]);
+  useEffect(() => { setPeriod(initialPeriod); setRangeOffset(0); }, [initialPeriod]);
 
   const load = async () => {
     const since = new Date();
-    since.setDate(since.getDate() - 70);
+    // Keep enough local report data for the current period, the selected past
+    // period and its comparison period (three 30-day windows at most).
+    since.setDate(since.getDate() - 100);
     since.setHours(0, 0, 0, 0);
     const [sessionResult, setResult, prResult] = await Promise.all([
       supabase.from('workout_sessions').select('id,started_at,ended_at,summary').eq('user_id', profile.id).eq('completed', true).gte('ended_at', since.toISOString()).order('ended_at', { ascending: false }),
@@ -50,8 +54,8 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
 
   useEffect(() => { load(); }, [profile.id]);
 
-  const currentRange = useMemo(() => periodRange(period, 0), [period]);
-  const previousRange = useMemo(() => periodRange(period, 1), [period]);
+  const currentRange = useMemo(() => periodRange(period, rangeOffset), [period, rangeOffset]);
+  const previousRange = useMemo(() => periodRange(period, rangeOffset + 1), [period, rangeOffset]);
   const current = useMemo(() => summarize(currentRange, sessions, sets, prs), [currentRange, sessions, sets, prs]);
   const previous = useMemo(() => summarize(previousRange, sessions, sets, prs), [previousRange, sessions, sets, prs]);
   const chart = useMemo(() => trendData(currentRange, current, trendFocus), [currentRange, current, trendFocus]);
@@ -62,6 +66,7 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
   const workoutDelta = current.sessions.length - previous.sessions.length;
   const periodTarget = Math.max(1, Number(profile.workout_days_target ?? 3)) * (period === 'month' ? 4 : 1);
   const completionProgress = Math.min(100, current.sessions.length / periodTarget * 100);
+  const maxRangeOffset = period === 'week' ? 8 : 1;
 
   const recommendations = useMemo(() => {
     if (!current.sessions.length) return ['No completed workouts are recorded for this period yet. Your report will build automatically as sessions are completed.'];
@@ -80,19 +85,19 @@ export default function FitnessJourneyScreen({ profile, initialPeriod = 'week', 
     </View>
 
     <Card style={s.journeyHero}>
-      <View style={s.heroArt}><JourneyProgressSceneIcon size={112} color={colors.text} accentColor={colors.primary} surfaceColor={colors.panel}/></View>
-      <View style={s.heroCopy}><Text style={s.heroEyebrow}>{period === 'week' ? 'YOUR CURRENT WEEK' : 'YOUR CURRENT MONTH'}</Text><Text style={s.heroTitle}>{current.sessions.length} workout{current.sessions.length === 1 ? '' : 's'}</Text><Text style={s.heroSub}>{formatMinutes(current.duration)} training time · {current.activeDays} active day{current.activeDays === 1 ? '' : 's'}</Text><View style={s.heroTrack}><View style={[s.heroFill,{width:`${completionProgress}%`}]}/></View><Text style={s.heroCompare}>{workoutDelta === 0 ? 'Same number of workouts as the previous period' : `${workoutDelta > 0 ? '+' : ''}${workoutDelta} workout${Math.abs(workoutDelta) === 1 ? '' : 's'} vs previous`}</Text></View>
+      <View style={s.heroArt}><YouCardArtwork kind="journey" width={136} height={112}/></View>
+      <View style={s.heroCopy}><Text style={s.heroEyebrow}>{rangeOffset === 0 ? (period === 'week' ? 'YOUR CURRENT WEEK' : 'YOUR CURRENT MONTH') : (period === 'week' ? 'SELECTED WEEK' : 'SELECTED MONTH')}</Text><Text style={s.heroTitle}>{current.sessions.length} workout{current.sessions.length === 1 ? '' : 's'}</Text><Text style={s.heroSub}>{formatMinutes(current.duration)} training time · {current.activeDays} active day{current.activeDays === 1 ? '' : 's'}</Text><View style={s.heroTrack}><View style={[s.heroFill,{width:`${completionProgress}%`}]}/></View><Text style={s.heroCompare}>{workoutDelta === 0 ? 'Same number of workouts as the previous period' : `${workoutDelta > 0 ? '+' : ''}${workoutDelta} workout${Math.abs(workoutDelta) === 1 ? '' : 's'} vs previous`}</Text></View>
     </Card>
 
     <View style={s.periodSwitch}>
-      <PeriodButton label="Weekly report" active={period === 'week'} onPress={() => setPeriod('week')}/>
-      <PeriodButton label="Monthly report" active={period === 'month'} onPress={() => setPeriod('month')}/>
+      <PeriodButton label="Weekly report" active={period === 'week'} onPress={() => { setPeriod('week'); setRangeOffset(0); }}/>
+      <PeriodButton label="Monthly report" active={period === 'month'} onPress={() => { setPeriod('month'); setRangeOffset(0); }}/>
     </View>
 
     <View style={s.reportRange}>
-      <CalendarIcon size={22} color={colors.text} accentColor={colors.primary}/>
-      <View style={{ flex: 1 }}><Text style={s.rangeEyebrow}>CURRENT REPORT</Text><Text style={s.rangeText}>{formatDateRange(currentRange)}</Text></View>
-      <Text style={s.privatePill}>Only you</Text>
+      <Pressable disabled={rangeOffset >= maxRangeOffset} onPress={() => setRangeOffset((value) => Math.min(maxRangeOffset, value + 1))} style={[s.rangeArrow, rangeOffset >= maxRangeOffset && s.rangeArrowDisabled]} accessibilityRole="button" accessibilityLabel="Earlier report"><FreshChevronIcon size={19} color={colors.text} direction="left"/></Pressable>
+      <View style={s.rangeCenter}><Text style={s.rangeEyebrow}>{rangeOffset === 0 ? 'CURRENT REPORT' : 'PAST REPORT'}</Text><Text style={s.rangeText}>{formatDateRange(currentRange)}</Text><Text style={s.rangePrivate}>Private · only you</Text></View>
+      <Pressable disabled={rangeOffset === 0} onPress={() => setRangeOffset((value) => Math.max(0, value - 1))} style={[s.rangeArrow, rangeOffset === 0 && s.rangeArrowDisabled]} accessibilityRole="button" accessibilityLabel="Newer report"><FreshChevronIcon size={19} color={colors.text} direction="right"/></Pressable>
     </View>
 
     <View style={s.sectionHeading}><View><Text style={s.sectionEyebrow}>PROGRESS AT A GLANCE</Text><Text style={s.sectionTitle}>Your key numbers</Text></View><Text style={s.sectionHint}>Tap a card to chart it</Text></View>
@@ -237,12 +242,12 @@ function prLabel(pr: any, weightUnit: 'kg' | 'lb', distanceUnit: 'km' | 'mi') {
 
 const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   wrap: { padding: 16, paddingBottom: 52 },
-  journeyHero:{minHeight:154,flexDirection:'row',alignItems:'center',borderRadius:23,padding:12,marginBottom:13,shadowColor:colors.shadow,shadowOpacity:isDark?.18:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:3},heroArt:{width:116,height:116,alignItems:'center',justifyContent:'center',marginRight:3},heroCopy:{flex:1,minWidth:0},heroEyebrow:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.8},heroTitle:{color:colors.text,fontSize:22,fontWeight:'900',letterSpacing:-.35,marginTop:5},heroSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:5},heroTrack:{height:7,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:11},heroFill:{height:'100%',borderRadius:99,backgroundColor:colors.primary},heroCompare:{color:colors.muted,fontSize:8,fontWeight:'700',lineHeight:12,marginTop:6},
+  journeyHero:{minHeight:154,flexDirection:'row',alignItems:'center',borderRadius:23,padding:12,marginBottom:13,shadowColor:colors.shadow,shadowOpacity:isDark?.18:.09,shadowRadius:9,shadowOffset:{width:0,height:4},elevation:3,borderColor:colors.primary},heroArt:{width:122,height:116,borderRadius:28,backgroundColor:'#0B1013',alignItems:'center',justifyContent:'center',marginRight:8,overflow:'hidden'},heroCopy:{flex:1,minWidth:0},heroEyebrow:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.8},heroTitle:{color:colors.text,fontSize:22,fontWeight:'900',letterSpacing:-.35,marginTop:5},heroSub:{color:colors.muted,fontSize:10,lineHeight:15,marginTop:5},heroTrack:{height:7,borderRadius:99,backgroundColor:colors.panel2,overflow:'hidden',marginTop:11},heroFill:{height:'100%',borderRadius:99,backgroundColor:colors.primary},heroCompare:{color:colors.muted,fontSize:8,fontWeight:'700',lineHeight:12,marginTop:6},
   sectionHeading:{flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',marginTop:4,marginBottom:9},sectionEyebrow:{color:colors.primary,fontSize:8,fontWeight:'900',letterSpacing:.8},sectionTitle:{color:colors.text,fontSize:19,fontWeight:'900',marginTop:3},sectionHint:{color:colors.muted,fontSize:8,fontWeight:'700'},
   header: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 17 },
   backButton: { width: 38, height: 46, alignItems: 'center', justifyContent: 'center' }, back: { color: colors.text, fontSize: 40, lineHeight: 42, fontWeight: '300' }, headerCopy: { flex: 1 }, title: { color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -.45 }, sub: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
   periodSwitch: { flexDirection: 'row', gap: 9, marginBottom: 12 }, periodButton: { flex: 1, minHeight: 48, borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, alignItems: 'center', justifyContent: 'center' }, periodButtonActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, periodButtonText: { color: colors.muted, fontSize: 12, fontWeight: '800' }, periodButtonTextActive: { color: colors.primary, fontWeight: '900' },
-  reportRange: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: 13, minHeight: 64, marginBottom: 12 }, rangeEyebrow: { color: colors.primary, fontSize: 8, fontWeight: '900', letterSpacing: .45 }, rangeText: { color: colors.text, fontSize: 12, fontWeight: '900', marginTop: 3 }, privatePill: { color: colors.muted, fontSize: 8, fontWeight: '900', backgroundColor: colors.panel2, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 999 },
+  reportRange: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 17, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, paddingHorizontal: 10, minHeight: 78, marginBottom: 12 }, rangeArrow: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft }, rangeArrowDisabled: { opacity: .28 }, rangeCenter: { flex: 1, alignItems: 'center' }, rangeEyebrow: { color: colors.primary, fontSize: 8, fontWeight: '900', letterSpacing: .45 }, rangeText: { color: colors.text, fontSize: 12, fontWeight: '900', marginTop: 3, textAlign: 'center' }, rangePrivate: { color: colors.muted, fontSize: 8, fontWeight: '800', marginTop: 3 },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginBottom: 12 }, metricCard: { width: '48.6%', minHeight: 142, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.panel, padding: 13, shadowColor: colors.shadow, shadowOpacity: isDark ? .2 : .08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 }, metricCardActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, metricTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }, metricIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }, metricArrow: { color: colors.muted, fontSize: 20 }, metricLabel: { color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 10 }, metricValue: { color: colors.text, fontSize: 20, fontWeight: '900', marginTop: 3 }, metricCompare: { color: colors.muted, fontSize: 8, fontWeight: '700', marginTop: 4 },
   trendCard: { borderRadius: 20, padding: 15 }, cardHeadingRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 }, cardTitle: { color: colors.text, fontSize: 19, fontWeight: '900' }, trendBadge: { backgroundColor: colors.primarySoft, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6 }, trendBadgeText: { color: colors.primary, fontSize: 8, fontWeight: '900' }, focusRow: { flexDirection: 'row', gap: 6, marginTop: 13, marginBottom: 14 }, focusPill: { flex: 1, minHeight: 34, borderRadius: 11, backgroundColor: colors.panel2, alignItems: 'center', justifyContent: 'center' }, focusPillActive: { backgroundColor: colors.primary }, focusText: { color: colors.muted, fontSize: 8, fontWeight: '900' }, focusTextActive: { color: '#FFFFFF' },
   chartArea: { height: 154, flexDirection: 'row', alignItems: 'flex-end', gap: 7, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 15 }, barColumn: { flex: 1, height: '100%', alignItems: 'center', justifyContent: 'flex-end' }, barValue: { color: colors.text, fontSize: 8, fontWeight: '900', marginBottom: 5 }, barTrack: { width: '62%', flex: 1, borderRadius: 8, backgroundColor: colors.panel2, justifyContent: 'flex-end', overflow: 'hidden' }, barFill: { width: '100%', borderRadius: 8, backgroundColor: colors.primary }, barLabel: { color: colors.muted, fontSize: 8, fontWeight: '800', marginTop: 6 },

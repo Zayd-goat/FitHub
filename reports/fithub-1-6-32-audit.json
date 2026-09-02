@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-09-02T12:08:05.446Z",
+  "version": "1.6.32",
+  "passed": 17,
+  "total": 17,
+  "checks": [
+    {
+      "label": "Shared Gym sends real database invites",
+      "pass": true
+    },
+    {
+      "label": "Shared Gym triggers immediate invite and response notifications",
+      "pass": true
+    },
+    {
+      "label": "Shared Gym chooses confirmed friends and has quick scheduling",
+      "pass": true
+    },
+    {
+      "label": "Shared Gym handles Android Back inside a room",
+      "pass": true
+    },
+    {
+      "label": "Shared Gym uses realistic FitHub artwork",
+      "pass": true
+    },
+    {
+      "label": "Gym invite migration links extra invites to one shared room",
+      "pass": true
+    },
+    {
+      "label": "Gym invite migration protects immutable invite ownership and room links",
+      "pass": true
+    },
+    {
+      "label": "Supplement reminders archive without losing history",
+      "pass": true
+    },
+    {
+      "label": "Supplement check-in offers clear, reversible statuses",
+      "pass": true
+    },
+    {
+      "label": "Supplement UI uses realistic tracker artwork and age-safe guidance",
+      "pass": true
+    },
+    {
+      "label": "Journey supports navigating current and past report periods",
+      "pass": true
+    },
+    {
+      "label": "Journey uses realistic FitHub artwork",
+      "pass": true
+    },
+    {
+      "label": "Weekly Split uses realistic workout-specific imagery",
+      "pass": true
+    },
+    {
+      "label": "Weekly Split supports quick choices, custom labels and clearing days",
+      "pass": true
+    },
+    {
+      "label": "Customization has clear Appearance, Units and Features sections",
+      "pass": true
+    },
+    {
+      "label": "Customization provides live theme previews and custom accents",
+      "pass": true
+    },
+    {
+      "label": "Customization uses realistic FitHub artwork",
+      "pass": true
+    }
+  ]
+}

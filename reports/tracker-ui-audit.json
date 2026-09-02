@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-01T12:35:33.355Z",
-  "version": "1.6.31",
+  "generated_at": "2026-09-02T12:08:04.613Z",
+  "version": "1.6.32",
   "passed": 17,
   "total": 17,
   "checks": [
@@ -37,7 +37,7 @@
       "pass": true
     },
     {
-      "label": "Journey has period hero, progress and prior-period comparison",
+      "label": "Journey has realistic period hero, progress and prior-period comparison",
       "pass": true
     },
     {

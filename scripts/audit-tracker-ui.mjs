@@ -20,7 +20,7 @@ const checks = [
   ['Workout removes the extra hero, progress rail and Step 1 introduction', !['BUILD YOUR SESSION', 'BuildStep', 'Choose your focus'].some((value) => workout.includes(value))],
   ['Workout retains saved plans, preview, active recovery and reordering', hasAll(workout, ['savedWorkouts', 'showWorkoutPreview', 'activeStartedAt', 'DraggableOrderRow'])],
   ['Workout retains movement guidance and Android Back handling', hasAll(workout, ['showExerciseGuide', 'MOVEMENT GUIDE', 'useImperativeHandle'])],
-  ['Journey has period hero, progress and prior-period comparison', hasAll(journey, ['JourneyProgressSceneIcon', 'completionProgress', 'workoutDelta', 'vs previous'])],
+  ['Journey has realistic period hero, progress and prior-period comparison', hasAll(journey, ['YouCardArtwork kind="journey"', 'completionProgress', 'workoutDelta', 'rangeOffset', 'vs previous'])],
   ['Journey retains weekly/monthly reporting and pull to refresh', hasAll(journey, ["'week'", "'month'", 'RefreshableScrollView', 'onRefresh={load}'])],
   ['Supplements has routine, calendar, daily check-in and schedule', hasAll(supplements, ["TODAY'S ROUTINE", 'Calendar', 'Daily check-in', 'Your schedule'])],
   ['Supplements retains reminder and status actions', hasAll(supplements, ['scheduleDailySupplementReminder', 'setStatus', 'clearStatus', 'reschedule'])],

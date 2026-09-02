@@ -1,6 +1,6 @@
 {
-  "version": "1.6.30",
-  "generated_at": "2026-09-01T00:20:12.217Z",
+  "version": "1.6.32",
+  "generated_at": "2026-09-02T12:08:04.491Z",
   "checks": [
     {
       "name": "Main app renders the rebuilt Home tab",
