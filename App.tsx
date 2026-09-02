@@ -12,6 +12,7 @@ import { registerFriendPushToken } from './src/lib/notifications';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { establishAuthSessionFromUrl, isPasswordRecoveryUrl } from './src/lib/authLinks';
 import { profileAge } from './src/lib/profileAge';
+import FitHubAlertProvider from './src/components/FitHubAlertProvider';
 
 function AppContent() {
   const { colors, syncUserPreferences } = useTheme();
@@ -94,5 +95,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return <ThemeProvider><AppContent /></ThemeProvider>;
+  return <ThemeProvider><FitHubAlertProvider><AppContent /></FitHubAlertProvider></ThemeProvider>;
 }
