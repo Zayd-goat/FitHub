@@ -1,32 +1,33 @@
-# FitHub 1.6.31
+# FitHub 1.6.32
 
 FitHub is an Expo/React Native training, nutrition, progress, and social-fitness app backed by Supabase.
 
-Start with [START_HERE_FITHUB_1_6_31.md](START_HERE_FITHUB_1_6_31.md), then follow [FITHUB_1_6_31_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_31_COMPLETE_UPDATE_GUIDE.md).
+Start with [START_HERE_FITHUB_1_6_32.md](START_HERE_FITHUB_1_6_32.md), then follow [FITHUB_1_6_32_COMPLETE_UPDATE_GUIDE.md](FITHUB_1_6_32_COMPLETE_UPDATE_GUIDE.md).
 
-## 1.6.31 highlights
+## 1.6.32 highlights
 
-- Replaces native-looking alerts with a consistent, theme-aware FitHub action sheet throughout the app.
-- Lets users dismiss every upgraded popup with the close control, the dimmed background, or their phone’s Android Back button.
-- Makes every Post controls action visible, including the requested Delete post action and its confirmation.
-- Rebuilds all seven You-page destination illustrations as original realistic transparent artwork.
-- Keeps every route, profile action, post control, theme, younger-account safeguard, and 1.6.30 feature intact.
-- Requires no database migration or Edge Function redeployment.
+- Makes the Gym Together page send real, notification-backed invites to confirmed friends.
+- Lets a shared-session leader invite additional friends into the same workout room.
+- Rebuilds Gym Together, Supplement Tracker, My Fitness Journey, Weekly Split and Customize FitHub with clearer controls and realistic FitHub artwork.
+- Preserves supplement history when a reminder is removed, improves daily status editing, and keeps younger-account guidance neutral and support-led.
+- Adds past-period navigation to Journey reports and image-led weekly workout planning.
+- Keeps the Home, Food, Friends, You, popup, workout and notification improvements from earlier releases intact.
 
 ## Release identity
 
-- App: `1.6.31`
-- Android version code: `41`
-- iOS build number: `41`
-- APK artifact: `FitHub-1.6.31-APK`
-- New SQL or Edge Function for 1.6.31: none
+- App: `1.6.32`
+- Android version code: `42`
+- iOS build number: `42`
+- APK artifact: `FitHub-1.6.32-APK`
+- New SQL: `supabase/UPDATE_2026_09_02_FITHUB_1_6_32_ADDITIVE.sql`
+- Edge Function code is unchanged; keep the existing `friend-notifications` deployment active.
 
 ## Deployment boundary
 
-If the complete FitHub 1.6.30 release is already in GitHub, apply the 1.6.31 patch and build a new APK. Use the complete package if the repository is older or uncertain.
+If the complete FitHub 1.6.31 release is already in GitHub, apply the 1.6.32 patch and build a new APK. Use the complete package if the repository is older or uncertain.
 
-Do not rerun an older migration or redeploy an Edge Function solely for this UI release. Never upload `.expo`, `node_modules`, `.env`, `google-services.json`, Android signing files, secrets or tokens.
+Run the 1.6.32 additive SQL once before testing Gym Together or removing a supplement reminder. Never upload `.expo`, `node_modules`, `.env`, `google-services.json`, Android signing files, secrets or tokens.
 
 ## Younger-account safeguards
 
-Younger accounts retain the neutral meal-journal safeguards: online nutrition search, barcode nutrition lookup and nutrition targets remain hidden. Load-based Clubs also remain hidden. The Supplements destination artwork is generic, unbranded and makes no product or dosage claim.
+Younger accounts retain the neutral meal-journal safeguards: online nutrition search, barcode nutrition lookup and nutrition targets remain hidden. Load-based Clubs also remain hidden. Supplement tracking does not recommend a product or dose and continues to direct younger users toward parent, guardian or qualified-clinician support.

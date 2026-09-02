@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitHub",
     "slug": "fithub",
-    "version": "1.6.31",
+    "version": "1.6.32",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.fithub.app",
-      "versionCode": 41,
+      "versionCode": 42,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "INTERNET",
@@ -29,7 +29,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.fithub.app",
-      "buildNumber": "41",
+      "buildNumber": "42",
       "supportsTablet": true
     },
     "plugins": [
