@@ -82,6 +82,9 @@ jobs:
       - name: Audit FitHub 1.6.32 shared sessions and tracker updates
         run: npm run audit:1-6-32
 
+      - name: Audit FitHub 1.6.33 Journey redesign
+        run: npm run audit:1-6-33
+
       - name: Audit PNG asset integrity
         run: npm run audit:png-assets
 
@@ -107,7 +110,7 @@ jobs:
       - name: Upload FitHub APK
         uses: actions/upload-artifact@v4
         with:
-          name: FitHub-1.6.32-APK
+          name: FitHub-1.6.33-APK
           path: FitHub.apk
           if-no-files-found: error
           retention-days: 14
